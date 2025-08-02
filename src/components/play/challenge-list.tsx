@@ -35,7 +35,7 @@ export default function ChallengeList() {
                 </div>
             </div>
             <div className="text-right">
-              <p className="text-green-600 font-bold">Rs {challenge.amount}</p>
+              <p className="text-green-600 font-bold">₹ {challenge.amount}</p>
               <Link href="/play/game">
                 <Button size="sm" className="mt-1">Play</Button>
               </Link>

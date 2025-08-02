@@ -46,7 +46,7 @@ export default function BattleList() {
 
             <div className="flex flex-col items-center">
               <Image src="/vs.png" alt="vs" width={24} height={24} />
-              <span className="text-green-600 font-bold mt-1">Rs {battle.amount}</span>
+              <span className="text-green-600 font-bold mt-1">₹ {battle.amount}</span>
             </div>
 
             <div className="flex items-center gap-2">
