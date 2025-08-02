@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import {
   Wallet,
   Bell,
-  PlusCircle,
   Menu,
   ShieldCheck,
   History,
@@ -58,6 +57,7 @@ export default function Header() {
   };
 
   const getInitials = (name: string) => {
+    if (!name) return 'U';
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   }
 
@@ -166,12 +166,6 @@ export default function Header() {
         </div>
         {user && (
           <div className="flex items-center gap-3">
-             <Link href="/wallet/add-cash">
-                <Button size="sm" className="rounded-full font-bold">
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Add Cash
-                </Button>
-            </Link>
             <Button variant="ghost" size="icon" className="rounded-full">
               <Bell className="h-5 w-5" />
             </Button>
