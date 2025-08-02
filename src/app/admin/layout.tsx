@@ -50,7 +50,6 @@ export default function AdminLayout({
     <SidebarProvider>
         <Sidebar>
           <SidebarHeader>
-            <SheetTitle>Admin Panel</SheetTitle>
             <div className="p-4 text-center">
               <h1 className="text-2xl font-bold text-red-600">Admin Panel</h1>
             </div>
