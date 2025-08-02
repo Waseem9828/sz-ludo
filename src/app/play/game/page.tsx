@@ -68,7 +68,7 @@ function GamePageComponent() {
                             <span className="font-semibold">NSXKW...</span>
                         </div>
                         <div className="text-center">
-                            <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj87ucMyvvhf-gat6BSvABT1AQ0Jgo9VeN51TwF_iTZZk8j-PSlq2QTluQo7z1h70sI8CTAsPwe-UUfTiZG78qE4PcEPdm4ToEi1Q7Ei39Xo3TBYZbck2-xgEC5G7k2OWGOJQ22I3LQ82fHFILKGYEL9yP3ODdU-G_2Ho9TUOTGFEX6Xr8kFHNAnWEMy9c/s3264/74483.png" alt="vs" width={48} height={24} className="mx-auto" data-ai-hint="versus icon" />
+                            <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj87ucMyvvhf-gat6BSvABT1AQ0Jgo9VeN51TwF_iTZZk8j-PSlq2QTluQo7z1h70sI8CTAsPwe-UUfTiZG78qE4PcEPdm4ToEi1Q7Ei39Xo3TBYZbck2-xgEC5G7k2OWGOJQ22I3LQ82fHFILKGYEL9yP3ODdU-G_2Ho9TUOTGFEX6Xr8kFHNAnWEMy9c/s3264/74483.png" alt="vs" width={64} height={32} className="mx-auto" data-ai-hint="versus icon" />
                             <p className="font-bold text-green-600 mt-1">₹ {amount}</p>
                         </div>
                         <div className="flex items-center gap-2">
