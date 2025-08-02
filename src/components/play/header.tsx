@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -11,7 +12,7 @@ import Link from "next/link";
 export default function Header() {
   const navItems = [
     { icon: Dice5, label: "Play", href: "/play" },
-    { icon: Wallet, label: "Wallet", href: "#" },
+    { icon: Wallet, label: "Wallet", href: "/wallet" },
     { icon: History, label: "History", href: "#" },
     { icon: User, label: "Profile", href: "#" },
     { icon: Gift, label: "Refer & Earn", href: "/refer" },
