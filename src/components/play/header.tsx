@@ -19,7 +19,7 @@ export default function Header() {
     { icon: FileText, label: "Term & Conditions", href: "/terms" },
     { icon: FileText, label: "GST Policy", href: "/gst-policy" },
     { icon: Shield, label: "Privacy Policy", href: "/privacy-policy" },
-    { icon: Shield, label: "Refund Policy", href: "#" },
+    { icon: Shield, label: "Refund Policy", href: "/refund-policy" },
     { icon: LifeBuoy, label: "Support", href: "#" },
   ];
 
