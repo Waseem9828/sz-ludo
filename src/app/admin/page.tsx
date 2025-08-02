@@ -6,6 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { BarChart, LineChart, XAxis, YAxis, Tooltip, Legend, Bar, Line, CartesianGrid, ResponsiveContainer } from 'recharts';
 import { DollarSign, Users, Wallet, TrendingUp } from 'lucide-react';
+import ChallengeList from '@/components/play/challenge-list';
+import BattleList from '@/components/play/battle-list';
 
 
 const kpiData = [
@@ -116,6 +118,26 @@ export default function AdminDashboardPage() {
                 </CardContent>
             </Card>
         </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-red-600">🏆 Open Challenges</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <ChallengeList />
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-red-600">⚔️ Ongoing Battles</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <BattleList />
+                </CardContent>
+            </Card>
+        </div>
+
     </div>
   );
 }
