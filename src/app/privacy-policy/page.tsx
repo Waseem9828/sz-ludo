@@ -14,87 +14,155 @@ export default function PrivacyPolicyPage() {
                     
                     <Typewriter speed={10}>
                     <div className="space-y-6 text-foreground">
-                        <p>This document explains how SZ LUDO (https://SZLUDO.com) collects, processes, stores and/or shares any personal data and/or information from users (jointly referred to as “Information”). By accessing and/or using the Services you consent to the collection, transfer, manipulation, storage, disclosure, and other uses of your information as described in this Privacy Policy. If you have any concerns about providing data, or having it used in any manner permitted in this Privacy Policy, you should not use the Services. As set out in the terms and conditions relating to the Services (the “Terms”), you must be at least at legal age (minimum age of 18 years) to access and/or use the Services, or if legally possible, to access with your legal guardian's consent, due authorization, and agreement with this Privacy Policy.</p>
+                        <p>Effective Date: August 02, 2024</p>
+                        <p>Website: https://sz-ludo.com</p>
+                        <p>Contact: tahirkhan@gmail.com</p>
+                        <p>WhatsApp: +91-9982749204</p>
+                        <p>Owner: SZ Tahir Khan</p>
                         
-                        <div>
-                            <h2 className="text-xl font-bold font-headline mb-3 text-red-600">The Information collected:</h2>
-                            <p>SZ LUDO and/or third parties, including but not limited to business partners, advertising networks, analytics, or search information providers, may collect and process the following data about you: information that you provide when you fill in forms when accessing and/or using the Services, or when you create an account within the Services; details of your use of the Services and the resources that you access; the correspondence between you and SZ LUDO and any interactions, or with other users on the Service, the channels, and/or any social media related; from third parties who hold data about you and who agree to share this data with us; and information collected via cookies and other similar technologies and/or other mechanisms, as explained further below.</p>
-                        </div>
+                        <hr className="my-4"/>
 
                         <div>
-                            <h2 className="text-xl font-bold font-headline mb-3 text-red-600">Personal Data:</h2>
-                            <p>While using Our Service, We may ask You to provide Us with certain personally identifiable information that can be used to contact or identify You. Personally identifiable information may include, but is not limited to:</p>
-                            <ul className="list-disc list-inside pl-4 space-y-1 mt-2">
-                                <li>Email address</li>
-                                <li>First name and last name</li>
-                                <li>Phone Number</li>
-                                <li>Address, State, Province, ZIP/Postal code, City</li>
+                            <h2 className="text-xl font-bold font-headline mb-3 text-red-600">1. Introduction</h2>
+                            <p>At SZ Ludo, we are committed to protecting your personal data and respecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our platform or use our services.</p>
+                            <p>By using our website or mobile app, you agree to the terms of this Privacy Policy.</p>
+                        </div>
+
+                        <hr className="my-4"/>
+
+                        <div>
+                            <h2 className="text-xl font-bold font-headline mb-3 text-red-600">2. Information We Collect</h2>
+                            <p>We may collect the following types of information from users:</p>
+                            <div className="pl-4">
+                                <h3 className="font-semibold mt-2">a. Personal Information</h3>
+                                <ul className="list-disc list-inside pl-4 space-y-1 mt-1">
+                                    <li>Name</li>
+                                    <li>Mobile number</li>
+                                    <li>Email address</li>
+                                    <li>City/Location</li>
+                                    <li>Payment details (e.g., wallet balance, transaction IDs)</li>
+                                    <li>WhatsApp contact</li>
+                                    <li>Aadhaar KYC (if enabled)</li>
+                                </ul>
+
+                                <h3 className="font-semibold mt-2">b. Device and Technical Data</h3>
+                                 <ul className="list-disc list-inside pl-4 space-y-1 mt-1">
+                                    <li>IP Address</li>
+                                    <li>Browser type and version</li>
+                                    <li>Operating system</li>
+                                    <li>Device type and ID</li>
+                                </ul>
+
+                                <h3 className="font-semibold mt-2">c. Game-related Data</h3>
+                                 <ul className="list-disc list-inside pl-4 space-y-1 mt-1">
+                                    <li>Room code created</li>
+                                    <li>Game join time</li>
+                                    <li>Opponent match data</li>
+                                    <li>Game result reports (win/loss)</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <hr className="my-4"/>
+
+                        <div>
+                            <h2 className="text-xl font-bold font-headline mb-3 text-red-600">3. How We Use Your Information</h2>
+                            <p>We use your information for the following purposes:</p>
+                             <ul className="list-disc list-inside pl-4 space-y-1 mt-2">
+                                <li>To connect players through room codes.</li>
+                                <li>To deduct the chosen entry fee from wallets.</li>
+                                <li>To match players in real-time for Ludo King games.</li>
+                                <li>To process payments and manage wallet balances.</li>
+                                <li>To ensure fair play and prevent fraud.</li>
+                                <li>To provide customer support.</li>
+                                <li>To improve user experience and security.</li>
                             </ul>
                         </div>
 
+                        <hr className="my-4"/>
+
                         <div>
-                            <h2 className="text-xl font-bold font-headline mb-3 text-red-600">I. Cookies:</h2>
-                            <p>SZ LUDO uses cookies and other similar technologies in the Services. These technologies operate either by placing a small file which stores some information on your computer or mobile device; and/or by accessing information on your device. SZ LUDO uses cookies and similar technologies to recognize you and your device, for example by identifying your IP address; to allow the Services to interact with a third party social network or platform where you have chosen to allow such interaction; to allow payment processes when you submit payment instructions; to enable SZ LUDO and third parties to provide you with more customized services; and to collect data such as your device’s model, operating system and screen size, other applications installed on your device, and information about how you use the Services. By accessing and/or using the Services you consent to the use of cookies and similar technologies in accordance with this Privacy Policy. You can disable cookies through your web or mobile device browser settings but some features of the Services may not function properly. Alternatively, if you do not wish such data collection as described in this section, you should stop using the Services.</p>
+                            <h2 className="text-xl font-bold font-headline mb-3 text-red-600">4. Information Sharing</h2>
+                            <p>We do not sell or rent your personal data to any third parties. However, we may share your data with:</p>
+                            <ul className="list-disc list-inside pl-4 space-y-1 mt-2">
+                                <li>Government authorities (if legally required)</li>
+                                <li>Payment gateways for transaction processing</li>
+                                <li>Firebase or database providers (for data storage)</li>
+                            </ul>
                         </div>
+
+                        <hr className="my-4"/>
+
+                        <div>
+                            <h2 className="text-xl font-bold font-headline mb-3 text-red-600">5. Data Security</h2>
+                            <p>We use industry-standard security measures to protect your information. All data is encrypted and stored securely.</p>
+                             <ul className="list-disc list-inside pl-4 space-y-1 mt-2">
+                                <li>HTTPS protocol on all pages</li>
+                                <li>Firebase/Firestore encryption</li>
+                                <li>Regular database audits</li>
+                                <li>Limited access control</li>
+                            </ul>
+                        </div>
+
+                        <hr className="my-4"/>
                         
                         <div>
-                            <h2 className="text-xl font-bold font-headline mb-3 text-red-600">II. Ads:</h2>
-                            <p>Advertisers on mobile devices sometimes use advertising identifiers to enable and optimize their advertising, to deliver tailored ads related to your interests (Interest-Based Advertising or IBA). These identifiers are non-permanent, non-personal, device identifiers. SZ LUDO and/or third parties may use your device’s advertising identifier and other information associated with it, to deliver ads that relate to your interests and to improve and measure the effectiveness of ad campaigns.</p>
+                            <h2 className="text-xl font-bold font-headline mb-3 text-red-600">6. User Rights</h2>
+                             <p>You have the right to:</p>
+                             <ul className="list-disc list-inside pl-4 space-y-1 mt-2">
+                                <li>Access your data</li>
+                                <li>Update or correct your information</li>
+                                <li>Request deletion of your account and data</li>
+                                <li>Withdraw consent at any time</li>
+                            </ul>
+                            <p className="mt-2">To exercise these rights, contact us at: tahirkhan@gmail.com</p>
                         </div>
 
-                        <div>
-                            <h2 className="text-xl font-bold font-headline mb-3 text-red-600">III. Location Information:</h2>
-                            <p>You may choose to publish your location in your SZ LUDO profile. You may also tell your location when you enable your device to send such location information. SZ LUDO and/or third parties may use and store information about your location to provide special features, to deliver ads that relate to your interests and/or to improve and customize the Services.</p>
-                        </div>
+                        <hr className="my-4"/>
 
                         <div>
-                            <h2 className="text-xl font-bold font-headline mb-3 text-red-600">IV. Links:</h2>
-                            <p>SZ LUDO may keep track of how you interact with links across the Services, including email notifications, third-party services, and client applications, by redirecting clicks or through other means.</p>
+                            <h2 className="text-xl font-bold font-headline mb-3 text-red-600">7. Cookies and Tracking</h2>
+                             <p>We may use cookies or similar tracking tools to:</p>
+                             <ul className="list-disc list-inside pl-4 space-y-1 mt-2">
+                                <li>Analyze usage patterns</li>
+                                <li>Improve functionality</li>
+                                <li>Remember user preferences</li>
+                            </ul>
+                            <p className="mt-2">You can control cookies through your browser settings.</p>
+                        </div>
+                        
+                        <hr className="my-4"/>
+                        
+                        <div>
+                            <h2 className="text-xl font-bold font-headline mb-3 text-red-600">8. Children’s Privacy</h2>
+                            <p>Our platform is intended for users 18 years and older. We do not knowingly collect data from children under 18. If we become aware, we will delete the data immediately.</p>
                         </div>
 
-                        <div>
-                            <h2 className="text-xl font-bold font-headline mb-3 text-red-600">V. Log Data:</h2>
-                            <p>Servers automatically record information created by your use of the Services. This data may include information such as your IP address, browser type, operating system, the referring web page, pages visited, location, your mobile carrier, device and application IDs, search terms, and cookie information. Log data is received when you interact with the Services. This data is used to provide the Services and to measure, customize, and improve them.</p>
-                        </div>
+                        <hr className="my-4"/>
 
                         <div>
-                            <h2 className="text-xl font-bold font-headline mb-3 text-red-600">VI. Payment Information:</h2>
-                            <p>If you make a purchase in the Services, SZ LUDO may collect the billing and financial information necessary to process the charges; and/or do so on behalf of the relevant payment service providers. Purchases of third-party services are subject to the policies applicable to such providers.</p>
+                            <h2 className="text-xl font-bold font-headline mb-3 text-red-600">9. Third-Party Links</h2>
+                            <p>Our website may contain links to external websites (e.g., Ludo King). We are not responsible for the privacy practices of those sites. Always read their policies separately.</p>
                         </div>
 
-                        <div>
-                            <h2 className="text-xl font-bold font-headline mb-3 text-red-600">VII. Third-party services:</h2>
-                            <p>SZ LUDO uses a variety of third-party services to help its provision of the Services, such as hosting and other services. These third-party service providers may collect information sent by your browser as part of a web page request, such as cookies or your IP address, location, and device’s unique identifiers. Also, third-party ad partners may share information to measure ad quality and tailor ads, for example, to display ads about things you may have already shown interest in.</p>
-                        </div>
+                        <hr className="my-4"/>
 
                         <div>
-                            <h2 className="text-xl font-bold font-headline mb-3 text-red-600">VIII. Customer Support Correspondence:</h2>
-                            <p>When you ask for assistance from SZ LUDO customer support, the contact information you provide will be collected, as well as information about your gameplay or activity on the Service, your user ID number, and the correspondence and any information contained within. If available through the Services, you may provide SZ LUDO with profile information to make public, such as a short biography, location, website, cell phone, a picture, information to customize your account, etc. Such contact information may be used to send you information about the Services or related information. You may use your account settings to unsubscribe from notifications from SZ LUDO and/or from other users and find users you know. You may also unsubscribe by following the instructions contained within the notification or the instructions on the Service. Also, SZ LUDO may use your contact information to help others find your account, including through third-party services and client applications. Providing any additional information described in this section is entirely optional.</p>
+                            <h2 className="text-xl font-bold font-headline mb-3 text-red-600">10. Policy Changes</h2>
+                            <p>We may update this policy from time to time. When we do, we will revise the “Effective Date” at the top of this page and notify users as necessary.</p>
                         </div>
 
-                        <div>
-                            <h2 className="text-xl font-bold font-headline mb-3 text-red-600">Use of Information</h2>
-                            <p>When you create or configure an account in the Services, you provide some personal information, such as your name, username, password, email address, and any other information as required from time to time. Some of this information, for example, your name and/or username, may be listed publicly on the Services, including on your profile page and in search results. You agree that SZ LUDO and/or third parties on its behalf and/or its partners may use the Information for the purposes of contacting you as part of customer support; to send you updates or information about the Services; managing your account and relationship with the Service and improving your experience when you use it, improving the Services, research, surveying, and engaging with you, for example by sending you communications for these purposes; marketing and promotion of the Services or products; to personalize and optimize the Services, promotional content and/or advertising; to create reports, analysis, or similar services for the purposes of research or business intelligence.</p>
-                        </div>
+                        <hr className="my-4"/>
 
                         <div>
-                            <h2 className="text-xl font-bold font-headline mb-3 text-red-600">Information sharing and disclosure</h2>
-                            <p>SZ LUDO will only share your data with third parties according to the Privacy Policy, as reasonably necessary in order to provide the Services, for example, by providing Information to suppliers that SZ LUDO may use to fulfill the Services; where it is necessary to carry out your instructions, for example, to process a payment instruction your Information has to be provided to the payment processors; where your data is on an anonymous and aggregated basis, meaning you could not be personally identified from it; for the delivery of Interest-Based Advertising in the manner set out on this Privacy Policy; when you submit information as part of a competition or otherwise interact with any channel or social media, the information you submitted may be published; as it is reasonably believed is permitted by law or regulation; in order to comply with any legal obligation, or in order to enforce or apply the Terms, this Privacy Policy and/or any other agreement with you; or to protect the rights and/or property of SZ LUDO or third-party´s rights and/or property. SZ LUDO may share or disclose your non-private information, such as public user profile information, public messages, e-mail, etc., or share or disclose your information in an anonymous or aggregated basis in a manner that does not allow your personal identity to be revealed or as otherwise described in this Privacy Policy.</p>
-                        </div>
-
-                        <div>
-                            <h2 className="text-xl font-bold font-headline mb-3 text-red-600">Security and Data Retention</h2>
-                            <p>SZ LUDO follows generally accepted industry standards and maintains reasonable safeguards to attempt to ensure the security, integrity, and privacy of the information in SZ LUDO´s possession. Only those persons with a need to process your Information in connection with the fulfillment of SZ LUDO´s obligations to you and the purposes of the collection of the Information are granted access to your Information. SZ LUDO may retain your information for as long as is necessary to provide you with the Services; as needed for the purposes outlined in this Privacy Policy; as required by law, regulation or otherwise; or to prevent fraud, resolve disputes, troubleshoot problems, assist with any investigation, enforce the Terms, and/or take other actions permitted by law.</p>
-                        </div>
-
-                        <div>
-                            <h2 className="text-xl font-bold font-headline mb-3 text-red-600">Business Transfers</h2>
-                            <p>In the event that SZ LUDO undergoes any business transition, such as a merger, acquisition by another company, or sale of all or a portion of its assets, or in the event of insolvency or administration, SZ LUDO may be required to disclose your personal information.</p>
-                        </div>
-
-                        <div>
-                            <h2 className="text-xl font-bold font-headline mb-3 text-red-600">Changes to the Policy</h2>
-                            <p>SZ LUDO may update this Privacy Policy from time to time. Any changes will be posted here, and you should check this page periodically for updates. Your continued use of the Services after any such changes constitutes your acceptance of the new Privacy Policy. If you do not agree to any of these changes, please do not use or access (or continue to use or access) the Services.</p>
+                            <h2 className="text-xl font-bold font-headline mb-3 text-red-600">11. Contact Us</h2>
+                            <p>If you have any questions about this Privacy Policy or how we handle your data, please contact:</p>
+                             <ul className="list-disc list-inside pl-4 space-y-1 mt-2">
+                                <li>Owner Name: SZ Tahir Khan</li>
+                                <li>Email: tahirkhan@gmail.com</li>
+                                <li>Website: https://sz-ludo.com</li>
+                                <li>WhatsApp: +91-9982749204</li>
+                            </ul>
                         </div>
                     </div>
                     </Typewriter>
