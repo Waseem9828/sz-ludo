@@ -5,11 +5,12 @@ import React, { useState, useEffect } from 'react';
 import Header from "@/components/play/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronLeft, AlertCircle, Loader } from "lucide-react";
+import { ChevronLeft, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
+import { SplashScreen } from '@/components/ui/splash-screen';
 
 export default function WalletPage() {
     const { toast } = useToast();
@@ -45,11 +46,7 @@ export default function WalletPage() {
     };
     
     if (loading || !user) {
-        return (
-            <div className="flex justify-center items-center min-h-screen">
-                <Loader className="h-16 w-16 animate-spin" />
-            </div>
-        );
+        return <SplashScreen />;
     }
 
     return (

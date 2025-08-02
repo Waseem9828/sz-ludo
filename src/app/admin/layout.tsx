@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
-import { Loader } from "lucide-react";
+import { SplashScreen } from "@/components/ui/splash-screen";
 
 export default function AdminLayout({
   children,
@@ -39,11 +39,7 @@ export default function AdminLayout({
   }, [user, loading, router]);
 
   if (loading || !user) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <Loader className="h-16 w-16 animate-spin" />
-      </div>
-    );
+    return <SplashScreen />;
   }
 
   return (

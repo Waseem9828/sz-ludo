@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { AlertCircle, ArrowUp, BarChart2, Gift, Pencil, Trophy, Loader } from "lucide-react";
+import { AlertCircle, ArrowUp, BarChart2, Gift, Pencil, Trophy } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -15,6 +15,7 @@ import { useAuth } from '@/context/auth-context';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { updateProfile } from 'firebase/auth';
+import { SplashScreen } from '@/components/ui/splash-screen';
 
 const MetricCard = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) => (
     <Card className="bg-secondary/50">
@@ -94,11 +95,7 @@ export default function ProfilePage() {
     };
     
     if (loading || !user || !appUser) {
-        return (
-            <div className="flex justify-center items-center min-h-screen">
-                <Loader className="h-16 w-16 animate-spin" />
-            </div>
-        );
+        return <SplashScreen />;
     }
 
     const getInitials = (name: string) => {

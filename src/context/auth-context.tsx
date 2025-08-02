@@ -4,8 +4,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, User, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, updateProfile } from 'firebase/auth';
 import { auth, db, googleAuthProvider } from '@/lib/firebase/config';
-import { Loader } from 'lucide-react';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { SplashScreen } from '@/components/ui/splash-screen';
 
 interface AppUser {
     uid: string;
@@ -121,11 +121,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   if (loading) {
-    return (
-        <div className="flex justify-center items-center min-h-screen">
-            <Loader className="h-16 w-16 animate-spin" />
-        </div>
-    );
+    return <SplashScreen />;
   }
 
   return (

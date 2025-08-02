@@ -10,8 +10,8 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
-import { Loader } from 'lucide-react';
 import { CreateChallengeDialog } from '@/components/play/create-challenge-dialog';
+import { SplashScreen } from '@/components/ui/splash-screen';
 
 
 export default function PlayPage() {
@@ -53,11 +53,7 @@ export default function PlayPage() {
   }
 
    if (loading || !user) {
-    return (
-        <div className="flex justify-center items-center min-h-screen">
-            <Loader className="h-16 w-16 animate-spin" />
-        </div>
-    );
+    return <SplashScreen />;
   }
 
 
