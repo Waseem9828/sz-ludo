@@ -50,9 +50,9 @@ export default function BattleList() {
               <span className="font-semibold">{battle.player1.name}</span>
             </div>
 
-            <div className="flex flex-col items-center">
-              <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj87ucMyvvhf-gat6BSvABT1AQ0Jgo9VeN51TwF_iTZZk8j-PSlq2QTluQo7z1h70sI8CTAsPwe-UUfTiZG78qE4PcEPdm4ToEi1Q7Ei39Xo3TBYZbck2-xgEC5G7k2OWGOJQ22I3LQ82fHFILKGYEL9yP3ODdU-G_2Ho9TUOTGFEX6Xr8kFHNAnWEMy9c/s3264/74483.png" alt="vs" width={64} height={32} data-ai-hint="versus icon" />
-              <span className="text-green-600 font-bold mt-1">₹{battle.amount}</span>
+            <div className="relative flex items-center justify-center">
+              <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj87ucMyvvhf-gat6BSvABT1AQ0Jgo9VeN51TwF_iTZZk8j-PSlq2QTluQo7z1h70sI8CTAsPwe-UUfTiZG78qE4PcEPdm4ToEi1Q7Ei39Xo3TBYZbck2-xgEC5G7k2OWGOJQ22I3LQ82fHFILKGYEL9yP3ODdU-G_2Ho9TUOTGFEX6Xr8kFHNAnWEMy9c/s3264/74483.png" alt="vs" width={80} height={40} data-ai-hint="versus icon" />
+              <span className="absolute text-white font-bold text-sm">₹{battle.amount}</span>
             </div>
 
             <div className="flex items-center gap-2">
