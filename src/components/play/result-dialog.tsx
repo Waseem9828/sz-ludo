@@ -19,6 +19,7 @@ interface ResultDialogProps {
   variant: 'won' | 'lost';
   title: string;
   description: string;
+  onClose?: () => void;
 }
 
 export function ResultDialog({
@@ -27,13 +28,21 @@ export function ResultDialog({
   variant,
   title,
   description,
+  onClose,
 }: ResultDialogProps) {
 
   const Icon = variant === 'won' ? PartyPopper : Frown;
   const iconColor = variant === 'won' ? 'text-green-500' : 'text-yellow-500';
 
+  const handleClose = () => {
+    setIsOpen(false);
+    if(onClose) {
+        onClose();
+    }
+  }
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md text-center overflow-hidden">
         {variant === 'won' && <Confetti />}
         <DialogHeader className="items-center">
@@ -46,7 +55,7 @@ export function ResultDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="sm:justify-center">
-          <Button onClick={() => setIsOpen(false)}>
+          <Button onClick={handleClose}>
             Close
           </Button>
         </DialogFooter>

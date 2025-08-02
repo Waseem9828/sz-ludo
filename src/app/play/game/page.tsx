@@ -6,16 +6,18 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ChevronLeft, Info, Upload, PartyPopper, Frown } from 'lucide-react';
+import { ChevronLeft, Info, Upload, Loader } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useSearchParams } from 'next/navigation';
-import { Suspense, useState, useRef } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { Suspense, useState, useRef, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ResultDialog } from '@/components/play/result-dialog';
-
+import { useAuth } from '@/context/auth-context';
+import { Game, getGameById, updateGameStatus, submitGameResult } from '@/lib/firebase/games';
+import { SplashScreen } from '@/components/ui/splash-screen';
 
 const penalties = [
     { amount: '₹100', reason: 'Fraud / Fake Screenshot' },
@@ -25,12 +27,19 @@ const penalties = [
 ];
 
 function GamePageComponent() {
+    const router = useRouter();
     const searchParams = useSearchParams();
-    const amount = searchParams.get('amount') || '50';
+    const gameId = searchParams.get('id');
     const { toast } = useToast();
+    const { user, appUser } = useAuth();
+
+    const [game, setGame] = useState<Game | null>(null);
+    const [loading, setLoading] = useState(true);
     const [selectedResult, setSelectedResult] = useState<string | null>(null);
     const [screenshot, setScreenshot] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    
     const [isResultDialogOpen, setIsResultDialogOpen] = useState(false);
     const [resultDialogProps, setResultDialogProps] = useState({
         variant: 'won' as 'won' | 'lost',
@@ -38,61 +47,99 @@ function GamePageComponent() {
         description: '',
     });
 
-
-    const handleResultClick = (result: string) => {
-        setSelectedResult(result);
-        if (result === 'LOST' || result === 'CANCEL') {
-            handleSubmit(result, null);
-        }
-    };
-    
-    const handleSubmit = (result: string | null, file: File | null) => {
-        if (!result) return;
-
-        if (result === 'WON' && !file) {
-            toast({
-                title: `Screenshot Required`,
-                description: `Please upload a screenshot to declare you won.`,
-                variant: 'destructive',
-            });
+    useEffect(() => {
+        if (!gameId) {
+            toast({ title: 'Error', description: 'No game ID provided.', variant: 'destructive' });
+            router.push('/play');
             return;
         }
 
-        console.log({ result, screenshot: file?.name });
+        getGameById(gameId)
+            .then(gameData => {
+                if (gameData) {
+                    setGame(gameData);
+                } else {
+                    toast({ title: 'Error', description: 'Game not found.', variant: 'destructive' });
+                    router.push('/play');
+                }
+            })
+            .catch(err => {
+                 toast({ title: 'Error', description: 'Failed to load game.', variant: 'destructive' });
+                 console.error(err);
+                 router.push('/play');
+            })
+            .finally(() => setLoading(false));
+
+    }, [gameId, router, toast]);
+
+    const handleResultClick = async (result: 'WON' | 'LOST' | 'CANCEL') => {
+        if (!game || !user) return;
+        setSelectedResult(result);
+
+        if (result === 'LOST' || result === 'CANCEL') {
+            setIsSubmitting(true);
+            try {
+                const status = result === 'LOST' ? 'completed' : 'cancelled';
+                // If I lost, the other player won
+                const winnerId = result === 'LOST' ? (game.player1.uid === user.uid ? game.player2?.uid : game.player1.uid) : null;
+                
+                await updateGameStatus(game.id, status, winnerId || undefined);
+
+                if (result === 'LOST') {
+                    setResultDialogProps({
+                        variant: 'lost',
+                        title: 'Better Luck Next Time!',
+                        description: 'You have declared that you lost the game.',
+                    });
+                    setIsResultDialogOpen(true);
+                } else {
+                     toast({ title: 'Game Cancelled', description: 'Your cancellation request has been submitted.' });
+                     router.push('/play');
+                }
+
+            } catch (err: any) {
+                toast({ title: 'Error', description: err.message, variant: 'destructive' });
+            } finally {
+                setIsSubmitting(false);
+            }
+        }
+    };
+    
+    const handleSubmitWin = async () => {
+        if (!game || !user || !screenshot) {
+            toast({ title: `Screenshot Required`, description: `Please upload a screenshot to declare you won.`, variant: 'destructive'});
+            return;
+        }
         
-        if (result === 'WON') {
-             setResultDialogProps({
+        setIsSubmitting(true);
+        try {
+            await submitGameResult(game.id, user.uid, screenshot);
+            setResultDialogProps({
                 variant: 'won',
                 title: 'Congratulations!',
-                description: `You won ₹${amount}! Your result is under review.`,
+                description: `You won ₹${game.amount}! Your result is under review.`,
             });
-        } else if (result === 'LOST') {
-            setResultDialogProps({
-                variant: 'lost',
-                title: 'Better Luck Next Time!',
-                description: 'You have declared that you lost the game.',
-            });
-        }
-        
-        if(result === 'WON' || result === 'LOST') {
             setIsResultDialogOpen(true);
-        }
 
-        if (result === 'CANCEL') {
-            toast({
-                title: 'Game Cancelled',
-                description: 'Your cancellation request has been submitted.'
-            });
-        }
+             // Reset state
+            setSelectedResult(null);
+            setScreenshot(null);
+            if(fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
 
-        // Reset state
-        setSelectedResult(null);
-        setScreenshot(null);
-        if(fileInputRef.current) {
-            fileInputRef.current.value = '';
+        } catch (err: any) {
+            toast({ title: 'Submission Failed', description: err.message, variant: 'destructive' });
+        } finally {
+            setIsSubmitting(false);
         }
     }
+    
+    if (loading || !game || !appUser) {
+        return <SplashScreen />;
+    }
 
+    const opponent = game.player1.uid === appUser.uid ? game.player2 : game.player1;
 
     return (
         <>
@@ -102,6 +149,7 @@ function GamePageComponent() {
             variant={resultDialogProps.variant}
             title={resultDialogProps.title}
             description={resultDialogProps.description}
+            onClose={() => router.push('/play')}
         />
         <div className="flex flex-col min-h-screen bg-background font-body">
             <Header />
@@ -123,20 +171,20 @@ function GamePageComponent() {
                     <CardContent className="p-4 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <Avatar className="h-10 w-10">
-                                <AvatarImage src="https://placehold.co/40x40.png" alt="NSXKW..." data-ai-hint="avatar person" />
-                                <AvatarFallback>NS</AvatarFallback>
+                                <AvatarImage src={appUser.photoURL || `https://placehold.co/40x40.png`} alt={appUser.displayName || 'You'} data-ai-hint="avatar person" />
+                                <AvatarFallback>{appUser.displayName?.charAt(0)}</AvatarFallback>
                             </Avatar>
-                            <span className="font-semibold">NSXKW...</span>
+                            <span className="font-semibold">{appUser.displayName}</span>
                         </div>
                         <div className="text-center">
                             <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEilS2_YhPAJBDjdcIRsoMJLTWafsJuIyola3KN50zXQAZYWSSIbhLhWhOJGMG6UYkUB5ZOiVKgsy2bVstr2af0LVf2g-eWjXHnGO4Z0IbaePP4E7TSDB9x_eK8OqTidX968zc5Wn9p6uGlkLoD9iglU3KZ28_2IbXgl29zHTZgwxzMWPvbN6zhA5AhyH7s/s1600/74920.png" alt="vs" width={64} height={32} className="mx-auto" data-ai-hint="versus icon" />
-                            <p className="font-bold text-green-600 mt-1">₹ {amount}</p>
+                            <p className="font-bold text-green-600 mt-1">₹ {game.amount}</p>
                         </div>
                         <div className="flex items-center gap-2">
-                             <span className="font-semibold">KlwzB...</span>
+                             <span className="font-semibold">{opponent?.displayName}</span>
                             <Avatar className="h-10 w-10">
-                                <AvatarImage src="https://placehold.co/40x40.png" alt="KlwzB..." data-ai-hint="avatar person" />
-                                <AvatarFallback>KL</AvatarFallback>
+                                <AvatarImage src={opponent?.photoURL || 'https://placehold.co/40x40.png'} alt={opponent?.displayName || 'Opponent'} data-ai-hint="avatar person" />
+                                <AvatarFallback>{opponent?.displayName?.charAt(0)}</AvatarFallback>
                             </Avatar>
                         </div>
                     </CardContent>
@@ -147,7 +195,7 @@ function GamePageComponent() {
                         <CardTitle className="text-center text-md font-semibold text-red-600">Room Code</CardTitle>
                     </CardHeader>
                     <CardContent className="p-6 text-center">
-                        <p className="text-4xl font-bold tracking-widest my-4">01063482</p>
+                        <p className="text-4xl font-bold tracking-widest my-4">{game.roomCode}</p>
                         <Button className="w-full bg-gray-700 hover:bg-gray-800 text-white">
                              <Image src="/ludo_king.png" alt="Ludo King" width={20} height={20} className="mr-2" />
                             Play
@@ -163,9 +211,9 @@ function GamePageComponent() {
                         <p className="text-center text-sm text-muted-foreground">After completion of your game, select the status of the game and post your screenshot below</p>
                         
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                             <Button onClick={() => handleResultClick('WON')} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3">I WON</Button>
-                             <Button onClick={() => handleResultClick('LOST')} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3">I LOST</Button>
-                             <Button onClick={() => handleResultClick('CANCEL')} variant="outline" className="w-full font-bold py-3 md:col-span-1">CANCEL</Button>
+                             <Button onClick={() => handleResultClick('WON')} disabled={isSubmitting} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3">I WON</Button>
+                             <Button onClick={() => handleResultClick('LOST')} disabled={isSubmitting} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3">I LOST</Button>
+                             <Button onClick={() => handleResultClick('CANCEL')} disabled={isSubmitting} variant="outline" className="w-full font-bold py-3 md:col-span-1">CANCEL</Button>
                         </div>
 
                        {selectedResult === 'WON' && (
@@ -178,10 +226,11 @@ function GamePageComponent() {
                                     ref={fileInputRef}
                                     onChange={(e) => setScreenshot(e.target.files ? e.target.files[0] : null)}
                                     className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                                    disabled={isSubmitting}
                                 />
                                 {screenshot && <p className="text-sm text-center text-muted-foreground">Selected: {screenshot.name}</p>}
-                                <Button onClick={() => handleSubmit('WON', screenshot)} className="w-full" disabled={!screenshot}>
-                                    <Upload className="mr-2 h-4 w-4" />
+                                <Button onClick={handleSubmitWin} className="w-full" disabled={!screenshot || isSubmitting}>
+                                    {isSubmitting ? <Loader className="animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                                     Submit Result
                                 </Button>
                             </div>
@@ -221,7 +270,7 @@ function GamePageComponent() {
 
 export default function GamePage() {
     return (
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense fallback={<SplashScreen />}>
             <GamePageComponent />
         </Suspense>
     )

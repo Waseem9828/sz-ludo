@@ -4,19 +4,9 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, User, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, updateProfile } from 'firebase/auth';
 import { auth, db, googleAuthProvider } from '@/lib/firebase/config';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import { SplashScreen } from '@/components/ui/splash-screen';
-
-interface AppUser {
-    uid: string;
-    email: string | null;
-    displayName: string | null;
-    phone?: string;
-    wallet?: {
-        balance: number;
-        winnings: number;
-    }
-}
+import type { AppUser } from '@/lib/firebase/users';
 
 interface AuthContextType {
   user: User | null;
@@ -44,29 +34,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       setUser(user);
       if (user) {
-          const userRef = doc(db, 'users', user.uid);
-          const userSnap = await getDoc(userRef);
-          if (userSnap.exists()) {
-              setAppUser(userSnap.data() as AppUser);
-          } else {
-              const newAppUser: AppUser = {
-                  uid: user.uid,
-                  email: user.email,
-                  displayName: user.displayName,
-              };
-              await setDoc(userRef, newAppUser);
-              setAppUser(newAppUser);
-          }
+        const userRef = doc(db, 'users', user.uid);
+        const unsubscribeFirestore = onSnapshot(userRef, (doc) => {
+            if (doc.exists()) {
+                setAppUser(doc.data() as AppUser);
+            }
+            setLoading(false);
+        });
+        return () => unsubscribeFirestore();
       } else {
-          setAppUser(null);
+        setAppUser(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => unsubscribeAuth();
   }, []);
   
   const signUp = async (email:string, password:string, name:string, phone:string) => {
@@ -80,10 +65,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           email: user.email,
           displayName: name,
           phone: phone,
+          photoURL: user.photoURL,
           wallet: {
               balance: 0,
               winnings: 0,
-          }
+          },
+          kycStatus: 'Pending',
+          gameStats: { played: 0, won: 0, lost: 0 },
+          lifetimeStats: { totalDeposits: 0, totalWithdrawals: 0 }
       };
       await setDoc(userRef, newAppUser);
       setAppUser(newAppUser);
@@ -106,7 +95,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         uid: user.uid,
         email: user.email,
         displayName: user.displayName,
+        photoURL: user.photoURL,
         wallet: { balance: 0, winnings: 0 },
+        kycStatus: 'Pending',
+        gameStats: { played: 0, won: 0, lost: 0 },
+        lifetimeStats: { totalDeposits: 0, totalWithdrawals: 0 }
       };
       await setDoc(userRef, newAppUser);
       setAppUser(newAppUser);

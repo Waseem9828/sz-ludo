@@ -13,6 +13,8 @@ import { ChevronLeft, Loader } from 'lucide-react';
 import { getActiveUpiId, UpiId } from '@/lib/firebase/settings';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
+import { useAuth } from '@/context/auth-context';
+import { createDepositRequest } from '@/lib/firebase/transactions';
 
 const quickAmountsConfig = {
   '100': { limit: 10 },
@@ -50,6 +52,8 @@ export default function AddCashPage() {
   const [activeUpi, setActiveUpi] = useState<UpiId | null>(null);
   const [loadingSettings, setLoadingSettings] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user, appUser } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [attempts, setAttempts] = useState(() => {
     const initialAttempts: { [key: number]: number } = {};
@@ -132,17 +136,32 @@ export default function AddCashPage() {
     setShowQr(true);
   };
 
-  const handlePaymentDone = () => {
-    // In a real app, you would have a webhook or a manual process
-    // to verify the payment and then update the user's wallet
-    // and the upiId's currentAmount in Firestore.
-    toast({
-      title: 'Payment Confirmation Sent',
-      description: 'Your request has been sent to the admin. Your balance will be updated after verification.',
-    });
-    setAmount('100');
-    setQrCodeUrl('');
-    setShowQr(false);
+  const handlePaymentDone = async () => {
+    if (!user || !appUser || !activeUpi) {
+        toast({ title: "Error", description: "You must be logged in.", variant: "destructive" });
+        return;
+    }
+    setIsSubmitting(true);
+    try {
+        await createDepositRequest({
+            userId: user.uid,
+            userName: appUser.displayName || 'N/A',
+            amount: parseFloat(amount),
+            upiId: activeUpi.id,
+            status: 'pending'
+        });
+        toast({
+            title: 'Payment Confirmation Sent',
+            description: 'Your request has been sent to the admin. Your balance will be updated after verification.',
+        });
+        setAmount('100');
+        setQrCodeUrl('');
+        setShowQr(false);
+    } catch (err: any) {
+         toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   const summary = useMemo(() => {
@@ -206,7 +225,7 @@ export default function AddCashPage() {
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   className="bg-card pl-8 text-lg"
-                  disabled={!!error}
+                  disabled={!!error || showQr}
                 />
               </div>
               <div className="grid grid-cols-4 gap-2">
@@ -224,7 +243,7 @@ export default function AddCashPage() {
                     key={qAmount}
                     variant="outline"
                     onClick={() => handleQuickAmountClick(qAmount)}
-                    disabled={!!error || isLocked}
+                    disabled={!!error || showQr || isLocked}
                     className="flex-col h-auto"
                    >
                     <span>₹{qAmount}</span>
@@ -254,8 +273,8 @@ export default function AddCashPage() {
                         <div className="flex justify-center p-4 bg-white rounded-md border">
                         {qrCodeUrl ? <Image src={qrCodeUrl} alt="UPI QR Code" width={200} height={200} /> : <Loader className="h-10 w-10 animate-spin" />}
                         </div>
-                        <Button onClick={handlePaymentDone} className="w-full font-bold text-lg py-6 bg-green-600 hover:bg-green-700 text-white">
-                        I have paid
+                        <Button onClick={handlePaymentDone} className="w-full font-bold text-lg py-6 bg-green-600 hover:bg-green-700 text-white" disabled={isSubmitting}>
+                          {isSubmitting ? <Loader className="animate-spin" /> : 'I have paid'}
                         </Button>
                     </CardContent>
                 </Card>

@@ -1,51 +1,91 @@
 
+'use client';
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
-
-const challenges = [
-  {
-    id: "cl1",
-    name: "bos...",
-    amount: 50,
-    avatar: "https://placehold.co/40x40/E62E2D/FFFFFF.png",
-    avatarFallback: "B"
-  },
-  {
-    id: "cl2",
-    name: "Tahir...",
-    amount: 500,
-    avatar: "https://placehold.co/40x40/F5A623/FFFFFF.png",
-    avatarFallback: "T"
-  }
-];
+import { useEffect, useState } from "react";
+import { Game, listenForGames, acceptChallenge } from "@/lib/firebase/games";
+import { useAuth } from "@/context/auth-context";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
+import { updateUserWallet } from "@/lib/firebase/users";
 
 export default function ChallengeList() {
-  return (
-    <div className="space-y-4">
-      {challenges.map((challenge, index) => (
-        <Card key={challenge.id} className="bg-card shadow-sm">
-          <CardContent className="p-3 flex items-center justify-between">
-            <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground">Challenge set by</span>
-                <div className="flex items-center gap-2 mt-1">
-                    <Avatar className="h-8 w-8">
-                        <AvatarImage src={challenge.avatar} alt={challenge.name} />
-                        <AvatarFallback>{challenge.avatarFallback}</AvatarFallback>
-                    </Avatar>
-                    <span className="font-semibold">{challenge.name}</span>
+    const [challenges, setChallenges] = useState<Game[]>([]);
+    const { user, appUser } = useAuth();
+    const { toast } = useToast();
+    const router = useRouter();
+
+    useEffect(() => {
+        const unsubscribe = listenForGames((games) => {
+            const openChallenges = games.filter(g => g.status === 'challenge');
+            setChallenges(openChallenges);
+        });
+
+        return () => unsubscribe();
+    }, []);
+
+    const handleAccept = async (challenge: Game) => {
+        if (!user || !appUser) {
+            toast({ title: 'Login Required', description: 'You must be logged in to accept a challenge.', variant: 'destructive' });
+            return;
+        }
+
+        if (user.uid === challenge.createdBy.uid) {
+            toast({ title: 'Cannot Accept Own Challenge', description: 'You cannot accept your own challenge.', variant: 'destructive' });
+            return;
+        }
+
+        if (appUser.wallet && appUser.wallet.balance < challenge.amount) {
+            toast({ title: 'Insufficient Balance', description: 'You do not have enough balance to accept this challenge.', variant: 'destructive' });
+            return;
+        }
+        
+        try {
+            // Deduct amount from acceptor's wallet
+            await updateUserWallet(user.uid, -challenge.amount, 'balance');
+            
+            await acceptChallenge(challenge.id, {
+                uid: user.uid,
+                displayName: appUser.displayName,
+                photoURL: appUser.photoURL,
+            });
+
+            toast({ title: 'Challenge Accepted!', description: `You are now in a battle for ₹${challenge.amount}.` });
+            router.push(`/play/game?id=${challenge.id}`);
+        } catch (error: any) {
+             // Re-credit user if accept fails
+            await updateUserWallet(user.uid, challenge.amount, 'balance');
+            toast({ title: 'Failed to Accept', description: error.message, variant: 'destructive' });
+        }
+    };
+
+    return (
+        <div className="space-y-4">
+        {challenges.map((challenge) => (
+            <Card key={challenge.id} className="bg-card shadow-sm">
+            <CardContent className="p-3 flex items-center justify-between">
+                <div className="flex flex-col">
+                    <span className="text-xs text-muted-foreground">Challenge set by</span>
+                    <div className="flex items-center gap-2 mt-1">
+                        <Avatar className="h-8 w-8">
+                            <AvatarImage src={challenge.createdBy.photoURL || undefined} alt={challenge.createdBy.displayName || 'User'} />
+                            <AvatarFallback>{challenge.createdBy.displayName?.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <span className="font-semibold">{challenge.createdBy.displayName}</span>
+                    </div>
                 </div>
-            </div>
-            <div className="text-right">
-              <p className="text-green-600 font-bold">₹ {challenge.amount}</p>
-              <Link href={`/play/game?amount=${challenge.amount}`}>
-                <Button size="sm" className="mt-1">Play</Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
+                <div className="text-right">
+                <p className="text-green-600 font-bold">₹ {challenge.amount}</p>
+                <Button size="sm" className="mt-1" onClick={() => handleAccept(challenge)} disabled={user?.uid === challenge.createdBy.uid}>
+                    Play
+                </Button>
+                </div>
+            </CardContent>
+            </Card>
+        ))}
+        </div>
+    );
 }

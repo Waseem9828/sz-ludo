@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -9,55 +9,114 @@ import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { Game, listenForGames, updateGameStatus } from '@/lib/firebase/games';
+import { Loader } from 'lucide-react';
+import { updateUserWallet } from '@/lib/firebase/users';
 
-const sampleMatches = [
-  { id: '1', player1: 'NSXKW...', player2: 'KlwzB...', amount: 50, status: 'Under Review', winner: 'NSXKW...', screenshotUrl: 'https://placehold.co/400x800.png', roomCode: '01063482' },
-  { id: '2', player1: 'cuvbd...', player2: 'MnMBR...', amount: 450, status: 'Completed', winner: 'cuvbd...', screenshotUrl: null, roomCode: '98765432' },
-  { id: '3', player1: 'IfffN...', player2: 'Shri...', amount: 150, status: 'Under Review', winner: 'Shri...', screenshotUrl: 'https://placehold.co/400x800.png', roomCode: '11223344' },
-  { id: '4', player1: 'Mohit...', player2: 'JvNqA...', amount: 3500, status: 'Cancelled', winner: null, screenshotUrl: null, roomCode: '55667788' },
-  { id: '5', player1: 'Sahil...', player2: 'UmIIR...', amount: 650, status: 'Completed', winner: 'Sahil...', screenshotUrl: null, roomCode: '34345656' },
-];
-
-type MatchStatus = 'Under Review' | 'Completed' | 'Cancelled' | 'Disputed';
+type MatchStatus = 'under_review' | 'completed' | 'cancelled' | 'disputed';
 
 export default function MatchesPage() {
-    const [matches, setMatches] = useState(sampleMatches);
+    const [matches, setMatches] = useState<Game[]>([]);
+    const [loading, setLoading] = useState(true);
     const { toast } = useToast();
 
-    const handleApprove = (matchId: string, finalAmount: number, winner: string) => {
-        setMatches(matches.map(m => m.id === matchId ? { ...m, status: 'Completed' as MatchStatus } : m));
-        toast({
-            title: 'Match Approved!',
-            description: `₹${finalAmount} has been credited to ${winner}'s winning wallet.`,
-        });
-        // Here you would add logic to update the match status in Firestore
-        // and update the player's winning wallet with the finalAmount.
+    useEffect(() => {
+        const unsubscribe = listenForGames(
+            (games) => {
+                const reviewableGames = games.filter(g => g.status === 'under_review' || g.status === 'completed' || g.status === 'cancelled' || g.status === 'disputed');
+                setMatches(reviewableGames);
+                setLoading(false);
+            },
+            (error) => {
+                console.error("Error fetching matches: ", error);
+                toast({ title: "Error", description: "Could not fetch matches.", variant: "destructive" });
+                setLoading(false);
+            }
+        );
+
+        return () => unsubscribe();
+    }, [toast]);
+
+
+    const handleApprove = async (match: Game) => {
+        if (!match.winner || !match.player1 || !match.player2) {
+             toast({
+                title: 'Error',
+                description: 'Match data is incomplete.',
+                variant: 'destructive',
+            });
+            return;
+        }
+
+        const commission = match.amount * 0.045;
+        const finalAmount = match.amount - commission;
+        const loserId = match.winner === match.player1.uid ? match.player2.uid : match.player1.uid;
+
+        try {
+            // First, credit the winner
+            await updateUserWallet(match.winner, finalAmount, 'winnings');
+
+            // Then, deduct from the loser. This assumes the bet amount was held in an escrow or deducted from balance at match start.
+            // For simplicity, we'll just log the logic here. A real system would have more complex transaction handling.
+            // await updateUserWallet(loserId, -match.amount, 'balance');
+
+            // Finally, update the game status
+            await updateGameStatus(match.id, 'completed');
+
+            toast({
+                title: 'Match Approved!',
+                description: `₹${finalAmount.toFixed(2)} has been credited to the winner.`,
+            });
+        } catch (error: any) {
+             toast({
+                title: 'Approval Failed',
+                description: error.message,
+                variant: 'destructive',
+            });
+        }
     };
 
-    const handleDecline = (matchId: string) => {
-        setMatches(matches.map(m => m.id === matchId ? { ...m, status: 'Disputed' as MatchStatus } : m));
-         // Here you would add logic to handle the dispute, e.g., refund players.
-         toast({
-            title: 'Match Declined',
-            description: 'The match has been marked as disputed.',
-            variant: 'destructive',
-         });
+    const handleDecline = async (matchId: string) => {
+         try {
+            await updateGameStatus(matchId, 'disputed');
+            // Here you would add logic to handle the dispute, e.g., refund players.
+            // For simplicity, we are just changing the status.
+            toast({
+                title: 'Match Declined',
+                description: 'The match has been marked as disputed.',
+                variant: 'destructive',
+            });
+         } catch (error: any) {
+              toast({
+                title: 'Decline Failed',
+                description: error.message,
+                variant: 'destructive',
+            });
+         }
     };
     
-    const getStatusBadgeVariant = (status: MatchStatus) => {
+    const getStatusBadgeVariant = (status: Game['status']) => {
         switch (status) {
-            case 'Completed':
+            case 'completed':
                 return 'default'; // Greenish in some themes
-            case 'Under Review':
+            case 'under_review':
                 return 'secondary';
-            case 'Cancelled':
+            case 'cancelled':
                 return 'destructive';
-            case 'Disputed':
+            case 'disputed':
                 return 'destructive';
             default:
                 return 'outline';
         }
     };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-full">
+        <Loader className="h-16 w-16 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <Card>
@@ -84,15 +143,15 @@ export default function MatchesPage() {
 
                 return (
               <TableRow key={match.id}>
-                <TableCell>{match.player1} vs {match.player2}</TableCell>
+                <TableCell>{match.player1?.displayName} vs {match.player2?.displayName}</TableCell>
                 <TableCell>₹{match.amount}</TableCell>
-                <TableCell>{match.winner || 'N/A'}</TableCell>
+                <TableCell>{match.winner === match.player1.uid ? match.player1.displayName : match.player2?.displayName || 'N/A'}</TableCell>
                 <TableCell>{match.roomCode}</TableCell>
                 <TableCell>
-                    <Badge variant={getStatusBadgeVariant(match.status as MatchStatus)}>{match.status}</Badge>
+                    <Badge variant={getStatusBadgeVariant(match.status)}>{match.status.replace('_', ' ')}</Badge>
                 </TableCell>
                 <TableCell className="space-x-2">
-                  {match.status === 'Under Review' && match.screenshotUrl && (
+                  {match.status === 'under_review' && match.screenshotUrl && (
                      <Dialog>
                         <DialogTrigger asChild>
                            <Button variant="outline" size="sm">Review Match</Button>
@@ -113,11 +172,11 @@ export default function MatchesPage() {
                                      <CardContent className="p-4 text-sm space-y-2">
                                           <div className="flex justify-between">
                                             <span className="text-muted-foreground">Player 1:</span>
-                                            <span className="font-medium">{match.player1}</span>
+                                            <span className="font-medium">{match.player1.displayName}</span>
                                           </div>
                                           <div className="flex justify-between">
                                             <span className="text-muted-foreground">Player 2:</span>
-                                            <span className="font-medium">{match.player2}</span>
+                                            <span className="font-medium">{match.player2?.displayName}</span>
                                           </div>
                                            <div className="flex justify-between">
                                             <span className="text-muted-foreground">Room Code:</span>
@@ -125,7 +184,7 @@ export default function MatchesPage() {
                                           </div>
                                            <div className="flex justify-between">
                                             <span className="text-muted-foreground">Winner Declared:</span>
-                                            <span className="font-medium">{match.winner}</span>
+                                            <span className="font-medium">{match.winner === match.player1.uid ? match.player1.displayName : match.player2?.displayName}</span>
                                           </div>
                                      </CardContent>
                                   </Card>
@@ -164,7 +223,7 @@ export default function MatchesPage() {
                                     <Button variant="destructive" onClick={() => handleDecline(match.id)}>Decline</Button>
                                 </DialogClose>
                                 <DialogClose asChild>
-                                    <Button onClick={() => handleApprove(match.id, finalAmount, match.winner || '')}>Approve</Button>
+                                    <Button onClick={() => handleApprove(match)}>Approve</Button>
                                 </DialogClose>
                            </div>
                         </DialogContent>

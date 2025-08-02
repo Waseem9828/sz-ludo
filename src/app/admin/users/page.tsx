@@ -1,12 +1,12 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MoreVertical, User, Wallet, Shield, TrendingUp, TrendingDown, Gamepad2 } from 'lucide-react';
+import { MoreVertical, User, Wallet, Shield, TrendingUp, TrendingDown, Gamepad2, Loader } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -14,18 +14,30 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-
-const sampleUsers = [
-  { id: '1', name: 'NSXKW...', email: 'nsxkw@example.com', phone: '123-456-7890', wallet: { deposit: 100, winning: 50 }, kycStatus: 'Verified', avatar: 'https://placehold.co/40x40.png', totalDeposits: 500, totalWithdrawals: 200, gamesPlayed: 50, gamesWon: 30, gamesLost: 20 },
-  { id: '2', name: 'cuvbd...', email: 'cuvbd@example.com', phone: '234-567-8901', wallet: { deposit: 250, winning: 450 }, kycStatus: 'Pending', avatar: 'https://placehold.co/40x40.png', totalDeposits: 1000, totalWithdrawals: 300, gamesPlayed: 80, gamesWon: 60, gamesLost: 20 },
-  { id: '3', name: 'IfffN...', email: 'ifffn@example.com', phone: '345-678-9012', wallet: { deposit: 50, winning: 150 }, kycStatus: 'Verified', avatar: 'https://placehold.co/40x40.png', totalDeposits: 200, totalWithdrawals: 50, gamesPlayed: 25, gamesWon: 15, gamesLost: 10 },
-  { id: '4', name: 'Mohit...', email: 'mohit@example.com', phone: '456-789-0123', wallet: { deposit: 1000, winning: 3500 }, kycStatus: 'Rejected', avatar: 'https://placehold.co/40x40.png', totalDeposits: 5000, totalWithdrawals: 1500, gamesPlayed: 120, gamesWon: 90, gamesLost: 30 },
-  { id: '5', name: 'Sahil...', email: 'sahil@example.com', phone: '567-890-1234', wallet: { deposit: 0, winning: 650 }, kycStatus: 'Verified', avatar: 'https://placehold.co/40x40.png', totalDeposits: 800, totalWithdrawals: 150, gamesPlayed: 40, gamesWon: 25, gamesLost: 15 },
-];
-
+import { AppUser, listenForAllUsers } from '@/lib/firebase/users';
+import { useToast } from '@/hooks/use-toast';
 
 export default function UsersPage() {
-    const [users, setUsers] = useState(sampleUsers);
+    const [users, setUsers] = useState<AppUser[]>([]);
+    const [loading, setLoading] = useState(true);
+    const { toast } = useToast();
+
+    useEffect(() => {
+        const unsubscribe = listenForAllUsers(
+            (allUsers) => {
+                setUsers(allUsers);
+                setLoading(false);
+            },
+            (error) => {
+                console.error("Error fetching users: ", error);
+                toast({ title: "Error", description: "Could not fetch users.", variant: "destructive" });
+                setLoading(false);
+            }
+        );
+
+        return () => unsubscribe();
+    }, [toast]);
+
 
     const getKycBadgeVariant = (status: string) => {
         switch (status) {
@@ -40,9 +52,17 @@ export default function UsersPage() {
         }
     };
     
-    const getInitials = (name: string) => {
+    const getInitials = (name?: string | null) => {
         return name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U';
     }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-full">
+        <Loader className="h-16 w-16 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <Card>
@@ -64,15 +84,15 @@ export default function UsersPage() {
           </TableHeader>
           <TableBody>
             {users.map((user) => (
-              <TableRow key={user.id}>
+              <TableRow key={user.uid}>
                 <TableCell>
                     <div className="flex items-center gap-3">
                         <Avatar>
-                            <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="avatar person"/>
-                            <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                            <AvatarImage src={user.photoURL || 'https://placehold.co/40x40.png'} alt={user.displayName || 'user'} data-ai-hint="avatar person"/>
+                            <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
                         </Avatar>
                         <div>
-                            <div className="font-medium">{user.name}</div>
+                            <div className="font-medium">{user.displayName}</div>
                             <div className="text-muted-foreground text-xs">{user.email}</div>
                         </div>
                     </div>
@@ -80,29 +100,29 @@ export default function UsersPage() {
                 <TableCell>
                     <div className="flex items-center gap-1">
                         <Wallet className="text-muted-foreground" size={16}/>
-                        <span>₹{user.wallet.deposit} / ₹{user.wallet.winning}</span>
+                        <span>₹{user.wallet?.balance || 0} / ₹{user.wallet?.winnings || 0}</span>
                     </div>
                 </TableCell>
                 <TableCell>
                      <div className="space-y-1">
                         <div className="flex items-center gap-1 text-green-600">
                            <TrendingUp size={16}/>
-                           <span>₹{user.totalDeposits}</span>
+                           <span>₹{user.lifetimeStats?.totalDeposits || 0}</span>
                         </div>
                         <div className="flex items-center gap-1 text-red-600">
                            <TrendingDown size={16}/>
-                           <span>₹{user.totalWithdrawals}</span>
+                           <span>₹{user.lifetimeStats?.totalWithdrawals || 0}</span>
                         </div>
                      </div>
                 </TableCell>
                  <TableCell>
                     <div className="flex items-center gap-1">
                         <Gamepad2 className="text-muted-foreground" size={16} />
-                        <span>{user.gamesPlayed} / {user.gamesWon} / {user.gamesLost}</span>
+                        <span>{user.gameStats?.played || 0} / {user.gameStats?.won || 0} / {user.gameStats?.lost || 0}</span>
                     </div>
                 </TableCell>
                 <TableCell>
-                    <Badge variant={getKycBadgeVariant(user.kycStatus) as any}>{user.kycStatus}</Badge>
+                    <Badge variant={getKycBadgeVariant(user.kycStatus || 'Pending') as any}>{user.kycStatus || 'Pending'}</Badge>
                 </TableCell>
                 <TableCell className="text-right">
                     <DropdownMenu>

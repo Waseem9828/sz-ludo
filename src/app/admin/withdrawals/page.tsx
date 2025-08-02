@@ -1,53 +1,83 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
+import { Withdrawal, listenForWithdrawals, updateWithdrawalStatus } from '@/lib/firebase/withdrawals';
+import { Loader } from 'lucide-react';
+import { updateUserWallet } from '@/lib/firebase/users';
 
-type WithdrawalStatus = 'Pending' | 'Approved' | 'Rejected';
-
-const sampleWithdrawals = [
-  { id: 'w1', userId: '1', userName: 'NSXKW...', amount: 200, upiId: 'nsxkw@upi', date: '2023-10-27', status: 'Pending' as WithdrawalStatus, userAvatar: 'https://placehold.co/40x40.png' },
-  { id: 'w2', userId: '2', userName: 'cuvbd...', amount: 150, upiId: 'cuvbd@upi', date: '2023-10-26', status: 'Pending' as WithdrawalStatus, userAvatar: 'https://placehold.co/40x40.png' },
-  { id: 'w3', userId: '5', userName: 'Sahil...', amount: 500, upiId: 'sahil@upi', date: '2023-10-25', status: 'Approved' as WithdrawalStatus, userAvatar: 'https://placehold.co/40x40.png' },
-   { id: 'w4', userId: '4', userName: 'Mohit...', amount: 100, upiId: 'mohit@upi', date: '2023-10-24', status: 'Rejected' as WithdrawalStatus, userAvatar: 'https://placehold.co/40x40.png' },
-];
 
 export default function WithdrawalsPage() {
-    const [withdrawals, setWithdrawals] = useState(sampleWithdrawals);
+    const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
+    const [loading, setLoading] = useState(true);
     const { toast } = useToast();
 
-    const handleApprove = (withdrawalId: string) => {
-        setWithdrawals(withdrawals.map(w => w.id === withdrawalId ? { ...w, status: 'Approved' } : w));
-        toast({
-            title: 'Withdrawal Approved',
-            description: 'The user will receive their funds shortly.',
-        });
-        // Here you would add logic to update the request in Firestore and deduct from the user's winning wallet.
+    useEffect(() => {
+      const unsubscribe = listenForWithdrawals(
+        (allWithdrawals) => {
+          setWithdrawals(allWithdrawals);
+          setLoading(false);
+        },
+        (error) => {
+          console.error("Error fetching withdrawals:", error);
+          toast({ title: "Error", description: "Could not fetch withdrawals.", variant: "destructive" });
+          setLoading(false);
+        }
+      );
+      return () => unsubscribe();
+    }, [toast]);
+
+
+    const handleApprove = async (withdrawal: Withdrawal) => {
+        try {
+            // In a real app, you would process the payment via a payment gateway here.
+            // For this simulation, we assume payment is done manually.
+            await updateWithdrawalStatus(withdrawal.id, 'approved');
+            toast({
+                title: 'Withdrawal Approved',
+                description: 'The user will receive their funds shortly. Remember to process the payment manually.',
+            });
+        } catch (error: any) {
+             toast({
+                title: 'Approval Failed',
+                description: error.message,
+                variant: 'destructive',
+            });
+        }
     };
 
-    const handleReject = (withdrawalId: string) => {
-        setWithdrawals(withdrawals.map(w => w.id === withdrawalId ? { ...w, status: 'Rejected' } : w));
-         toast({
-            title: 'Withdrawal Rejected',
-            description: 'The withdrawal request has been rejected. The funds remain in the user\'s wallet.',
-            variant: 'destructive'
-        });
-        // Here you would update the request status in Firestore.
+    const handleReject = async (withdrawal: Withdrawal) => {
+        try {
+            // Return funds to user's winning wallet
+            await updateUserWallet(withdrawal.userId, withdrawal.amount, 'winnings');
+            await updateWithdrawalStatus(withdrawal.id, 'rejected');
+             toast({
+                title: 'Withdrawal Rejected',
+                description: 'The withdrawal request has been rejected. The funds have been returned to the user\'s wallet.',
+                variant: 'destructive'
+            });
+        } catch (error: any) {
+            toast({
+                title: 'Rejection Failed',
+                description: error.message,
+                variant: 'destructive',
+            });
+        }
     };
     
-    const getStatusBadgeVariant = (status: WithdrawalStatus) => {
+    const getStatusBadgeVariant = (status: Withdrawal['status']) => {
         switch (status) {
-            case 'Approved':
+            case 'approved':
                 return 'default';
-            case 'Pending':
+            case 'pending':
                 return 'secondary';
-            case 'Rejected':
+            case 'rejected':
                 return 'destructive';
             default:
                 return 'outline';
@@ -56,6 +86,14 @@ export default function WithdrawalsPage() {
 
     const getInitials = (name: string) => {
         return name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U';
+    }
+    
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center h-full">
+                <Loader className="h-16 w-16 animate-spin" />
+            </div>
+        )
     }
 
   return (
@@ -89,15 +127,15 @@ export default function WithdrawalsPage() {
                 </TableCell>
                 <TableCell>₹{withdrawal.amount}</TableCell>
                 <TableCell>{withdrawal.upiId}</TableCell>
-                <TableCell>{withdrawal.date}</TableCell>
+                <TableCell>{new Date(withdrawal.createdAt).toLocaleDateString()}</TableCell>
                 <TableCell>
                     <Badge variant={getStatusBadgeVariant(withdrawal.status)}>{withdrawal.status}</Badge>
                 </TableCell>
                 <TableCell className="space-x-2">
-                  {withdrawal.status === 'Pending' && (
+                  {withdrawal.status === 'pending' && (
                      <>
-                        <Button variant="destructive" size="sm" onClick={() => handleReject(withdrawal.id)}>Reject</Button>
-                        <Button size="sm" onClick={() => handleApprove(withdrawal.id)}>Approve</Button>
+                        <Button variant="destructive" size="sm" onClick={() => handleReject(withdrawal)}>Reject</Button>
+                        <Button size="sm" onClick={() => handleApprove(withdrawal)}>Approve</Button>
                      </>
                   )}
                 </TableCell>

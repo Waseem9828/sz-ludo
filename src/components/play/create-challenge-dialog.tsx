@@ -13,12 +13,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { Loader } from 'lucide-react';
 
 interface CreateChallengeDialogProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   amount: number;
-  onChallengeCreated: () => void;
+  onChallengeCreated: (roomCode: string) => Promise<void>;
 }
 
 export function CreateChallengeDialog({
@@ -28,14 +30,20 @@ export function CreateChallengeDialog({
   onChallengeCreated,
 }: CreateChallengeDialogProps) {
   const [roomCode, setRoomCode] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
-  const handleSubmit = () => {
-    // Here you would typically save the challenge with the room code to your backend.
-    // For now, we'll just simulate it and close the dialog.
-    console.log(`Challenge created for ₹${amount} with room code: ${roomCode}`);
-    onChallengeCreated();
-    setIsOpen(false);
-    setRoomCode('');
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+        await onChallengeCreated(roomCode);
+        setIsOpen(false);
+        setRoomCode('');
+    } catch(err) {
+        // Error toast is handled in the parent component
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   return (
@@ -63,8 +71,8 @@ export function CreateChallengeDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button type="submit" onClick={handleSubmit} disabled={!roomCode}>
-            Create Challenge
+          <Button type="submit" onClick={handleSubmit} disabled={!roomCode || isSubmitting}>
+             {isSubmitting ? <Loader className="animate-spin" /> : 'Create Challenge'}
           </Button>
         </DialogFooter>
       </DialogContent>

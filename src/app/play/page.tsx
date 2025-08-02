@@ -12,6 +12,8 @@ import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
 import { CreateChallengeDialog } from '@/components/play/create-challenge-dialog';
 import { SplashScreen } from '@/components/ui/splash-screen';
+import { createChallenge, Game } from '@/lib/firebase/games';
+import { updateUserWallet } from '@/lib/firebase/users';
 
 
 export default function PlayPage() {
@@ -19,7 +21,7 @@ export default function PlayPage() {
   const [challengeAmount, setChallengeAmount] = useState(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
-  const { user, loading } = useAuth();
+  const { user, appUser, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -30,10 +32,20 @@ export default function PlayPage() {
 
 
   const handleSetChallenge = () => {
+    if (!appUser) return;
     const numericAmount = Number(amount);
+    
     if (amount && !isNaN(numericAmount) && numericAmount > 0) {
-      setChallengeAmount(numericAmount);
-      setIsDialogOpen(true);
+      if (appUser.wallet && appUser.wallet.balance >= numericAmount) {
+         setChallengeAmount(numericAmount);
+         setIsDialogOpen(true);
+      } else {
+          toast({
+            title: 'Insufficient Balance',
+            description: 'You do not have enough balance to create this challenge.',
+            variant: 'destructive',
+          });
+      }
     } else {
        toast({
         title: 'Invalid Amount',
@@ -43,13 +55,37 @@ export default function PlayPage() {
     }
   };
 
-  const handleChallengeCreated = () => {
-    toast({
-        title: 'Challenge Created!',
-        description: `Your challenge for ₹${challengeAmount} has been set.`,
-    });
-    setAmount('');
-    setChallengeAmount(0);
+  const handleChallengeCreated = async (roomCode: string) => {
+    if (!user || !appUser || !challengeAmount) return;
+    try {
+        // Deduct amount from user's wallet
+        await updateUserWallet(user.uid, -challengeAmount, 'balance');
+
+        await createChallenge({
+            amount: challengeAmount,
+            createdBy: {
+                uid: user.uid,
+                displayName: appUser.displayName,
+                photoURL: appUser.photoURL,
+            },
+            roomCode: roomCode,
+        });
+
+        toast({
+            title: 'Challenge Created!',
+            description: `Your challenge for ₹${challengeAmount} has been set.`,
+        });
+        setAmount('');
+        setChallengeAmount(0);
+    } catch(error: any) {
+        // Re-credit user if challenge creation fails
+        await updateUserWallet(user.uid, challengeAmount, 'balance');
+        toast({
+            title: 'Error Creating Challenge',
+            description: error.message,
+            variant: 'destructive',
+        });
+    }
   }
 
    if (loading || !user) {
