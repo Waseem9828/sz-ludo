@@ -3,7 +3,7 @@ import type { Game } from "@/types";
 import GameCard from "@/components/game-card";
 
 const games: Game[] = [
-  { id: 1, title: "Classic Ludo", bettingRange: "₹10 - ₹500", imageUrl: "https://placehold.co/400x300.png", imageHint: "dice game" },
+  { id: 1, title: "Classic Ludo", bettingRange: "₹550 - ₹50000", imageUrl: "https://placehold.co/400x300.png", imageHint: "dice game" },
   { id: 2, title: "Popular Ludo", bettingRange: "₹50 - ₹1000", imageUrl: "https://placehold.co/400x300.png", imageHint: "ludo board" },
 ];
 
