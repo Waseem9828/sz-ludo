@@ -11,10 +11,13 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
 import { Loader } from 'lucide-react';
+import { CreateChallengeDialog } from '@/components/play/create-challenge-dialog';
 
 
 export default function PlayPage() {
   const [amount, setAmount] = useState('');
+  const [challengeAmount, setChallengeAmount] = useState(0);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -27,14 +30,10 @@ export default function PlayPage() {
 
 
   const handleSetChallenge = () => {
-    if (amount && !isNaN(Number(amount)) && Number(amount) > 0) {
-      toast({
-        title: 'Challenge Created!',
-        description: `Your challenge for ₹${amount} has been set.`,
-      });
-      // Here you would typically add the challenge to a list of open challenges.
-      // For now, we just show a notification.
-      setAmount('');
+    const numericAmount = Number(amount);
+    if (amount && !isNaN(numericAmount) && numericAmount > 0) {
+      setChallengeAmount(numericAmount);
+      setIsDialogOpen(true);
     } else {
        toast({
         title: 'Invalid Amount',
@@ -43,6 +42,15 @@ export default function PlayPage() {
       });
     }
   };
+
+  const handleChallengeCreated = () => {
+    toast({
+        title: 'Challenge Created!',
+        description: `Your challenge for ₹${challengeAmount} has been set.`,
+    });
+    setAmount('');
+    setChallengeAmount(0);
+  }
 
    if (loading || !user) {
     return (
@@ -54,6 +62,13 @@ export default function PlayPage() {
 
 
   return (
+    <>
+    <CreateChallengeDialog
+        isOpen={isDialogOpen}
+        setIsOpen={setIsDialogOpen}
+        amount={challengeAmount}
+        onChallengeCreated={handleChallengeCreated}
+    />
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
       <Header />
       <main className="flex-grow container mx-auto px-4 py-6 space-y-8">
@@ -89,5 +104,6 @@ export default function PlayPage() {
         </Button>
       </div>
     </div>
+    </>
   );
 }
