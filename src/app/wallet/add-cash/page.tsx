@@ -14,6 +14,17 @@ import { getActiveUpiId, UpiId } from '@/lib/firebase/settings';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 
+const quickAmountsConfig = {
+  '100': { limit: 10 },
+  '200': { limit: 20 },
+  '500': { limit: 30 },
+  '1000': { limit: Infinity },
+  '2000': { limit: Infinity },
+  '5000': { limit: Infinity },
+  '7500': { limit: Infinity },
+  '10000': { limit: Infinity },
+};
+
 const quickAmounts = [100, 200, 500, 1000, 2000, 5000, 7500, 10000];
 
 const PaymentLogos = () => (
@@ -40,6 +51,14 @@ export default function AddCashPage() {
   const [loadingSettings, setLoadingSettings] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [attempts, setAttempts] = useState(() => {
+    const initialAttempts: { [key: number]: number } = {};
+    Object.keys(quickAmountsConfig).forEach(amountStr => {
+      initialAttempts[Number(amountStr)] = 0;
+    });
+    return initialAttempts;
+  });
+
   useEffect(() => {
     async function fetchSettings() {
       try {
@@ -63,6 +82,27 @@ export default function AddCashPage() {
     }
     fetchSettings();
   }, [toast]);
+
+  const handleQuickAmountClick = (qAmount: number) => {
+    const key = qAmount.toString() as keyof typeof quickAmountsConfig;
+    const config = quickAmountsConfig[key];
+    const currentAttempts = attempts[qAmount] || 0;
+
+    if (config && currentAttempts < config.limit) {
+      setAmount(qAmount.toString());
+      setAttempts(prev => ({
+        ...prev,
+        [qAmount]: currentAttempts + 1
+      }));
+    } else {
+      toast({
+        title: 'Limit Reached',
+        description: `You have reached the limit for ₹${qAmount}.`,
+        variant: 'destructive'
+      });
+    }
+  };
+
 
   const handleProceed = () => {
     if (!activeUpi) {
@@ -170,16 +210,28 @@ export default function AddCashPage() {
                 />
               </div>
               <div className="grid grid-cols-4 gap-2">
-                {quickAmounts.map((qAmount) => (
+                {quickAmounts.map((qAmount) => {
+                  const key = qAmount.toString() as keyof typeof quickAmountsConfig;
+                  const config = quickAmountsConfig[key];
+                  const currentAttempts = attempts[qAmount] || 0;
+                  const limit = config.limit;
+                  const remaining = limit - currentAttempts;
+                  const isLimited = limit !== Infinity;
+                  const isLocked = isLimited && currentAttempts >= limit;
+
+                  return (
                    <Button 
                     key={qAmount}
                     variant="outline"
-                    onClick={() => setAmount(qAmount.toString())}
-                    disabled={!!error}
+                    onClick={() => handleQuickAmountClick(qAmount)}
+                    disabled={!!error || isLocked}
+                    className="flex-col h-auto"
                    >
-                    ₹{qAmount}
+                    <span>₹{qAmount}</span>
+                    {isLimited && !isLocked && <span className="text-xs text-muted-foreground">({remaining} left)</span>}
+                    {isLocked && <span className="text-xs text-destructive">Limit Reached</span>}
                    </Button>
-                ))}
+                )})}
               </div>
               <Button onClick={handleProceed} className="w-full font-bold text-lg py-6" disabled={!!error || showQr}>Proceed</Button>
             </div>
