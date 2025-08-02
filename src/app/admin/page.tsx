@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { SheetTitle } from "@/components/ui/sheet";
 
 export default function AdminLayout({
   children,
@@ -35,6 +36,7 @@ export default function AdminLayout({
     <SidebarProvider>
         <Sidebar>
           <SidebarHeader>
+            <SheetTitle className="hidden">Admin Panel</SheetTitle>
             <div className="p-4 text-center">
               <h1 className="text-2xl font-bold">Admin Panel</h1>
             </div>
