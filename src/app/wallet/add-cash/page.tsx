@@ -17,7 +17,7 @@ export default function AddCashPage() {
   const { toast } = useToast();
 
   const upiId = 'example@upi';
-  const payeeName = 'Akadda';
+  const payeeName = 'SZ LUDO';
 
   const handleGenerateQr = () => {
     const numericAmount = parseFloat(amount);

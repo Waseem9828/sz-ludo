@@ -10,7 +10,7 @@ export default function RefundPolicyPage() {
                     <h1 className="text-3xl font-bold mb-6 font-headline text-center">Refund Policy</h1>
                     
                     <div className="space-y-6 text-foreground">
-                        <p>Thanks for being a patron with (referred as akadda.com) . If you are not entirely satisfied with your subscription, we are here to help.</p>
+                        <p>Thanks for being a patron with (referred as SZ LUDO) . If you are not entirely satisfied with your subscription, we are here to help.</p>
                         
                         <div>
                             <h2 className="text-xl font-bold font-headline mb-3">Refund</h2>

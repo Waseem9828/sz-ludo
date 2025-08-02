@@ -10,7 +10,7 @@ export default function TermsPage() {
                     <h1 className="text-3xl font-bold mb-6 font-headline text-center">Terms and Conditions</h1>
                     
                     <div className="space-y-6 text-foreground">
-                        <p>These terms and conditions of use (“Terms”) along with privacy policy (“Privacy Policy”) forms a legally binding agreement (“Agreement”) between You and us (Akadda.com).</p>
+                        <p>These terms and conditions of use (“Terms”) along with privacy policy (“Privacy Policy”) forms a legally binding agreement (“Agreement”) between You and us (SZ LUDO).</p>
                         <p>Hence, We insist that You read these Terms and Privacy Policy and let Us know if You have any questions regarding the same. We will try Our best to answer Your queries.</p>
                         
                         <div>
