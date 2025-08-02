@@ -6,12 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ChevronLeft, Info } from 'lucide-react';
+import { ChevronLeft, Info, Upload } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
-import { Suspense } from 'react';
+import { Suspense, useState, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 
 const penalties = [
@@ -25,21 +27,48 @@ function GamePageComponent() {
     const searchParams = useSearchParams();
     const amount = searchParams.get('amount') || '50';
     const { toast } = useToast();
+    const [selectedResult, setSelectedResult] = useState<string | null>(null);
+    const [screenshot, setScreenshot] = useState<File | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
 
     const handleResultClick = (result: string) => {
+        setSelectedResult(result);
+        if (result === 'LOST' || result === 'CANCEL') {
+            // Submit result directly if lost or cancelled
+            handleSubmit(result, null);
+        }
+    };
+    
+    const handleSubmit = (result: string | null, file: File | null) => {
+        if (!result) return;
+
+        if (result === 'WON' && !file) {
+            toast({
+                title: `Screenshot Required`,
+                description: `Please upload a screenshot to declare you won.`,
+                variant: 'destructive',
+            });
+            return;
+        }
+
+        // In a real app, you would upload the file to Firebase Storage
+        // and then save the result with the screenshot URL to Firestore.
+        console.log({ result, screenshot: file?.name });
+        
         toast({
             title: `Game Result Submitted`,
             description: `You have declared that you ${result}. Your result is under review.`,
         });
-    };
 
-    const handleCancelClick = () => {
-         toast({
-            title: `Game Cancelled`,
-            description: `You have cancelled the game.`,
-            variant: 'destructive'
-        });
+        // Reset state
+        setSelectedResult(null);
+        setScreenshot(null);
+        if(fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
     }
+
 
     return (
         <div className="flex flex-col min-h-screen bg-background font-body">
@@ -100,9 +129,31 @@ function GamePageComponent() {
                     </CardHeader>
                     <CardContent className="p-4 space-y-3">
                         <p className="text-center text-sm text-muted-foreground">After completion of your game, select the status of the game and post your screenshot below</p>
-                        <Button onClick={() => handleResultClick('WON')} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3">I WON</Button>
-                        <Button onClick={() => handleResultClick('LOST')} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3">I LOST</Button>
-                        <Button onClick={handleCancelClick} variant="outline" className="w-full font-bold py-3">CANCEL</Button>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                             <Button onClick={() => handleResultClick('WON')} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3">I WON</Button>
+                             <Button onClick={() => handleResultClick('LOST')} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3">I LOST</Button>
+                             <Button onClick={() => handleResultClick('CANCEL')} variant="outline" className="w-full font-bold py-3 md:col-span-1">CANCEL</Button>
+                        </div>
+
+                       {selectedResult === 'WON' && (
+                            <div className="p-4 border-2 border-dashed rounded-lg space-y-4">
+                               <Label htmlFor="screenshot" className="text-center block font-semibold text-primary">Upload Winning Screenshot</Label>
+                                <Input
+                                    id="screenshot"
+                                    type="file"
+                                    accept="image/*"
+                                    ref={fileInputRef}
+                                    onChange={(e) => setScreenshot(e.target.files ? e.target.files[0] : null)}
+                                    className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                                />
+                                {screenshot && <p className="text-sm text-center text-muted-foreground">Selected: {screenshot.name}</p>}
+                                <Button onClick={() => handleSubmit('WON', screenshot)} className="w-full" disabled={!screenshot}>
+                                    <Upload className="mr-2 h-4 w-4" />
+                                    Submit Result
+                                </Button>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 

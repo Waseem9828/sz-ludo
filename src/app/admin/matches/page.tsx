@@ -7,8 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { DialogTrigger } from '@radix-ui/react-dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 
 const sampleMatches = [
   { id: '1', player1: 'NSXKW...', player2: 'KlwzB...', amount: 50, status: 'Under Review', winner: 'NSXKW...', screenshotUrl: 'https://placehold.co/400x800.png', roomCode: '01063482' },
@@ -53,6 +52,7 @@ export default function MatchesPage() {
     <Card>
       <CardHeader>
         <CardTitle>Manage Matches</CardTitle>
+        <CardDescription>Review match results and screenshots to approve or decline outcomes.</CardDescription>
       </CardHeader>
       <CardContent>
         <Table>
@@ -61,6 +61,7 @@ export default function MatchesPage() {
               <TableHead>Players</TableHead>
               <TableHead>Amount</TableHead>
               <TableHead>Winner</TableHead>
+              <TableHead>Room Code</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -71,6 +72,7 @@ export default function MatchesPage() {
                 <TableCell>{match.player1} vs {match.player2}</TableCell>
                 <TableCell>₹{match.amount}</TableCell>
                 <TableCell>{match.winner || 'N/A'}</TableCell>
+                <TableCell>{match.roomCode}</TableCell>
                 <TableCell>
                     <Badge variant={getStatusBadgeVariant(match.status as MatchStatus)}>{match.status}</Badge>
                 </TableCell>
@@ -106,7 +108,7 @@ export default function MatchesPage() {
                                         <span className="font-mono tracking-widest">{match.roomCode}</span>
                                       </div>
                                        <div className="flex justify-between">
-                                        <span className="text-muted-foreground">Winner:</span>
+                                        <span className="text-muted-foreground">Winner Declared:</span>
                                         <span className="font-medium">{match.winner}</span>
                                       </div>
                                  </CardContent>
