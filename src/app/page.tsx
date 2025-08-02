@@ -9,7 +9,6 @@ import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Loader } from 'lucide-react';
-import BannerCarousel from '@/components/banner-carousel';
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -33,7 +32,6 @@ export default function Home() {
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
       <Header />
       <main className="flex-grow container mx-auto px-4 py-6 space-y-8">
-        <BannerCarousel />
         <KycInfo 
           title="Verify Your Account"
           description="Complete KYC to unlock all features."
