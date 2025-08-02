@@ -4,6 +4,7 @@ import {
   Sheet,
   SheetContent,
   SheetHeader,
+  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -51,6 +52,7 @@ export default function Header() {
             </SheetTrigger>
             <SheetContent side="left" className="p-0 w-80 bg-card">
               <SheetHeader className="p-4 border-b">
+                 <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                 <div className="flex items-center gap-3">
                   <Avatar className="h-12 w-12">
                     <AvatarImage
