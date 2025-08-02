@@ -35,7 +35,7 @@ export default function Header() {
             </SheetTrigger>
             <SheetContent side="left" className="p-0 w-80 bg-card">
               <SheetHeader className="p-4 border-b">
-                <SheetTitle>Navigation Menu</SheetTitle>
+                <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                 <div className="flex items-center gap-3">
                   <Avatar className="h-12 w-12">
                     <AvatarImage
@@ -74,7 +74,7 @@ export default function Header() {
           </Sheet>
           <div className="flex items-center gap-1">
             <Link href="/">
-              <Image src="/ak-logo.png" alt="AKADDA Logo" width={24} height={24} />
+              <Image src="/(1).png" alt="AKADDA Logo" width={24} height={24} />
             </Link>
             <Link href="/">
               <h1 className="text-xl font-headline font-bold">AKADDA</h1>
