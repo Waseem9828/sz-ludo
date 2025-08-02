@@ -15,7 +15,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 export default function LoginPage() {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const { signUp, signIn, signInWithGoogle, user } = useAuth();
@@ -37,7 +39,7 @@ export default function LoginPage() {
       return;
     }
     try {
-      await signUp(email, password);
+      await signUp(email, password, name, phone);
       router.push('/');
       toast({
         title: 'Success',
@@ -144,9 +146,17 @@ export default function LoginPage() {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSignUp} className="space-y-4">
+                   <div className="space-y-2">
+                    <Label htmlFor="signup-name">Name</Label>
+                    <Input id="signup-name" type="text" placeholder="John Doe" required value={name} onChange={(e) => setName(e.target.value)} />
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-email">Email</Label>
                     <Input id="signup-email" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                  </div>
+                   <div className="space-y-2">
+                    <Label htmlFor="signup-phone">Phone Number</Label>
+                    <Input id="signup-phone" type="tel" placeholder="123-456-7890" required value={phone} onChange={(e) => setPhone(e.target.value)} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-password">Password</Label>

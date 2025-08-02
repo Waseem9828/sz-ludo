@@ -12,6 +12,9 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/auth-context';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase/config';
+import { updateProfile } from 'firebase/auth';
 
 const MetricCard = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) => (
     <Card className="bg-gray-50 dark:bg-gray-800">
@@ -28,31 +31,47 @@ const MetricCard = ({ icon, label, value }: { icon: React.ReactNode, label: stri
 export default function ProfilePage() {
     const { toast } = useToast();
     const router = useRouter();
-    const { user, loading, logout } = useAuth();
+    const { user, appUser, loading, logout } = useAuth();
     
-    const [username, setUsername] = useState("Waseem_Akram21");
+    const [username, setUsername] = useState("");
     const [isEditingUsername, setIsEditingUsername] = useState(false);
-    const [tempUsername, setTempUsername] = useState(username);
+    const [tempUsername, setTempUsername] = useState("");
 
     useEffect(() => {
         if (!loading && !user) {
             router.push('/login');
         }
-        if (user) {
-            setUsername(user.displayName || user.email?.split('@')[0] || 'User');
-            setTempUsername(user.displayName || user.email?.split('@')[0] || 'User');
+        if (user && appUser) {
+            const name = appUser.displayName || user.displayName || user.email?.split('@')[0] || 'User';
+            setUsername(name);
+            setTempUsername(name);
         }
-    }, [user, loading, router]);
+    }, [user, appUser, loading, router]);
 
 
-    const handleEditUsername = () => {
+    const handleEditUsername = async () => {
         if (isEditingUsername) {
-            // Here you would typically update the user's profile in Firebase
-            setUsername(tempUsername);
-            toast({
-                title: 'Username Updated',
-                description: `Your username has been changed to ${tempUsername}`,
-            });
+            if (user && tempUsername) {
+                try {
+                    // Update profile in Firebase Auth
+                    await updateProfile(user, { displayName: tempUsername });
+                    // Update display name in Firestore
+                    const userRef = doc(db, 'users', user.uid);
+                    await updateDoc(userRef, { displayName: tempUsername });
+                    
+                    setUsername(tempUsername);
+                    toast({
+                        title: 'Username Updated',
+                        description: `Your username has been changed to ${tempUsername}`,
+                    });
+                } catch(error: any) {
+                     toast({
+                        title: 'Error updating username',
+                        description: error.message,
+                        variant: 'destructive'
+                    });
+                }
+            }
         }
         setIsEditingUsername(!isEditingUsername);
     };
@@ -74,7 +93,7 @@ export default function ProfilePage() {
         }
     };
     
-    if (loading || !user) {
+    if (loading || !user || !appUser) {
         return (
             <div className="flex justify-center items-center min-h-screen">
                 <Loader className="h-16 w-16 animate-spin" />
@@ -83,7 +102,7 @@ export default function ProfilePage() {
     }
 
     const getInitials = (name: string) => {
-        return name.split(' ').map(n => n[0]).join('').toUpperCase();
+        return name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U';
     }
     
     return (
@@ -121,8 +140,12 @@ export default function ProfilePage() {
                                 </div>
                             </div>
                             <div>
-                                <label htmlFor="phone" className="text-sm font-medium text-muted-foreground">Email</label>
-                                <Input id="phone" type="text" value={user.email || ''} className="mt-1 bg-gray-200 dark:bg-gray-800" readOnly />
+                                <label htmlFor="email" className="text-sm font-medium text-muted-foreground">Email</label>
+                                <Input id="email" type="text" value={user.email || ''} className="mt-1 bg-gray-200 dark:bg-gray-800" readOnly />
+                            </div>
+                             <div>
+                                <label htmlFor="phone" className="text-sm font-medium text-muted-foreground">Phone</label>
+                                <Input id="phone" type="text" value={appUser.phone || ''} className="mt-1 bg-gray-200 dark:bg-gray-800" readOnly />
                             </div>
                         </div>
 
