@@ -54,7 +54,7 @@ export default function AddCashPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-100 font-body">
+    <div className="flex flex-col min-h-screen bg-background font-body">
       <Header />
       <main className="flex-grow container mx-auto px-4 py-6 space-y-6">
         <div className="flex items-center">
@@ -82,7 +82,7 @@ export default function AddCashPage() {
                   placeholder="Enter amount"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="bg-white"
+                  className="bg-card"
                 />
                 <Button onClick={handleGenerateQr}>Generate QR</Button>
               </div>
@@ -96,7 +96,7 @@ export default function AddCashPage() {
                 <div className="flex justify-center p-4 bg-white rounded-md border">
                   <Image src={qrCodeUrl} alt="UPI QR Code" width={200} height={200} />
                 </div>
-                <Button onClick={handlePaymentDone} className="w-full font-bold text-lg py-6 bg-green-600 hover:bg-green-700">
+                <Button onClick={handlePaymentDone} className="w-full font-bold text-lg py-6 bg-green-600 hover:bg-green-700 text-white">
                   I have paid
                 </Button>
               </div>

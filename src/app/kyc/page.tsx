@@ -50,7 +50,7 @@ export default function KycPage() {
     }
 
     return (
-        <div className="flex flex-col min-h-screen bg-gray-100 font-body">
+        <div className="flex flex-col min-h-screen bg-background font-body">
             <Header />
             <main className="flex-grow container mx-auto px-4 py-6">
                 <Card className="max-w-2xl mx-auto">

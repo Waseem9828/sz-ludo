@@ -61,11 +61,11 @@ export default function PlayPage() {
           <Input 
             type="number" 
             placeholder="Amount" 
-            className="bg-white dark:bg-gray-800" 
+            className="bg-card dark:bg-gray-800" 
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
           />
-          <Button className="bg-gray-800 text-white" onClick={handleSetChallenge}>Set</Button>
+          <Button className="bg-primary text-primary-foreground" onClick={handleSetChallenge}>Set</Button>
         </div>
         
         <section>

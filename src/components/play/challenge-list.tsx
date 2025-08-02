@@ -23,7 +23,7 @@ export default function ChallengeList() {
   return (
     <div className="space-y-4">
       {challenges.map((challenge, index) => (
-        <Card key={index} className="bg-white shadow-sm">
+        <Card key={index} className="bg-card shadow-sm">
           <CardContent className="p-3 flex items-center justify-between">
             <div className="flex flex-col">
                 <span className="text-xs text-muted-foreground">Challenge set by</span>

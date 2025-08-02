@@ -17,7 +17,7 @@ import { db } from '@/lib/firebase/config';
 import { updateProfile } from 'firebase/auth';
 
 const MetricCard = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) => (
-    <Card className="bg-gray-50 dark:bg-gray-800">
+    <Card className="bg-secondary/50">
         <CardContent className="p-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 {icon}
@@ -106,7 +106,7 @@ export default function ProfilePage() {
     }
     
     return (
-        <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900 font-body">
+        <div className="flex flex-col min-h-screen bg-background font-body">
             <Header />
             <main className="flex-grow container mx-auto px-4 py-6 space-y-6">
                 <Card>
@@ -119,8 +119,8 @@ export default function ProfilePage() {
                                 <AvatarImage src={user.photoURL || `https://placehold.co/96x96.png`} alt={username} data-ai-hint="avatar person" />
                                 <AvatarFallback>{getInitials(username)}</AvatarFallback>
                             </Avatar>
-                            <Button size="icon" className="absolute bottom-0 right-0 rounded-full bg-gray-800 hover:bg-gray-900 h-8 w-8">
-                                <Pencil className="h-4 w-4 text-white" />
+                            <Button size="icon" className="absolute bottom-0 right-0 rounded-full bg-primary hover:bg-primary/90 h-8 w-8">
+                                <Pencil className="h-4 w-4 text-primary-foreground" />
                             </Button>
                         </div>
 
@@ -134,26 +134,26 @@ export default function ProfilePage() {
                                         value={isEditingUsername ? tempUsername : username} 
                                         onChange={(e) => setTempUsername(e.target.value)}
                                         readOnly={!isEditingUsername}
-                                        className={isEditingUsername ? "bg-white dark:bg-gray-700" : "bg-gray-200 dark:bg-gray-800"}
+                                        className={isEditingUsername ? "bg-card" : "bg-muted"}
                                     />
-                                    <Button onClick={handleEditUsername} className="bg-gray-800 text-white">{isEditingUsername ? 'Save' : 'Edit'}</Button>
+                                    <Button onClick={handleEditUsername}>{isEditingUsername ? 'Save' : 'Edit'}</Button>
                                 </div>
                             </div>
                             <div>
                                 <label htmlFor="email" className="text-sm font-medium text-muted-foreground">Email</label>
-                                <Input id="email" type="text" value={user.email || ''} className="mt-1 bg-gray-200 dark:bg-gray-800" readOnly />
+                                <Input id="email" type="text" value={user.email || ''} className="mt-1 bg-muted" readOnly />
                             </div>
                              <div>
                                 <label htmlFor="phone" className="text-sm font-medium text-muted-foreground">Phone</label>
-                                <Input id="phone" type="text" value={appUser.phone || ''} className="mt-1 bg-gray-200 dark:bg-gray-800" readOnly />
+                                <Input id="phone" type="text" value={appUser.phone || ''} className="mt-1 bg-muted" readOnly />
                             </div>
                         </div>
 
-                        <Card className="bg-red-100 border-red-300">
+                        <Card className="bg-destructive/10 border-destructive/50">
                             <CardContent className="p-3 flex justify-between items-center">
                                 <div className="flex items-center gap-2">
-                                    <AlertCircle className="h-5 w-5 text-red-600" />
-                                    <span className="font-semibold text-red-800">KYC Pending</span>
+                                    <AlertCircle className="h-5 w-5 text-destructive" />
+                                    <span className="font-semibold text-destructive">KYC Pending</span>
                                 </div>
                                 <Link href="/kyc">
                                     <Button variant="destructive" size="sm">Complete Here</Button>
@@ -177,7 +177,7 @@ export default function ProfilePage() {
                     </CardContent>
                 </Card>
 
-                <Button onClick={handleLogout} variant="outline" className="w-full border-red-500 text-red-500 hover:bg-red-500 hover:text-white font-bold text-lg py-6">
+                <Button onClick={handleLogout} variant="destructive" className="w-full font-bold text-lg py-6">
                     LOG OUT
                 </Button>
             </main>

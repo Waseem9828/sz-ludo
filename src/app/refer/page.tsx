@@ -1,3 +1,4 @@
+
 import Header from "@/components/play/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,7 +24,7 @@ export default function ReferPage() {
     const referralCode = "6020032542";
 
     return (
-        <div className="flex flex-col min-h-screen bg-gray-100 font-body">
+        <div className="flex flex-col min-h-screen bg-background font-body">
             <Header />
             <main className="flex-grow container mx-auto px-4 py-6 space-y-6">
                 <Card>
@@ -52,8 +53,8 @@ export default function ReferPage() {
                             <Image src="https://placehold.co/200x150.png" alt="Refer a friend" width={200} height={150} data-ai-hint="referral illustration"/>
                         </div>
                         <div className="flex">
-                            <Input type="text" value={referralCode} readOnly className="text-center bg-gray-200 border-r-0 rounded-r-none" />
-                            <Button className="rounded-l-none bg-gray-800 text-white">COPY</Button>
+                            <Input type="text" value={referralCode} readOnly className="text-center bg-muted border-r-0 rounded-r-none" />
+                            <Button className="rounded-l-none">COPY</Button>
                         </div>
                         <div className="flex items-center my-4">
                             <hr className="w-full border-gray-300" />

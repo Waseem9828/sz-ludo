@@ -115,9 +115,9 @@ export default function Header() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button variant="outline" className="border-green-500">
-            <Wallet className="h-5 w-5 text-green-500 mr-2" />
-            <span className="font-bold text-green-500">₹0</span>
+          <Button variant="outline" className="border-green-500 text-green-500 hover:bg-green-500 hover:text-white">
+            <Wallet className="h-5 w-5 mr-2" />
+            <span className="font-bold">₹0</span>
           </Button>
         </div>
       </div>

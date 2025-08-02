@@ -1,3 +1,4 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Image from "next/image";
@@ -34,7 +35,7 @@ export default function BattleList() {
   return (
     <div className="space-y-4">
       {battles.map((battle, index) => (
-        <Card key={index} className="bg-white shadow-sm">
+        <Card key={index} className="bg-card shadow-sm">
           <CardContent className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Avatar className="h-8 w-8">

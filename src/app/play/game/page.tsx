@@ -42,7 +42,7 @@ function GamePageComponent() {
     }
 
     return (
-        <div className="flex flex-col min-h-screen bg-gray-100 font-body">
+        <div className="flex flex-col min-h-screen bg-background font-body">
             <Header />
             <main className="flex-grow container mx-auto px-4 py-6 space-y-6">
                 <div className="flex justify-between items-center">
@@ -82,8 +82,8 @@ function GamePageComponent() {
                 </Card>
 
                 <Card>
-                    <CardHeader className="py-3 bg-gray-50 rounded-t-lg">
-                        <CardTitle className="text-center text-md font-semibold text-gray-600">Room Code</CardTitle>
+                    <CardHeader className="py-3 bg-muted rounded-t-lg">
+                        <CardTitle className="text-center text-md font-semibold text-muted-foreground">Room Code</CardTitle>
                     </CardHeader>
                     <CardContent className="p-6 text-center">
                         <p className="text-4xl font-bold tracking-widest my-4">01063482</p>
@@ -95,8 +95,8 @@ function GamePageComponent() {
                 </Card>
 
                 <Card>
-                     <CardHeader className="py-3 bg-gray-50 rounded-t-lg">
-                        <CardTitle className="text-center text-md font-semibold text-gray-600">Game Result</CardTitle>
+                     <CardHeader className="py-3 bg-muted rounded-t-lg">
+                        <CardTitle className="text-center text-md font-semibold text-muted-foreground">Game Result</CardTitle>
                     </CardHeader>
                     <CardContent className="p-4 space-y-3">
                         <p className="text-center text-sm text-muted-foreground">After completion of your game, select the status of the game and post your screenshot below</p>
@@ -107,8 +107,8 @@ function GamePageComponent() {
                 </Card>
 
                 <Card>
-                    <CardHeader className="py-3 bg-gray-50 rounded-t-lg">
-                        <CardTitle className="text-center text-md font-semibold text-gray-600">Penalty</CardTitle>
+                    <CardHeader className="py-3 bg-muted rounded-t-lg">
+                        <CardTitle className="text-center text-md font-semibold text-muted-foreground">Penalty</CardTitle>
                     </CardHeader>
                     <CardContent className="p-0">
                         <Table>
@@ -120,7 +120,7 @@ function GamePageComponent() {
                             </TableHeader>
                             <TableBody>
                                 {penalties.map((penalty, index) => (
-                                    <TableRow key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                                    <TableRow key={index} className={index % 2 === 0 ? 'bg-muted/50' : 'bg-card'}>
                                         <TableCell className="font-medium">{penalty.amount}</TableCell>
                                         <TableCell>{penalty.reason}</TableCell>
                                     </TableRow>
