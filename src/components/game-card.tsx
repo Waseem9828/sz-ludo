@@ -11,7 +11,7 @@ interface GameCardProps {
 export default function GameCard({ game }: GameCardProps) {
   return (
     <Card className="overflow-hidden shadow-lg hover:shadow-primary/20 hover:shadow-xl transition-shadow duration-300 group">
-      <div className="relative w-full h-40">
+      <div className="relative w-full aspect-video">
         <Image
           src={game.imageUrl}
           alt={game.title}
