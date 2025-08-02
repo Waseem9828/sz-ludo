@@ -23,13 +23,13 @@ export default function MatchesPage() {
     const [matches, setMatches] = useState(sampleMatches);
 
     const handleApprove = (matchId: string) => {
-        setMatches(matches.map(m => m.id === matchId ? { ...m, status: 'Completed' } : m));
+        setMatches(matches.map(m => m.id === matchId ? { ...m, status: 'Completed' as MatchStatus } : m));
         // Here you would add logic to update the match status in Firestore
         // and update player wallets.
     };
 
     const handleDecline = (matchId: string) => {
-        setMatches(matches.map(m => m.id === matchId ? { ...m, status: 'Disputed' } : m));
+        setMatches(matches.map(m => m.id === matchId ? { ...m, status: 'Disputed' as MatchStatus } : m));
          // Here you would add logic to handle the dispute, e.g., refund players.
     };
     
@@ -51,7 +51,7 @@ export default function MatchesPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-red-600">Manage Matches</CardTitle>
+        <CardTitle>Manage Matches</CardTitle>
       </CardHeader>
       <CardContent>
         <Table>

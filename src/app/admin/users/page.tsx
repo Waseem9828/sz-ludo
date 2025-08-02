@@ -40,7 +40,7 @@ export default function UsersPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-red-600">User Management</CardTitle>
+        <CardTitle>User Management</CardTitle>
       </CardHeader>
       <CardContent>
         <Table>

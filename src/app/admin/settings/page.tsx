@@ -13,6 +13,7 @@ import { Loader } from 'lucide-react';
 export default function SettingsPage() {
   const [upiId, setUpiId] = useState('');
   const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -37,7 +38,7 @@ export default function SettingsPage() {
   }, [toast]);
 
   const handleSave = async () => {
-    setLoading(true);
+    setIsSaving(true);
     try {
       await updateSettings({ upiId });
       toast({
@@ -52,7 +53,7 @@ export default function SettingsPage() {
         variant: 'destructive',
       });
     } finally {
-      setLoading(false);
+      setIsSaving(false);
     }
   };
 
@@ -67,7 +68,7 @@ export default function SettingsPage() {
   return (
       <Card>
           <CardHeader>
-              <CardTitle className="text-red-600">Payment Settings</CardTitle>
+              <CardTitle>Payment Settings</CardTitle>
           </CardHeader>
           <CardContent>
               <div className="space-y-4">
@@ -80,8 +81,8 @@ export default function SettingsPage() {
                       placeholder="your-upi-id@okhdfcbank"
                       />
                   </div>
-                  <Button onClick={handleSave} disabled={loading}>
-                      {loading ? 'Saving...' : 'Save Settings'}
+                  <Button onClick={handleSave} disabled={isSaving}>
+                      {isSaving ? 'Saving...' : 'Save Settings'}
                   </Button>
               </div>
           </CardContent>

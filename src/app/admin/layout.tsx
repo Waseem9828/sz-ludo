@@ -7,8 +7,8 @@ import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
-import { SheetTitle } from "@/components/ui/sheet";
 import { Loader } from "lucide-react";
+import { SheetTitle } from "@/components/ui/sheet";
 
 export default function AdminLayout({
   children,
@@ -50,8 +50,9 @@ export default function AdminLayout({
     <SidebarProvider>
         <Sidebar>
           <SidebarHeader>
+             <SheetTitle className="sr-only">Admin Menu</SheetTitle>
             <div className="p-4 text-center">
-              <h1 className="text-2xl font-bold text-red-600">Admin Panel</h1>
+              <h1 className="text-2xl font-bold text-primary">Admin Panel</h1>
             </div>
           </SidebarHeader>
           <SidebarContent>
@@ -72,7 +73,7 @@ export default function AdminLayout({
         <SidebarInset>
              <header className="flex items-center justify-between p-4 border-b">
                 <SidebarTrigger />
-                <h2 className="text-xl font-semibold text-red-600">{pageTitle}</h2>
+                <h2 className="text-xl font-semibold text-primary">{pageTitle}</h2>
              </header>
             <main className="p-6">
                 {children}
