@@ -93,7 +93,7 @@ export default function LoginPage() {
   };
 
   if (user) {
-    return null; // or a loading spinner
+    return null; // or a loading spinner, to prevent rendering the login form while redirecting
   }
 
   return (
