@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -24,9 +24,12 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  if (user) {
-    router.push('/');
-  }
+  useEffect(() => {
+    if (user) {
+      router.push('/');
+    }
+  }, [user, router]);
+
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,6 +91,10 @@ export default function LoginPage() {
       });
     }
   };
+
+  if (user) {
+    return null; // or a loading spinner
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
