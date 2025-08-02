@@ -45,7 +45,7 @@ export default function AdminLayout({
             <SidebarMenu>
               <SidebarMenuItem>
                  <Link href="/admin">
-                    <SidebarMenuButton tooltip="Dashboard">
+                    <SidebarMenuButton tooltip="Dashboard" isActive>
                         <Home />
                         <span>Dashboard</span>
                     </SidebarMenuButton>

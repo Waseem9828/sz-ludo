@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Header from '@/components/play/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +9,8 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Loader } from 'lucide-react';
+import { getSettings } from '@/lib/firebase/settings';
 
 const quickAmounts = [100, 200, 500, 1000, 2000, 5000, 7500, 10000];
 
@@ -33,11 +34,43 @@ export default function AddCashPage() {
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [showQr, setShowQr] = useState(false);
   const { toast } = useToast();
+  const [upiId, setUpiId] = useState('');
+  const [loadingSettings, setLoadingSettings] = useState(true);
 
-  const upiId = 'example@upi';
   const payeeName = 'SZ LUDO';
 
+  useEffect(() => {
+    async function fetchSettings() {
+      try {
+        const settings = await getSettings();
+        if (settings && settings.upiId) {
+          setUpiId(settings.upiId);
+        } else {
+            toast({
+                title: 'Configuration Error',
+                description: 'UPI ID is not set. Please contact support.',
+                variant: 'destructive'
+            })
+        }
+      } catch (error) {
+        console.error("Error fetching settings: ", error);
+      } finally {
+        setLoadingSettings(false);
+      }
+    }
+    fetchSettings();
+  }, [toast]);
+
   const handleProceed = () => {
+    if (!upiId) {
+       toast({
+        title: 'Cannot Proceed',
+        description: 'Payment UPI ID is not configured by the admin.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const numericAmount = parseFloat(amount);
     if (isNaN(numericAmount) || numericAmount <= 0) {
       toast({
@@ -79,6 +112,17 @@ export default function AddCashPage() {
         walletBalance: numericAmount.toFixed(2)
     }
   }, [amount]);
+
+  if (loadingSettings) {
+    return (
+        <div className="flex flex-col min-h-screen bg-background font-body">
+            <Header />
+            <main className="flex-grow container mx-auto px-4 py-6 flex justify-center items-center">
+                <Loader className="h-16 w-16 animate-spin" />
+            </main>
+        </div>
+    )
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-background font-body">
@@ -189,5 +233,3 @@ export default function AddCashPage() {
     </div>
   );
 }
-
-  
