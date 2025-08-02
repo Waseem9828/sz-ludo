@@ -4,12 +4,20 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Menu, Download, Settings, Wallet, ChevronRight, Dice5, History, User, Gift, FileText, Shield, LifeBuoy, ShieldCheck } from "lucide-react";
+import { Menu, Download, Settings, Wallet, ChevronRight, Dice5, History, User, Gift, FileText, Shield, LifeBuoy, ShieldCheck, Sun, Moon } from "lucide-react";
 import Image from "next/image";
-import { Switch } from "@/components/ui/switch";
 import Link from "next/link";
+import { useTheme } from "next-themes";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 export default function Header() {
+  const { setTheme } = useTheme()
+
   const navItems = [
     { icon: Dice5, label: "Play", href: "/play" },
     { icon: Wallet, label: "Wallet", href: "/wallet" },
@@ -87,10 +95,26 @@ export default function Header() {
           <Button variant="outline" size="icon" className="border-green-500 text-green-500">
             <Download className="h-5 w-5" />
           </Button>
-           <div className="flex items-center gap-1 p-1 rounded-full border bg-gray-200">
-            <Settings className="h-5 w-5 text-gray-500" />
-            <Switch id="sound-toggle" />
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                <span className="sr-only">Toggle theme</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setTheme("light")}>
+                Light
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTheme("dark")}>
+                Dark
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTheme("system")}>
+                System
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button variant="outline" className="border-green-500">
             <Wallet className="h-5 w-5 text-green-500 mr-2" />
             <span className="font-bold text-green-500">₹0</span>
