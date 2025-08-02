@@ -1,3 +1,4 @@
+
 import type { Game } from "@/types";
 import GameCard from "@/components/game-card";
 
