@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Sidebar, SidebarProvider, SidebarTrigger, SidebarInset, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
+import { Sidebar, SidebarProvider, SidebarTrigger, SidebarInset, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar } from "@/components/ui/sidebar";
 import { Home, BarChart, Users, Settings, CircleDollarSign } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
@@ -50,8 +50,8 @@ export default function AdminLayout({
   return (
     <SidebarProvider>
         <Sidebar>
+          <SheetTitle className="sr-only">Admin Menu</SheetTitle>
           <SidebarHeader>
-             <SheetTitle className="sr-only">Admin Menu</SheetTitle>
             <div className="p-4 text-center">
               <h1 className="text-2xl font-bold text-primary">Admin Panel</h1>
             </div>

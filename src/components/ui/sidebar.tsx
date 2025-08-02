@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -10,7 +11,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Tooltip,
@@ -177,6 +178,14 @@ const Sidebar = React.forwardRef<
   ) => {
     const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
 
+    // Extract SheetTitle from children if it exists
+    const sheetTitle = React.Children.toArray(children).find(
+      (child) => (child as React.ReactElement).type === SheetTitle
+    );
+    const otherChildren = React.Children.toArray(children).filter(
+      (child) => (child as React.ReactElement).type !== SheetTitle
+    );
+
     if (collapsible === "none") {
       return (
         <div
@@ -206,7 +215,8 @@ const Sidebar = React.forwardRef<
             }
             side={side}
           >
-            <div className="flex h-full w-full flex-col">{children}</div>
+            {sheetTitle}
+            <div className="flex h-full w-full flex-col">{otherChildren}</div>
           </SheetContent>
         </Sheet>
       )
@@ -250,7 +260,7 @@ const Sidebar = React.forwardRef<
             data-sidebar="sidebar"
             className="flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
           >
-            {children}
+            {otherChildren}
           </div>
         </div>
       </div>
