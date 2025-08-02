@@ -9,6 +9,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ChevronLeft, Info } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
+import { useToast } from '@/hooks/use-toast';
+
 
 const penalties = [
     { amount: '₹100', reason: 'Fraud / Fake Screenshot' },
@@ -17,7 +21,26 @@ const penalties = [
     { amount: '₹25', reason: 'Abusing' },
 ];
 
-export default function GamePage() {
+function GamePageComponent() {
+    const searchParams = useSearchParams();
+    const amount = searchParams.get('amount') || '50';
+    const { toast } = useToast();
+
+    const handleResultClick = (result: string) => {
+        toast({
+            title: `Game Result Submitted`,
+            description: `You have declared that you ${result}. Your result is under review.`,
+        });
+    };
+
+    const handleCancelClick = () => {
+         toast({
+            title: `Game Cancelled`,
+            description: `You have cancelled the game.`,
+            variant: 'destructive'
+        });
+    }
+
     return (
         <div className="flex flex-col min-h-screen bg-gray-100 font-body">
             <Header />
@@ -46,7 +69,7 @@ export default function GamePage() {
                         </div>
                         <div className="text-center">
                             <Image src="/vs.png" alt="vs" width={24} height={24} className="mx-auto" />
-                            <p className="font-bold text-green-600 mt-1">₹ 50</p>
+                            <p className="font-bold text-green-600 mt-1">₹ {amount}</p>
                         </div>
                         <div className="flex items-center gap-2">
                              <span className="font-semibold">KlwzB...</span>
@@ -77,9 +100,9 @@ export default function GamePage() {
                     </CardHeader>
                     <CardContent className="p-4 space-y-3">
                         <p className="text-center text-sm text-muted-foreground">After completion of your game, select the status of the game and post your screenshot below</p>
-                        <Button className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3">I WON</Button>
-                        <Button className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3">I LOST</Button>
-                        <Button variant="outline" className="w-full font-bold py-3">CANCEL</Button>
+                        <Button onClick={() => handleResultClick('WON')} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3">I WON</Button>
+                        <Button onClick={() => handleResultClick('LOST')} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3">I LOST</Button>
+                        <Button onClick={handleCancelClick} variant="outline" className="w-full font-bold py-3">CANCEL</Button>
                     </CardContent>
                 </Card>
 
@@ -109,4 +132,13 @@ export default function GamePage() {
             </main>
         </div>
     );
+}
+
+
+export default function GamePage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <GamePageComponent />
+        </Suspense>
+    )
 }

@@ -1,17 +1,51 @@
+
+'use client'
+
+import React, { useState } from 'react';
 import Header from '@/components/play/header';
 import ChallengeList from '@/components/play/challenge-list';
 import BattleList from '@/components/play/battle-list';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
+
 
 export default function PlayPage() {
+  const [amount, setAmount] = useState('');
+  const { toast } = useToast();
+
+  const handleSetChallenge = () => {
+    if (amount && !isNaN(Number(amount)) && Number(amount) > 0) {
+      toast({
+        title: 'Challenge Created!',
+        description: `Your challenge for ₹${amount} has been set.`,
+      });
+      // Here you would typically add the challenge to a list of open challenges.
+      // For now, we just show a notification.
+      setAmount('');
+    } else {
+       toast({
+        title: 'Invalid Amount',
+        description: 'Please enter a valid amount to set a challenge.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
       <Header />
       <main className="flex-grow container mx-auto px-4 py-6 space-y-8">
         <div className="flex items-center gap-2">
-          <Input type="text" placeholder="Amount" className="bg-white" />
-          <Button className="bg-gray-800 text-white">Set</Button>
+          <Input 
+            type="number" 
+            placeholder="Amount" 
+            className="bg-white" 
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+          />
+          <Button className="bg-gray-800 text-white" onClick={handleSetChallenge}>Set</Button>
         </div>
         
         <section>

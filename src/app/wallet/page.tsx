@@ -1,11 +1,46 @@
 
+'use client';
+
+import React, { useState } from 'react';
 import Header from "@/components/play/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronLeft, AlertCircle } from "lucide-react";
 import Link from "next/link";
+import { useToast } from "@/hooks/use-toast";
 
 export default function WalletPage() {
+    const { toast } = useToast();
+    const [depositAmount, setDepositAmount] = useState(0);
+    const [winningAmount, setWinningAmount] = useState(0);
+
+    const handleAddChips = () => {
+        // This would typically open a payment gateway modal
+        const amountToAdd = 100; // Example amount
+        setDepositAmount(depositAmount + amountToAdd);
+        toast({
+            title: "Chips Added",
+            description: `₹${amountToAdd} has been added to your deposit wallet.`,
+        });
+    };
+
+    const handleWithdrawChips = () => {
+        if (winningAmount > 0) {
+            // This would open a withdrawal form
+            toast({
+                title: "Withdrawal Request",
+                description: `Your request to withdraw ₹${winningAmount} is being processed.`,
+            });
+            setWinningAmount(0); // Reset winnings after withdrawal
+        } else {
+            toast({
+                title: "Withdrawal Failed",
+                description: "You have no winnings to withdraw.",
+                variant: "destructive",
+            });
+        }
+    };
+
     return (
         <div className="flex flex-col min-h-screen bg-gray-100 font-body">
             <Header />
@@ -37,9 +72,9 @@ export default function WalletPage() {
                     <CardContent className="text-center space-y-4">
                         <div>
                             <p className="text-sm text-muted-foreground">Chips</p>
-                            <p className="text-2xl font-bold">0</p>
+                            <p className="text-2xl font-bold">₹{depositAmount}</p>
                         </div>
-                        <Button className="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold text-lg py-6">
+                        <Button onClick={handleAddChips} className="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold text-lg py-6">
                             Add
                         </Button>
                     </CardContent>
@@ -52,9 +87,9 @@ export default function WalletPage() {
                     <CardContent className="text-center space-y-4">
                         <div>
                             <p className="text-sm text-muted-foreground">Chips</p>
-                            <p className="text-2xl font-bold">0</p>
+                            <p className="text-2xl font-bold">₹{winningAmount}</p>
                         </div>
-                         <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-lg py-6">
+                         <Button onClick={handleWithdrawChips} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-lg py-6">
                             Withdraw
                         </Button>
                     </CardContent>

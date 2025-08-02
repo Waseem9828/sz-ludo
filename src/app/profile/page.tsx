@@ -1,12 +1,15 @@
 
+'use client'
+
+import React, { useState } from 'react';
 import Header from "@/components/play/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { AlertCircle, ArrowUp, BarChart2, Gift, Pencil, Trophy } from "lucide-react";
-import Image from "next/image";
-
+import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 const MetricCard = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) => (
     <Card className="bg-gray-50">
@@ -21,6 +24,31 @@ const MetricCard = ({ icon, label, value }: { icon: React.ReactNode, label: stri
 );
 
 export default function ProfilePage() {
+    const { toast } = useToast();
+    const router = useRouter();
+    const [username, setUsername] = useState("Waseem_Akram21");
+    const [isEditingUsername, setIsEditingUsername] = useState(false);
+    const [tempUsername, setTempUsername] = useState(username);
+
+    const handleEditUsername = () => {
+        if (isEditingUsername) {
+            setUsername(tempUsername);
+            toast({
+                title: 'Username Updated',
+                description: `Your username has been changed to ${tempUsername}`,
+            });
+        }
+        setIsEditingUsername(!isEditingUsername);
+    };
+
+    const handleLogout = () => {
+        toast({
+            title: 'Logged Out',
+            description: 'You have been successfully logged out.',
+        });
+        router.push('/'); 
+    };
+    
     return (
         <div className="flex flex-col min-h-screen bg-gray-100 font-body">
             <Header />
@@ -44,8 +72,15 @@ export default function ProfilePage() {
                             <div>
                                 <label htmlFor="username" className="text-sm font-medium text-muted-foreground">Username</label>
                                 <div className="flex items-center gap-2 mt-1">
-                                    <Input id="username" type="text" defaultValue="Waseem_Akram21" className="bg-gray-200" />
-                                    <Button className="bg-gray-800 text-white">Edit</Button>
+                                    <Input 
+                                        id="username" 
+                                        type="text" 
+                                        value={isEditingUsername ? tempUsername : username} 
+                                        onChange={(e) => setTempUsername(e.target.value)}
+                                        readOnly={!isEditingUsername}
+                                        className={isEditingUsername ? "bg-white" : "bg-gray-200"}
+                                    />
+                                    <Button onClick={handleEditUsername} className="bg-gray-800 text-white">{isEditingUsername ? 'Save' : 'Edit'}</Button>
                                 </div>
                             </div>
                             <div>
@@ -80,7 +115,7 @@ export default function ProfilePage() {
                     </CardContent>
                 </Card>
 
-                <Button variant="outline" className="w-full border-red-500 text-red-500 hover:bg-red-500 hover:text-white font-bold text-lg py-6">
+                <Button onClick={handleLogout} variant="outline" className="w-full border-red-500 text-red-500 hover:bg-red-500 hover:text-white font-bold text-lg py-6">
                     LOG OUT
                 </Button>
             </main>
