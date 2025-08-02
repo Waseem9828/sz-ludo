@@ -83,7 +83,7 @@ function GamePageComponent() {
 
                 <Card>
                     <CardHeader className="py-3 bg-muted rounded-t-lg">
-                        <CardTitle className="text-center text-md font-semibold text-muted-foreground">Room Code</CardTitle>
+                        <CardTitle className="text-center text-md font-semibold text-red-600">Room Code</CardTitle>
                     </CardHeader>
                     <CardContent className="p-6 text-center">
                         <p className="text-4xl font-bold tracking-widest my-4">01063482</p>
@@ -96,7 +96,7 @@ function GamePageComponent() {
 
                 <Card>
                      <CardHeader className="py-3 bg-muted rounded-t-lg">
-                        <CardTitle className="text-center text-md font-semibold text-muted-foreground">Game Result</CardTitle>
+                        <CardTitle className="text-center text-md font-semibold text-red-600">Game Result</CardTitle>
                     </CardHeader>
                     <CardContent className="p-4 space-y-3">
                         <p className="text-center text-sm text-muted-foreground">After completion of your game, select the status of the game and post your screenshot below</p>
@@ -108,7 +108,7 @@ function GamePageComponent() {
 
                 <Card>
                     <CardHeader className="py-3 bg-muted rounded-t-lg">
-                        <CardTitle className="text-center text-md font-semibold text-muted-foreground">Penalty</CardTitle>
+                        <CardTitle className="text-center text-md font-semibold text-red-600">Penalty</CardTitle>
                     </CardHeader>
                     <CardContent className="p-0">
                         <Table>

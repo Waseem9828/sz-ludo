@@ -11,7 +11,7 @@ export default function GameListing() {
   return (
     <section>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold font-headline">Available Games</h2>
+        <h2 className="text-2xl font-bold font-headline text-red-600">Available Games</h2>
         <a href="#" className="text-sm font-bold text-primary hover:underline">See All</a>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -59,7 +59,7 @@ export default function KycPage() {
             <main className="flex-grow container mx-auto px-4 py-6">
                 <Card className="max-w-2xl mx-auto">
                     <CardHeader>
-                        <CardTitle className="text-center text-2xl font-bold font-headline">
+                        <CardTitle className="text-center text-2xl font-bold font-headline text-red-600">
                             KYC Verification
                         </CardTitle>
                     </CardHeader>
@@ -68,7 +68,7 @@ export default function KycPage() {
                             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                                 <Card>
                                     <CardHeader>
-                                        <CardTitle className="text-lg">Aadhaar Details</CardTitle>
+                                        <CardTitle className="text-lg text-red-600">Aadhaar Details</CardTitle>
                                     </CardHeader>
                                     <CardContent>
                                         <FormField
@@ -89,7 +89,7 @@ export default function KycPage() {
 
                                 <Card>
                                     <CardHeader>
-                                        <CardTitle className="text-lg">PAN Card Details</CardTitle>
+                                        <CardTitle className="text-lg text-red-600">PAN Card Details</CardTitle>
                                     </CardHeader>
                                     <CardContent>
                                         <FormField
@@ -110,7 +110,7 @@ export default function KycPage() {
 
                                 <Card>
                                     <CardHeader>
-                                        <CardTitle className="text-lg">Bank Account Details</CardTitle>
+                                        <CardTitle className="text-lg text-red-600">Bank Account Details</CardTitle>
                                         <CardDescription>For receiving deposit and withdrawal confirmations.</CardDescription>
                                     </CardHeader>
                                     <CardContent className="space-y-4">

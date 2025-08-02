@@ -74,7 +74,7 @@ export default function SettingsPage() {
           <SidebarHeader>
             <SheetTitle>Admin Panel</SheetTitle>
             <div className="p-4 text-center">
-              <h1 className="text-2xl font-bold">Admin Panel</h1>
+              <h1 className="text-2xl font-bold text-red-600">Admin Panel</h1>
             </div>
           </SidebarHeader>
           <SidebarContent>
@@ -117,12 +117,12 @@ export default function SettingsPage() {
         <SidebarInset>
              <header className="flex items-center justify-between p-4 border-b">
                 <SidebarTrigger />
-                <h2 className="text-xl font-semibold">Settings</h2>
+                <h2 className="text-xl font-semibold text-red-600">Settings</h2>
              </header>
             <main className="p-6">
                  <Card>
                     <CardHeader>
-                        <CardTitle>Payment Settings</CardTitle>
+                        <CardTitle className="text-red-600">Payment Settings</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">

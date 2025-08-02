@@ -80,7 +80,7 @@ export default function WalletPage() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-center text-lg font-semibold">Deposit Chips</CardTitle>
+                        <CardTitle className="text-center text-lg font-semibold text-red-600">Deposit Chips</CardTitle>
                     </CardHeader>
                     <CardContent className="text-center space-y-4">
                         <div>
@@ -97,7 +97,7 @@ export default function WalletPage() {
                 
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-center text-lg font-semibold">Winning Chips</CardTitle>
+                        <CardTitle className="text-center text-lg font-semibold text-red-600">Winning Chips</CardTitle>
                     </CardHeader>
                     <CardContent className="text-center space-y-4">
                         <div>

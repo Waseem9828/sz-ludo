@@ -139,7 +139,7 @@ export default function AddCashPage() {
 
         <Card className="max-w-md mx-auto">
           <CardHeader>
-            <CardTitle className="text-center text-xl font-semibold">Buy Chips</CardTitle>
+            <CardTitle className="text-center text-xl font-semibold text-red-600">Buy Chips</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-4">
@@ -171,7 +171,7 @@ export default function AddCashPage() {
              {showQr ? (
                  <Card>
                     <CardHeader>
-                        <CardTitle className="text-center">Scan & Pay</CardTitle>
+                        <CardTitle className="text-center text-red-600">Scan & Pay</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4 text-center">
                         <p className="text-sm text-muted-foreground">
@@ -189,7 +189,7 @@ export default function AddCashPage() {
                 <>
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-center text-lg">Summary</CardTitle>
+                            <CardTitle className="text-center text-lg text-red-600">Summary</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3 text-sm">
                            <div className="flex justify-between">
@@ -219,7 +219,7 @@ export default function AddCashPage() {
 
                     <Card>
                          <CardHeader>
-                            <CardTitle className="text-center text-lg">Payments Secured By</CardTitle>
+                            <CardTitle className="text-center text-lg text-red-600">Payments Secured By</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <PaymentLogos />

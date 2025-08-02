@@ -86,7 +86,7 @@ export default function PlayPage() {
         <section>
            <div className="flex items-center justify-center my-4">
             <hr className="w-full border-gray-300 dark:border-gray-700" />
-            <span className="mx-4 text-muted-foreground font-semibold whitespace-nowrap">
+            <span className="mx-4 text-red-600 font-semibold whitespace-nowrap">
               🏆 Open Battles (Classic) 🏆
             </span>
             <hr className="w-full border-gray-300 dark:border-gray-700" />

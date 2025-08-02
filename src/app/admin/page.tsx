@@ -38,7 +38,7 @@ export default function AdminLayout({
           <SidebarHeader>
             <SheetTitle>Admin Panel</SheetTitle>
             <div className="p-4 text-center">
-              <h1 className="text-2xl font-bold">Admin Panel</h1>
+              <h1 className="text-2xl font-bold text-red-600">Admin Panel</h1>
             </div>
           </SidebarHeader>
           <SidebarContent>
@@ -81,7 +81,7 @@ export default function AdminLayout({
         <SidebarInset>
              <header className="flex items-center justify-between p-4 border-b">
                 <SidebarTrigger />
-                <h2 className="text-xl font-semibold">Dashboard</h2>
+                <h2 className="text-xl font-semibold text-red-600">Dashboard</h2>
              </header>
             <main className="p-6">
                 <h1 className="text-2xl font-bold">Welcome, Admin!</h1>

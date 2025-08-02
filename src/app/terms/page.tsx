@@ -7,14 +7,14 @@ export default function TermsPage() {
             <Header />
             <main className="flex-grow container mx-auto px-4 py-6 space-y-6">
                 <div className="bg-card p-6 md:p-8 rounded-lg shadow-md">
-                    <h1 className="text-3xl font-bold mb-6 font-headline text-center">Terms and Conditions</h1>
+                    <h1 className="text-3xl font-bold mb-6 font-headline text-center text-red-600">Terms and Conditions</h1>
                     
                     <div className="space-y-6 text-foreground">
                         <p>These terms and conditions of use (“Terms”) along with privacy policy (“Privacy Policy”) forms a legally binding agreement (“Agreement”) between You and us (SZ LUDO).</p>
                         <p>Hence, We insist that You read these Terms and Privacy Policy and let Us know if You have any questions regarding the same. We will try Our best to answer Your queries.</p>
                         
                         <div>
-                            <h2 className="text-xl font-bold font-headline mb-3">A. USERS’ APPROVAL</h2>
+                            <h2 className="text-xl font-bold font-headline mb-3 text-red-600">A. USERS’ APPROVAL</h2>
                             <div className="space-y-2 pl-4">
                                 <p>1. Users approve of and accept our Agreement by:</p>
                                 <ul className="list-disc list-inside pl-4 space-y-1">
@@ -34,7 +34,7 @@ export default function TermsPage() {
                         </div>
 
                         <div>
-                            <h2 className="text-xl font-bold font-headline mb-3">B. PROVISION OF THE APP</h2>
+                            <h2 className="text-xl font-bold font-headline mb-3 text-red-600">B. PROVISION OF THE APP</h2>
                             <div className="space-y-2 pl-4">
                                 <p>1. Section 12 of the Public Gambling Act, 1867 provides that games of mere skill are exempt from the application of the Act. The Supreme Court of India and various High Courts in India have opined that a game of mere skill is a game “in which, although the element of chance necessarily cannot be entirely eliminated, success depends principally upon the superior knowledge, training, attention, experience and adroitness of the player. A game of skill is one in which the element of skill predominates over the element of chance.” No penalty can be imposed upon a person for playing such games of skill.</p>
                                 <p>2. Users must note that ‘Ludo’ game available for challenge in our platform is ‘Games of Skill’, under Indian law, and that we do not support, endorse, or offer to Users ‘games of chance’ for money. While ‘Games of Skill’ do not have a comprehensive definition, they are those games where the impact of a player’s effort and skill on the outcome of a game is higher than the impact of luck and chance.</p>
@@ -46,7 +46,7 @@ export default function TermsPage() {
                         </div>
 
                         <div>
-                            <h2 className="text-xl font-bold font-headline mb-3">C. COMMUNICATION</h2>
+                            <h2 className="text-xl font-bold font-headline mb-3 text-red-600">C. COMMUNICATION</h2>
                              <div className="space-y-2 pl-4">
                                 <p>1. By using this platform, the User provides their consent to communicate with the company and receive such communications in relation to the games offered by the platform and its services.</p>
                                 <p>2. Communication between the Users and the company may happen electronically or through the various social media pages, and the User consents to receive these communications.</p>
@@ -55,12 +55,12 @@ export default function TermsPage() {
                         </div>
 
                         <div>
-                            <h2 className="text-xl font-bold font-headline mb-3">D. PENALTY</h2>
+                            <h2 className="text-xl font-bold font-headline mb-3 text-red-600">D. PENALTY</h2>
                             <p className="pl-4">The company reserves the right to penalize any User if found to be in violation of the contest/game rules.</p>
                         </div>
                         
                         <div>
-                            <h2 className="text-xl font-bold font-headline mb-3">E. CONTACT US</h2>
+                            <h2 className="text-xl font-bold font-headline mb-3 text-red-600">E. CONTACT US</h2>
                             <p className="pl-4">For any queries, please feel free to contact us via the contact information provided on the platform.</p>
                         </div>
                     </div>
