@@ -1,7 +1,6 @@
 import Header from '@/components/header';
 import KycInfo from '@/components/kyc-info';
 import GameListing from '@/components/game-listing';
-import BottomNav from '@/components/bottom-nav';
 
 export default function Home() {
   return (
@@ -11,7 +10,6 @@ export default function Home() {
         <KycInfo />
         <GameListing />
       </main>
-      <BottomNav />
       {/* Spacer to prevent content from being hidden by the fixed bottom nav */}
       <div className="h-20 md:hidden" />
     </div>
