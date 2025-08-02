@@ -4,7 +4,7 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Menu, Download, Settings, Wallet, ChevronRight, Dice5, History, User, Gift, FileText, Shield, LifeBuoy, ShieldCheck, Sun, Moon } from "lucide-react";
+import { Menu, Download, Settings, Wallet, ChevronRight, Dice5, History, User, Gift, FileText, Shield, LifeBuoy, ShieldCheck, Sun, Moon, LayoutDashboard } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useTheme } from "next-themes";
@@ -13,10 +13,17 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/context/auth-context";
 
 export default function Header() {
-  const { setTheme } = useTheme()
+  const { setTheme } = useTheme();
+  const { user } = useAuth();
+
+  const getInitials = (name: string) => {
+    if (!name) return 'U';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+  }
 
   const navItems = [
     { icon: Dice5, label: "Play", href: "/play" },
@@ -31,6 +38,8 @@ export default function Header() {
     { icon: Shield, label: "Refund Policy", href: "/refund-policy" },
     { icon: LifeBuoy, label: "Support", href: "#" },
   ];
+  
+  const isAdmin = user && user.email === 'admin@example.com';
 
   return (
     <header className="bg-card shadow-md sticky top-0 z-40">
@@ -45,24 +54,44 @@ export default function Header() {
             <SheetContent side="left" className="p-0 w-80 bg-card">
               <SheetHeader className="p-4 border-b">
                 <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage
-                      src="https://placehold.co/48x48.png"
-                      alt="Waseem Akram"
-                      data-ai-hint="avatar person"
-                    />
-                    <AvatarFallback>WA</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h2 className="text-lg font-bold font-headline">
-                      Waseem Akram 👋
-                    </h2>
-                  </div>
-                </div>
+                 {user ? (
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-12 w-12">
+                        <AvatarImage
+                          src={user.photoURL || "https://placehold.co/48x48.png"}
+                          alt={user.displayName || "User"}
+                          data-ai-hint="avatar person"
+                        />
+                        <AvatarFallback>{getInitials(user.displayName || user.email || 'U')}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <h2 className="text-lg font-bold font-headline">
+                          {user.displayName || user.email} 👋
+                        </h2>
+                      </div>
+                    </div>
+                 ) : (
+                    <div className="flex items-center gap-3">
+                         <h2 className="text-lg font-bold font-headline">Welcome!</h2>
+                    </div>
+                 )}
               </SheetHeader>
               <nav className="p-4">
                 <ul>
+                  {isAdmin && (
+                     <li>
+                      <Link
+                        href="/admin"
+                        className="flex items-center justify-between p-3 rounded-md hover:bg-accent/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-4">
+                          <LayoutDashboard className="h-6 w-6 text-muted-foreground" />
+                          <span className="font-medium">Admin Panel</span>
+                        </div>
+                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                      </Link>
+                    </li>
+                  )}
                   {navItems.map((item) => (
                     <li key={item.label}>
                       <Link
