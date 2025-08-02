@@ -1,18 +1,30 @@
 
 'use client'
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '@/components/play/header';
 import ChallengeList from '@/components/play/challenge-list';
 import BattleList from '@/components/play/battle-list';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/auth-context';
+import { useRouter } from 'next/navigation';
+import { Loader } from 'lucide-react';
 
 
 export default function PlayPage() {
   const [amount, setAmount] = useState('');
   const { toast } = useToast();
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
 
   const handleSetChallenge = () => {
     if (amount && !isNaN(Number(amount)) && Number(amount) > 0) {
@@ -32,6 +44,14 @@ export default function PlayPage() {
     }
   };
 
+   if (loading || !user) {
+    return (
+        <div className="flex justify-center items-center min-h-screen">
+            <Loader className="h-16 w-16 animate-spin" />
+        </div>
+    );
+  }
+
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
@@ -41,7 +61,7 @@ export default function PlayPage() {
           <Input 
             type="number" 
             placeholder="Amount" 
-            className="bg-white" 
+            className="bg-white dark:bg-gray-800" 
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
           />
@@ -50,11 +70,11 @@ export default function PlayPage() {
         
         <section>
            <div className="flex items-center justify-center my-4">
-            <hr className="w-full border-gray-300" />
+            <hr className="w-full border-gray-300 dark:border-gray-700" />
             <span className="mx-4 text-muted-foreground font-semibold whitespace-nowrap">
               🏆 Open Battles (Classic) 🏆
             </span>
-            <hr className="w-full border-gray-300" />
+            <hr className="w-full border-gray-300 dark:border-gray-700" />
           </div>
           <ChallengeList />
         </section>

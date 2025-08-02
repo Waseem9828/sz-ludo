@@ -1,19 +1,20 @@
 
 'use client'
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from "@/components/play/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { AlertCircle, ArrowUp, BarChart2, Gift, Pencil, Trophy } from "lucide-react";
+import { AlertCircle, ArrowUp, BarChart2, Gift, Pencil, Trophy, Loader } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@/context/auth-context';
 
 const MetricCard = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) => (
-    <Card className="bg-gray-50">
+    <Card className="bg-gray-50 dark:bg-gray-800">
         <CardContent className="p-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 {icon}
@@ -27,12 +28,26 @@ const MetricCard = ({ icon, label, value }: { icon: React.ReactNode, label: stri
 export default function ProfilePage() {
     const { toast } = useToast();
     const router = useRouter();
+    const { user, loading, logout } = useAuth();
+    
     const [username, setUsername] = useState("Waseem_Akram21");
     const [isEditingUsername, setIsEditingUsername] = useState(false);
     const [tempUsername, setTempUsername] = useState(username);
 
+    useEffect(() => {
+        if (!loading && !user) {
+            router.push('/login');
+        }
+        if (user) {
+            setUsername(user.displayName || user.email?.split('@')[0] || 'User');
+            setTempUsername(user.displayName || user.email?.split('@')[0] || 'User');
+        }
+    }, [user, loading, router]);
+
+
     const handleEditUsername = () => {
         if (isEditingUsername) {
+            // Here you would typically update the user's profile in Firebase
             setUsername(tempUsername);
             toast({
                 title: 'Username Updated',
@@ -42,16 +57,37 @@ export default function ProfilePage() {
         setIsEditingUsername(!isEditingUsername);
     };
 
-    const handleLogout = () => {
-        toast({
-            title: 'Logged Out',
-            description: 'You have been successfully logged out.',
-        });
-        router.push('/'); 
+    const handleLogout = async () => {
+        try {
+            await logout();
+            router.push('/login');
+            toast({
+                title: 'Logged Out',
+                description: 'You have been successfully logged out.',
+            });
+        } catch (error: any) {
+             toast({
+                title: 'Logout Failed',
+                description: error.message,
+                variant: 'destructive'
+            });
+        }
     };
     
+    if (loading || !user) {
+        return (
+            <div className="flex justify-center items-center min-h-screen">
+                <Loader className="h-16 w-16 animate-spin" />
+            </div>
+        );
+    }
+
+    const getInitials = (name: string) => {
+        return name.split(' ').map(n => n[0]).join('').toUpperCase();
+    }
+    
     return (
-        <div className="flex flex-col min-h-screen bg-gray-100 font-body">
+        <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900 font-body">
             <Header />
             <main className="flex-grow container mx-auto px-4 py-6 space-y-6">
                 <Card>
@@ -61,8 +97,8 @@ export default function ProfilePage() {
                     <CardContent className="space-y-6">
                         <div className="flex justify-center relative w-24 h-24 mx-auto">
                             <Avatar className="w-24 h-24 border-4 border-white shadow-md">
-                                <AvatarImage src="https://placehold.co/96x96.png" alt="Waseem Akram" data-ai-hint="avatar person" />
-                                <AvatarFallback>WA</AvatarFallback>
+                                <AvatarImage src={user.photoURL || `https://placehold.co/96x96.png`} alt={username} data-ai-hint="avatar person" />
+                                <AvatarFallback>{getInitials(username)}</AvatarFallback>
                             </Avatar>
                             <Button size="icon" className="absolute bottom-0 right-0 rounded-full bg-gray-800 hover:bg-gray-900 h-8 w-8">
                                 <Pencil className="h-4 w-4 text-white" />
@@ -79,14 +115,14 @@ export default function ProfilePage() {
                                         value={isEditingUsername ? tempUsername : username} 
                                         onChange={(e) => setTempUsername(e.target.value)}
                                         readOnly={!isEditingUsername}
-                                        className={isEditingUsername ? "bg-white" : "bg-gray-200"}
+                                        className={isEditingUsername ? "bg-white dark:bg-gray-700" : "bg-gray-200 dark:bg-gray-800"}
                                     />
                                     <Button onClick={handleEditUsername} className="bg-gray-800 text-white">{isEditingUsername ? 'Save' : 'Edit'}</Button>
                                 </div>
                             </div>
                             <div>
-                                <label htmlFor="phone" className="text-sm font-medium text-muted-foreground">Phone</label>
-                                <Input id="phone" type="text" defaultValue="9828786246" className="mt-1 bg-gray-200" readOnly />
+                                <label htmlFor="phone" className="text-sm font-medium text-muted-foreground">Email</label>
+                                <Input id="phone" type="text" value={user.email || ''} className="mt-1 bg-gray-200 dark:bg-gray-800" readOnly />
                             </div>
                         </div>
 

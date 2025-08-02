@@ -1,20 +1,31 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from "@/components/play/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronLeft, AlertCircle } from "lucide-react";
+import { ChevronLeft, AlertCircle, Loader } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/auth-context';
 
 export default function WalletPage() {
     const { toast } = useToast();
     const router = useRouter();
+    const { user, loading } = useAuth();
+    
+    // TODO: Fetch balances from Firestore
     const [depositAmount, setDepositAmount] = useState(0);
     const [winningAmount, setWinningAmount] = useState(0);
+
+    useEffect(() => {
+        if (!loading && !user) {
+            router.push('/login');
+        }
+    }, [user, loading, router]);
+
 
     const handleWithdrawChips = () => {
         if (winningAmount > 0) {
@@ -32,9 +43,17 @@ export default function WalletPage() {
             });
         }
     };
+    
+    if (loading || !user) {
+        return (
+            <div className="flex justify-center items-center min-h-screen">
+                <Loader className="h-16 w-16 animate-spin" />
+            </div>
+        );
+    }
 
     return (
-        <div className="flex flex-col min-h-screen bg-gray-100 font-body">
+        <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900 font-body">
             <Header />
             <main className="flex-grow container mx-auto px-4 py-6 space-y-6">
                 <div className="flex justify-between items-center">
