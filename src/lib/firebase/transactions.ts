@@ -1,5 +1,4 @@
 
-'use server';
 
 import { collection, addDoc, serverTimestamp, where, query, onSnapshot } from 'firebase/firestore';
 import { db } from './config';
