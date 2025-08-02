@@ -2,6 +2,6 @@ export type Game = {
   id: number;
   title: string;
   bettingRange: string;
-  imageUrls: string[];
+  imageUrl: string;
   imageHint: string;
 };
