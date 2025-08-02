@@ -2,7 +2,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShieldCheck } from "lucide-react";
 
-export default function KycInfo() {
+interface KycInfoProps {
+  title: string;
+  description: string;
+}
+
+export default function KycInfo({ title, description }: KycInfoProps) {
   return (
     <Card className="bg-accent/20 border-accent/50 text-accent-foreground shadow-lg">
       <CardContent className="p-4 flex items-center justify-between">
@@ -11,8 +16,8 @@ export default function KycInfo() {
             <ShieldCheck className="w-6 h-6 text-accent" />
           </div>
           <div>
-            <h2 className="font-bold font-headline text-lg text-foreground">Verify Your Account</h2>
-            <p className="text-sm text-muted-foreground">Complete KYC to unlock all features.</p>
+            <h2 className="font-bold font-headline text-lg text-foreground">{title}</h2>
+            <p className="text-sm text-muted-foreground">{description}</p>
           </div>
         </div>
         <Button variant="outline" className="border-accent text-accent hover:bg-accent hover:text-accent-foreground font-bold">

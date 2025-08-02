@@ -7,7 +7,10 @@ export default function Home() {
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
       <Header />
       <main className="flex-grow container mx-auto px-4 py-6 space-y-8">
-        <KycInfo />
+        <KycInfo 
+          title="Verify Your Account"
+          description="Complete KYC to unlock all features."
+        />
         <GameListing />
       </main>
       {/* Spacer to prevent content from being hidden by the fixed bottom nav */}
