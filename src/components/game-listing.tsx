@@ -3,8 +3,8 @@ import type { Game } from "@/types";
 import GameCard from "@/components/game-card";
 
 const games: Game[] = [
-  { id: 1, title: "Classic Ludo", bettingRange: "₹550 - ₹50000", imageUrl: "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjEsa6UQWzBpSK56pMDK8NXsNuRaamZuxTRt1W7JV1uTcB8vnk9s6JmRjUuGoOB0eggpQVUjoNkoBNkOd9wamgWB_ysKg66jm2WaPyif0AG_k5e3TUflDFDsc9RBzyBCEF7g-Pg8uxdA-zsbbMqxoBwjJ0LwzXaTXV1RVa6Wp-_aa4jW-T7_GmOuZtCmik/s1600/74338.jpg", imageHint: "ludo game" },
-  { id: 2, title: "Popular Ludo", bettingRange: "₹50000 - ₹1 Lakh", imageUrl: "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjEsa6UQWzBpSK56pMDK8NXsNuRaamZuxTRt1W7JV1uTcB8vnk9s6JmRjUuGoOB0eggpQVUjoNkoBNkOd9wamgWB_ysKg66jm2WaPyif0AG_k5e3TUflDFDsc9RBzyBCEF7g-Pg8uxdA-zsbbMqxoBwjJ0LwzXaTXV1RVa6Wp-_aa4jW-T7_GmOuZtCmik/s1600/74338.jpg", imageHint: "ludo board" },
+  { id: 1, title: "Classic Ludo", bettingRange: "₹550 - ₹100000", imageUrl: "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjEsa6UQWzBpSK56pMDK8NXsNuRaamZuxTRt1W7JV1uTcB8vnk9s6JmRjUuGoOB0eggpQVUjoNkoBNkOd9wamgWB_ysKg66jm2WaPyif0AG_k5e3TUflDFDsc9RBzyBCEF7g-Pg8uxdA-zsbbMqxoBwjJ0LwzXaTXV1RVa6Wp-_aa4jW-T7_GmOuZtCmik/s1600/74338.jpg", imageHint: "ludo game" },
+  { id: 2, title: "Popular Ludo", bettingRange: "₹550 - ₹100000", imageUrl: "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjEsa6UQWzBpSK56pMDK8NXsNuRaamZuxTRt1W7JV1uTcB8vnk9s6JmRjUuGoOB0eggpQVUjoNkoBNkOd9wamgWB_ysKg66jm2WaPyif0AG_k5e3TUflDFDsc9RBzyBCEF7g-Pg8uxdA-zsbbMqxoBwjJ0LwzXaTXV1RVa6Wp-_aa4jW-T7_GmOuZtCmik/s1600/74338.jpg", imageHint: "ludo board" },
 ];
 
 export default function GameListing() {
