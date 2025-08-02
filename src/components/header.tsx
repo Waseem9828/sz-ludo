@@ -157,7 +157,7 @@ export default function Header() {
           </Sheet>
            <div className="flex items-center gap-1">
             <Link href="/">
-              <Image src="/ak-logo.png" alt="AKADDA Logo" width={24} height={24} />
+              <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg2oNx0s_EsUtQCxkYGCkEqHAcVCA4PAgVdyNX-mDF_KO228qsfmqMAOefbIFmb-yD98WpX7jVLor2AJzeDhfqG6wC8n7lWtxU9euuYIYhPWStqYgbGjkGp6gu1JrfKmXMwCn7I_KjLGu_GlGy3PMNmf9ljC8Yr__ZpsiGxHJRKbtH6MfTuG4ofViNRsAY/s1600/73555.png" alt="AKADDA Logo" width={40} height={40} />
             </Link>
             <Link href="/">
               <h1 className="text-xl font-headline font-bold">AKADDA</h1>
