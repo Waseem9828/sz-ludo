@@ -36,7 +36,7 @@ export default function Header() {
     { icon: Gift, label: "Refer & Earn", href: "/refer" },
     { icon: FileText, label: "Term & Conditions", href: "/terms" },
     { icon: FileText, label: "GST Policy", href: "/gst-policy" },
-    { icon: Shield, label: "Privacy Policy", href: "#" },
+    { icon: Shield, label: "Privacy Policy", href: "/privacy-policy" },
     { icon: Shield, label: "Refund Policy", href: "#" },
     { icon: LifeBuoy, label: "Support", href: "#" },
   ];
@@ -53,7 +53,7 @@ export default function Header() {
             </SheetTrigger>
             <SheetContent side="left" className="p-0 w-80 bg-card">
               <SheetHeader className="p-4 border-b">
-                 <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+                 <SheetTitle>Navigation Menu</SheetTitle>
                 <div className="flex items-center gap-3">
                   <Avatar className="h-12 w-12">
                     <AvatarImage
