@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShieldCheck } from "lucide-react";
+import Link from "next/link";
 
 interface KycInfoProps {
   title: string;
@@ -20,9 +21,11 @@ export default function KycInfo({ title, description }: KycInfoProps) {
             <p className="text-sm text-muted-foreground">{description}</p>
           </div>
         </div>
-        <Button variant="outline" className="border-accent text-accent hover:bg-accent hover:text-accent-foreground font-bold">
-          Verify Now
-        </Button>
+        <Link href="/kyc">
+          <Button variant="outline" className="border-accent text-accent hover:bg-accent hover:text-accent-foreground font-bold">
+            Verify Now
+          </Button>
+        </Link>
       </CardContent>
     </Card>
   );

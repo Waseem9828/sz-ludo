@@ -10,6 +10,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { AlertCircle, ArrowUp, BarChart2, Gift, Pencil, Trophy } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 const MetricCard = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) => (
     <Card className="bg-gray-50">
@@ -95,7 +96,9 @@ export default function ProfilePage() {
                                     <AlertCircle className="h-5 w-5 text-red-600" />
                                     <span className="font-semibold text-red-800">KYC Pending</span>
                                 </div>
-                                <Button variant="destructive" size="sm">Complete Here</Button>
+                                <Link href="/kyc">
+                                    <Button variant="destructive" size="sm">Complete Here</Button>
+                                </Link>
                             </CardContent>
                         </Card>
                     </CardContent>
@@ -108,9 +111,9 @@ export default function ProfilePage() {
                     <CardContent>
                         <div className="grid grid-cols-2 gap-4">
                             <MetricCard icon={<BarChart2 className="h-4 w-4" />} label="Games Played" value="0" />
-                            <MetricCard icon={<Trophy className="h-4 w-4" />} label="Chips Won" value="0" />
-                            <MetricCard icon={<Gift className="h-4 w-4" />} label="Referal Earning" value="0" />
-                            <MetricCard icon={<ArrowUp className="h-4 w-4" />} label="Penalty" value="0" />
+                            <MetricCard icon={<Trophy className="h-4 w-4" />} label="Chips Won" value="₹0" />
+                            <MetricCard icon={<Gift className="h-4 w-4" />} label="Referal Earning" value="₹0" />
+                            <MetricCard icon={<ArrowUp className="h-4 w-4" />} label="Penalty" value="₹0" />
                         </div>
                     </CardContent>
                 </Card>

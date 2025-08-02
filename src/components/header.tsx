@@ -15,7 +15,7 @@ import {
   Bell,
   PlusCircle,
   Menu,
-  Home,
+  ShieldCheck,
   History,
   User,
   Gift,
@@ -32,6 +32,7 @@ export default function Header() {
   const navItems = [
     { icon: Dice5, label: "Play", href: "/play" },
     { icon: Wallet, label: "Wallet", href: "/wallet" },
+    { icon: ShieldCheck, label: "KYC", href: "/kyc" },
     { icon: History, label: "History", href: "#" },
     { icon: User, label: "Profile", href: "/profile" },
     { icon: Gift, label: "Refer & Earn", href: "/refer" },

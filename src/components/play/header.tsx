@@ -4,7 +4,7 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Menu, Download, Settings, Wallet, ChevronRight, Dice5, History, User, Gift, FileText, Shield, LifeBuoy } from "lucide-react";
+import { Menu, Download, Settings, Wallet, ChevronRight, Dice5, History, User, Gift, FileText, Shield, LifeBuoy, ShieldCheck } from "lucide-react";
 import Image from "next/image";
 import { Switch } from "@/components/ui/switch";
 import Link from "next/link";
@@ -13,6 +13,7 @@ export default function Header() {
   const navItems = [
     { icon: Dice5, label: "Play", href: "/play" },
     { icon: Wallet, label: "Wallet", href: "/wallet" },
+    { icon: ShieldCheck, label: "KYC", href: "/kyc" },
     { icon: History, label: "History", href: "#" },
     { icon: User, label: "Profile", href: "/profile" },
     { icon: Gift, label: "Refer & Earn", href: "/refer" },
@@ -92,7 +93,7 @@ export default function Header() {
           </div>
           <Button variant="outline" className="border-green-500">
             <Wallet className="h-5 w-5 text-green-500 mr-2" />
-            <span className="font-bold text-green-500">0</span>
+            <span className="font-bold text-green-500">₹0</span>
           </Button>
         </div>
       </div>
