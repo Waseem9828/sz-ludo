@@ -1,5 +1,8 @@
 
+'use client'
+
 import Header from "@/components/play/header";
+import Typewriter from "@/components/ui/typewriter";
 
 export default function TermsPage() {
     return (
@@ -9,6 +12,7 @@ export default function TermsPage() {
                 <div className="bg-card p-6 md:p-8 rounded-lg shadow-md">
                     <h1 className="text-3xl font-bold mb-6 font-headline text-center text-red-600">Terms and Conditions</h1>
                     
+                    <Typewriter speed={10}>
                     <div className="space-y-6 text-foreground">
                         <p>These terms and conditions of use (“Terms”) along with privacy policy (“Privacy Policy”) forms a legally binding agreement (“Agreement”) between You and us (SZ LUDO).</p>
                         <p>Hence, We insist that You read these Terms and Privacy Policy and let Us know if You have any questions regarding the same. We will try Our best to answer Your queries.</p>
@@ -64,6 +68,7 @@ export default function TermsPage() {
                             <p className="pl-4">For any queries, please feel free to contact us via the contact information provided on the platform.</p>
                         </div>
                     </div>
+                    </Typewriter>
                 </div>
             </main>
         </div>

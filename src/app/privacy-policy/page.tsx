@@ -1,5 +1,8 @@
 
+'use client'
+
 import Header from "@/components/play/header";
+import Typewriter from "@/components/ui/typewriter";
 
 export default function PrivacyPolicyPage() {
     return (
@@ -9,6 +12,7 @@ export default function PrivacyPolicyPage() {
                 <div className="bg-card p-6 md:p-8 rounded-lg shadow-md">
                     <h1 className="text-3xl font-bold mb-6 font-headline text-center text-red-600">Privacy Policy</h1>
                     
+                    <Typewriter speed={10}>
                     <div className="space-y-6 text-foreground">
                         <p>This document explains how SZ LUDO (https://SZLUDO.com) collects, processes, stores and/or shares any personal data and/or information from users (jointly referred to as “Information”). By accessing and/or using the Services you consent to the collection, transfer, manipulation, storage, disclosure, and other uses of your information as described in this Privacy Policy. If you have any concerns about providing data, or having it used in any manner permitted in this Privacy Policy, you should not use the Services. As set out in the terms and conditions relating to the Services (the “Terms”), you must be at least at legal age (minimum age of 18 years) to access and/or use the Services, or if legally possible, to access with your legal guardian's consent, due authorization, and agreement with this Privacy Policy.</p>
                         
@@ -93,6 +97,7 @@ export default function PrivacyPolicyPage() {
                             <p>SZ LUDO may update this Privacy Policy from time to time. Any changes will be posted here, and you should check this page periodically for updates. Your continued use of the Services after any such changes constitutes your acceptance of the new Privacy Policy. If you do not agree to any of these changes, please do not use or access (or continue to use or access) the Services.</p>
                         </div>
                     </div>
+                    </Typewriter>
                 </div>
             </main>
         </div>

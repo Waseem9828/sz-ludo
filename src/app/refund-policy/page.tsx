@@ -1,5 +1,8 @@
 
+'use client'
+
 import Header from "@/components/play/header";
+import Typewriter from "@/components/ui/typewriter";
 
 export default function RefundPolicyPage() {
     return (
@@ -9,6 +12,7 @@ export default function RefundPolicyPage() {
                 <div className="bg-card p-6 md:p-8 rounded-lg shadow-md">
                     <h1 className="text-3xl font-bold mb-6 font-headline text-center text-red-600">Refund Policy</h1>
                     
+                    <Typewriter speed={10}>
                     <div className="space-y-6 text-foreground">
                         <p>Thanks for being a patron with (referred as SZ LUDO) . If you are not entirely satisfied with your subscription, we are here to help.</p>
                         
@@ -17,6 +21,7 @@ export default function RefundPolicyPage() {
                             <p>Once we receive your Refund request, we will inspect it and notify you on the status of your refund. If your refund request is approved, we will initiate a refund to your credit card (or original method of payment) within 7 working days. You will receive the credit within a certain amount of days, depending on your card issuer's policies. In case of unforeseen technical glitch, would refund subscription upon reviewing the complaint. Final decision lies with the company.</p>
                         </div>
                     </div>
+                    </Typewriter>
                 </div>
             </main>
         </div>
