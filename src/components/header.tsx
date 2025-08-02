@@ -35,7 +35,7 @@ export default function Header() {
     { icon: User, label: "Profile", href: "/profile" },
     { icon: Gift, label: "Refer & Earn", href: "/refer" },
     { icon: FileText, label: "Term & Conditions", href: "/terms" },
-    { icon: FileText, label: "GST Policy", href: "#" },
+    { icon: FileText, label: "GST Policy", href: "/gst-policy" },
     { icon: Shield, label: "Privacy Policy", href: "#" },
     { icon: Shield, label: "Refund Policy", href: "#" },
     { icon: LifeBuoy, label: "Support", href: "#" },
