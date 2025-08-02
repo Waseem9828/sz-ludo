@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Link from "next/link";
 
 const challenges = [
   {
@@ -35,7 +36,9 @@ export default function ChallengeList() {
             </div>
             <div className="text-right">
               <p className="text-green-600 font-bold">Rs {challenge.amount}</p>
-              <Button size="sm" className="mt-1">Play</Button>
+              <Link href="/play/game">
+                <Button size="sm" className="mt-1">Play</Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
