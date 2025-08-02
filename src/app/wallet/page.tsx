@@ -8,21 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronLeft, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from 'next/navigation';
 
 export default function WalletPage() {
     const { toast } = useToast();
+    const router = useRouter();
     const [depositAmount, setDepositAmount] = useState(0);
     const [winningAmount, setWinningAmount] = useState(0);
-
-    const handleAddChips = () => {
-        // This would typically open a payment gateway modal
-        const amountToAdd = 100; // Example amount
-        setDepositAmount(depositAmount + amountToAdd);
-        toast({
-            title: "Chips Added",
-            description: `₹${amountToAdd} has been added to your deposit wallet.`,
-        });
-    };
 
     const handleWithdrawChips = () => {
         if (winningAmount > 0) {
@@ -76,9 +68,11 @@ export default function WalletPage() {
                             <p className="text-sm text-muted-foreground">Chips</p>
                             <p className="text-2xl font-bold">₹{depositAmount}</p>
                         </div>
-                        <Button onClick={handleAddChips} className="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold text-lg py-6">
-                            Add
-                        </Button>
+                        <Link href="/wallet/add-cash">
+                            <Button className="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold text-lg py-6">
+                                Add Cash
+                            </Button>
+                        </Link>
                     </CardContent>
                 </Card>
                 
