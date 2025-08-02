@@ -36,7 +36,7 @@ export default function AdminLayout({
     <SidebarProvider>
         <Sidebar>
           <SidebarHeader>
-            <SheetTitle className="hidden">Admin Panel</SheetTitle>
+            <SheetTitle>Admin Panel</SheetTitle>
             <div className="p-4 text-center">
               <h1 className="text-2xl font-bold">Admin Panel</h1>
             </div>
