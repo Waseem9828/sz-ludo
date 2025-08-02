@@ -2,7 +2,7 @@
 'use client';
 
 import { Sidebar, SidebarProvider, SidebarTrigger, SidebarInset, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
-import { Home, BarChart, Users, Settings } from "lucide-react";
+import { Home, BarChart, Users, Settings, CircleDollarSign } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
 import { useRouter, usePathname } from "next/navigation";
@@ -23,6 +23,7 @@ export default function AdminLayout({
     { href: "/admin", icon: Home, label: "Dashboard" },
     { href: "/admin/users", icon: Users, label: "Users" },
     { href: "/admin/matches", icon: BarChart, label: "Matches" },
+    { href: "/admin/withdrawals", icon: CircleDollarSign, label: "Withdrawals" },
     { href: "/admin/settings", icon: Settings, label: "Settings" },
   ];
 
