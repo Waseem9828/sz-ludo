@@ -32,7 +32,7 @@ export default function Header() {
     { icon: Dice5, label: "Play", href: "/play" },
     { icon: Wallet, label: "Wallet", href: "/wallet" },
     { icon: History, label: "History", href: "#" },
-    { icon: User, label: "Profile", href: "#" },
+    { icon: User, label: "Profile", href: "/profile" },
     { icon: Gift, label: "Refer & Earn", href: "/refer" },
     { icon: FileText, label: "Term & Conditions", href: "#" },
     { icon: FileText, label: "GST Policy", href: "#" },
