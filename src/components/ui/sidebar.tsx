@@ -163,6 +163,7 @@ const Sidebar = React.forwardRef<
     side?: "left" | "right"
     variant?: "sidebar" | "floating" | "inset"
     collapsible?: "offcanvas" | "icon" | "none"
+    title?: string;
   }
 >(
   (
@@ -170,6 +171,7 @@ const Sidebar = React.forwardRef<
       side = "left",
       variant = "sidebar",
       collapsible = "offcanvas",
+      title,
       className,
       children,
       ...props
@@ -177,14 +179,6 @@ const Sidebar = React.forwardRef<
     ref
   ) => {
     const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
-
-    // Extract SheetTitle from children if it exists
-    const sheetTitle = React.Children.toArray(children).find(
-      (child) => (child as React.ReactElement).type === SheetTitle
-    );
-    const otherChildren = React.Children.toArray(children).filter(
-      (child) => (child as React.ReactElement).type !== SheetTitle
-    );
 
     if (collapsible === "none") {
       return (
@@ -215,8 +209,8 @@ const Sidebar = React.forwardRef<
             }
             side={side}
           >
-            {sheetTitle}
-            <div className="flex h-full w-full flex-col">{otherChildren}</div>
+             {title && <SheetTitle className="sr-only">{title}</SheetTitle>}
+            <div className="flex h-full w-full flex-col">{children}</div>
           </SheetContent>
         </Sheet>
       )
@@ -260,7 +254,7 @@ const Sidebar = React.forwardRef<
             data-sidebar="sidebar"
             className="flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
           >
-            {otherChildren}
+            {children}
           </div>
         </div>
       </div>
