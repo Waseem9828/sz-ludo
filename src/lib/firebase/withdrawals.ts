@@ -1,4 +1,5 @@
 
+
 import { 
     collection, 
     addDoc, 
@@ -6,9 +7,12 @@ import {
     onSnapshot,
     query,
     doc,
-    updateDoc
+    updateDoc,
+    writeBatch,
+    increment
 } from 'firebase/firestore';
 import { db } from './config';
+import { createTransaction } from './transactions';
 
 export interface Withdrawal {
     id: string;
@@ -31,10 +35,21 @@ export const createWithdrawalRequest = async (data: {
     upiId: string;
     status: 'pending'
 }) => {
-    return addDoc(collection(db, WITHDRAWALS_COLLECTION), {
+     const batch = writeBatch(db);
+     const userRef = doc(db, 'users', data.userId);
+     const withdrawalRef = doc(collection(db, WITHDRAWALS_COLLECTION));
+
+     // 1. Decrement user's winnings
+     batch.update(userRef, { 'wallet.winnings': increment(-data.amount) });
+
+     // 2. Create withdrawal request
+     batch.set(withdrawalRef, {
         ...data,
-        createdAt: serverTimestamp(),
-    });
+        createdAt: serverTimestamp()
+     });
+
+     await batch.commit();
+     return withdrawalRef;
 };
 
 

@@ -2,26 +2,34 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { Withdrawal, listenForWithdrawals, updateWithdrawalStatus } from '@/lib/firebase/withdrawals';
-import { Loader } from 'lucide-react';
-import { updateUserWallet } from '@/lib/firebase/users';
+import { Loader, TrendingUp, TrendingDown } from 'lucide-react';
+import { updateUserWallet, AppUser, getUser } from '@/lib/firebase/users';
+import Link from 'next/link';
 
+type WithdrawalWithUser = Withdrawal & {
+    user?: AppUser;
+};
 
 export default function WithdrawalsPage() {
-    const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
+    const [withdrawals, setWithdrawals] = useState<WithdrawalWithUser[]>([]);
     const [loading, setLoading] = useState(true);
     const { toast } = useToast();
 
     useEffect(() => {
       const unsubscribe = listenForWithdrawals(
-        (allWithdrawals) => {
-          setWithdrawals(allWithdrawals);
+        async (allWithdrawals) => {
+            const withdrawalsWithUserData = await Promise.all(allWithdrawals.map(async (w) => {
+                const user = await getUser(w.userId);
+                return { ...w, user };
+            }));
+          setWithdrawals(withdrawalsWithUserData);
           setLoading(false);
         },
         (error) => {
@@ -36,8 +44,6 @@ export default function WithdrawalsPage() {
 
     const handleApprove = async (withdrawal: Withdrawal) => {
         try {
-            // In a real app, you would process the payment via a payment gateway here.
-            // For this simulation, we assume payment is done manually.
             await updateWithdrawalStatus(withdrawal.id, 'approved');
             toast({
                 title: 'Withdrawal Approved',
@@ -54,8 +60,7 @@ export default function WithdrawalsPage() {
 
     const handleReject = async (withdrawal: Withdrawal) => {
         try {
-            // Return funds to user's winning wallet
-            await updateUserWallet(withdrawal.userId, withdrawal.amount, 'winnings');
+            await updateUserWallet(withdrawal.userId, withdrawal.amount, 'winnings', 'Withdrawal Rejected');
             await updateWithdrawalStatus(withdrawal.id, 'rejected');
              toast({
                 title: 'Withdrawal Rejected',
@@ -84,7 +89,20 @@ export default function WithdrawalsPage() {
         }
     };
 
-    const getInitials = (name: string) => {
+     const getKycBadgeVariant = (status?: 'Pending' | 'Verified' | 'Rejected') => {
+        switch (status) {
+            case 'Verified':
+                return 'default';
+            case 'Pending':
+                return 'secondary';
+            case 'Rejected':
+                return 'destructive';
+            default:
+                return 'outline';
+        }
+    };
+
+    const getInitials = (name?: string | null) => {
         return name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U';
     }
     
@@ -100,6 +118,7 @@ export default function WithdrawalsPage() {
     <Card>
       <CardHeader>
         <CardTitle>Manage Withdrawals</CardTitle>
+        <CardDescription>Review and process user withdrawal requests.</CardDescription>
       </CardHeader>
       <CardContent>
         <Table>
@@ -109,6 +128,8 @@ export default function WithdrawalsPage() {
               <TableHead>Amount</TableHead>
               <TableHead>UPI ID</TableHead>
               <TableHead>Date</TableHead>
+              <TableHead>KYC</TableHead>
+              <TableHead>Lifetime (Dep/With)</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -117,17 +138,34 @@ export default function WithdrawalsPage() {
             {withdrawals.map((withdrawal) => (
               <TableRow key={withdrawal.id}>
                  <TableCell>
-                    <div className="flex items-center gap-3">
-                        <Avatar>
-                            <AvatarImage src={withdrawal.userAvatar} alt={withdrawal.userName} data-ai-hint="avatar person" />
-                            <AvatarFallback>{getInitials(withdrawal.userName)}</AvatarFallback>
-                        </Avatar>
-                        <div className="font-medium">{withdrawal.userName}</div>
-                    </div>
+                    <Link href={`/admin/users/${withdrawal.userId}`}>
+                        <div className="flex items-center gap-3 hover:underline">
+                            <Avatar>
+                                <AvatarImage src={withdrawal.userAvatar} alt={withdrawal.userName} data-ai-hint="avatar person" />
+                                <AvatarFallback>{getInitials(withdrawal.userName)}</AvatarFallback>
+                            </Avatar>
+                            <div className="font-medium">{withdrawal.userName}</div>
+                        </div>
+                    </Link>
                 </TableCell>
                 <TableCell>₹{withdrawal.amount}</TableCell>
                 <TableCell>{withdrawal.upiId}</TableCell>
-                <TableCell>{new Date(withdrawal.createdAt).toLocaleDateString()}</TableCell>
+                <TableCell>{new Date(withdrawal.createdAt?.toDate()).toLocaleDateString()}</TableCell>
+                <TableCell>
+                    <Badge variant={getKycBadgeVariant(withdrawal.user?.kycStatus)}>{withdrawal.user?.kycStatus || 'N/A'}</Badge>
+                </TableCell>
+                <TableCell>
+                    <div className="space-y-1 text-xs">
+                        <div className="flex items-center gap-1 text-green-600">
+                           <TrendingUp size={14}/>
+                           <span>₹{withdrawal.user?.lifetimeStats?.totalDeposits || 0}</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-red-600">
+                           <TrendingDown size={14}/>
+                           <span>₹{withdrawal.user?.lifetimeStats?.totalWithdrawals || 0}</span>
+                        </div>
+                     </div>
+                </TableCell>
                 <TableCell>
                     <Badge variant={getStatusBadgeVariant(withdrawal.status)}>{withdrawal.status}</Badge>
                 </TableCell>

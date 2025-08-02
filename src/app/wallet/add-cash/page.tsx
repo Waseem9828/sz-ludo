@@ -146,6 +146,7 @@ export default function AddCashPage() {
         await createDepositRequest({
             userId: user.uid,
             userName: appUser.displayName || 'N/A',
+            userAvatar: appUser.photoURL || '',
             amount: parseFloat(amount),
             upiId: activeUpi.id,
             status: 'pending'

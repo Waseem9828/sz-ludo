@@ -16,11 +16,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { AppUser, listenForAllUsers } from '@/lib/firebase/users';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 export default function UsersPage() {
     const [users, setUsers] = useState<AppUser[]>([]);
     const [loading, setLoading] = useState(true);
     const { toast } = useToast();
+    const router = useRouter();
 
     useEffect(() => {
         const unsubscribe = listenForAllUsers(
@@ -84,7 +86,7 @@ export default function UsersPage() {
           </TableHeader>
           <TableBody>
             {users.map((user) => (
-              <TableRow key={user.uid}>
+              <TableRow key={user.uid} className="cursor-pointer" onClick={() => router.push(`/admin/users/${user.uid}`)}>
                 <TableCell>
                     <div className="flex items-center gap-3">
                         <Avatar>
@@ -126,13 +128,13 @@ export default function UsersPage() {
                 </TableCell>
                 <TableCell className="text-right">
                     <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                             <Button variant="ghost" size="icon">
                                 <MoreVertical className="h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem><User className="mr-2 h-4 w-4"/>View Profile</DropdownMenuItem>
+                        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenuItem onClick={() => router.push(`/admin/users/${user.uid}`)}><User className="mr-2 h-4 w-4"/>View Profile</DropdownMenuItem>
                             <DropdownMenuItem><Wallet className="mr-2 h-4 w-4"/>Adjust Wallet</DropdownMenuItem>
                             <DropdownMenuItem><Shield className="mr-2 h-4 w-4"/>Update KYC</DropdownMenuItem>
                         </DropdownMenuContent>

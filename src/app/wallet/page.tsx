@@ -67,10 +67,6 @@ export default function WalletPage() {
 
         setIsSubmitting(true);
         try {
-            // Deduct from winning wallet immediately
-            await updateUserWallet(user.uid, -amount, 'winnings');
-
-            // Create withdrawal request for admin to process
             await createWithdrawalRequest({
                 userId: user.uid,
                 userName: appUser.displayName || 'N/A',
@@ -88,8 +84,6 @@ export default function WalletPage() {
             setWithdrawAmount('');
 
         } catch (error: any) {
-            // If request fails, refund the winnings
-            await updateUserWallet(user.uid, amount, 'winnings');
             toast({ title: "Withdrawal Failed", description: error.message, variant: "destructive" });
         } finally {
             setIsSubmitting(false);
@@ -174,7 +168,7 @@ export default function WalletPage() {
                                 <DialogHeader>
                                     <DialogTitle>Request Withdrawal</DialogTitle>
                                     <DialogDescription>
-                                        Enter the amount you wish to withdraw from your winnings of ₹{(appUser.wallet?.winnings || 0).toFixed(2)}.
+                                        Enter the amount you wish to withdraw from your winnings of ₹{(appUser.wallet?.winnings || 0).toFixed(2)}. Minimum withdrawal is ₹100.
                                     </DialogDescription>
                                 </DialogHeader>
                                 <div className="space-y-4">
