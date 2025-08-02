@@ -1,8 +1,6 @@
 import Header from '@/components/header';
 import KycInfo from '@/components/kyc-info';
 import GameListing from '@/components/game-listing';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 
 export default function Home() {
   return (
@@ -10,9 +8,6 @@ export default function Home() {
       <Header />
       <main className="flex-grow container mx-auto px-4 py-6 space-y-8">
         <KycInfo />
-        <Link href="/play">
-          <Button className="w-full">Go to Play Page</Button>
-        </Link>
         <GameListing />
       </main>
       {/* Spacer to prevent content from being hidden by the fixed bottom nav */}

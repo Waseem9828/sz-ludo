@@ -2,6 +2,7 @@ import type { Game } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import Link from "next/link";
 
 interface GameCardProps {
   game: Game;
@@ -22,7 +23,9 @@ export default function GameCard({ game }: GameCardProps) {
       <CardContent className="p-4 bg-card">
         <h3 className="text-lg font-bold font-headline">{game.title}</h3>
         <p className="text-sm text-muted-foreground mb-4">Entry: {game.bettingRange}</p>
-        <Button className="w-full font-bold">Play Now</Button>
+        <Link href="/play" className="w-full">
+          <Button className="w-full font-bold">Play Now</Button>
+        </Link>
       </CardContent>
     </Card>
   );

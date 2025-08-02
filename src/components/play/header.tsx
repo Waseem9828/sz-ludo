@@ -6,19 +6,20 @@ import { Button } from "@/components/ui/button";
 import { Menu, Download, Settings, Wallet, ChevronRight, Dice5, History, User, Gift, FileText, Shield, LifeBuoy } from "lucide-react";
 import Image from "next/image";
 import { Switch } from "@/components/ui/switch";
+import Link from "next/link";
 
 export default function Header() {
   const navItems = [
-    { icon: Dice5, label: "Play" },
-    { icon: Wallet, label: "Wallet" },
-    { icon: History, label: "History" },
-    { icon: User, label: "Profile" },
-    { icon: Gift, label: "Refer & Earn" },
-    { icon: FileText, label: "Term & Conditions" },
-    { icon: FileText, label: "GST Policy" },
-    { icon: Shield, label: "Privacy Policy" },
-    { icon: Shield, label: "Refund Policy" },
-    { icon: LifeBuoy, label: "Support" },
+    { icon: Dice5, label: "Play", href: "/play" },
+    { icon: Wallet, label: "Wallet", href: "#" },
+    { icon: History, label: "History", href: "#" },
+    { icon: User, label: "Profile", href: "#" },
+    { icon: Gift, label: "Refer & Earn", href: "#" },
+    { icon: FileText, label: "Term & Conditions", href: "#" },
+    { icon: FileText, label: "GST Policy", href: "#" },
+    { icon: Shield, label: "Privacy Policy", href: "#" },
+    { icon: Shield, label: "Refund Policy", href: "#" },
+    { icon: LifeBuoy, label: "Support", href: "#" },
   ];
 
   return (
@@ -53,8 +54,8 @@ export default function Header() {
                 <ul>
                   {navItems.map((item) => (
                     <li key={item.label}>
-                      <a
-                        href="#"
+                      <Link
+                        href={item.href}
                         className="flex items-center justify-between p-3 rounded-md hover:bg-accent/50 transition-colors"
                       >
                         <div className="flex items-center gap-4">
@@ -62,7 +63,7 @@ export default function Header() {
                           <span className="font-medium">{item.label}</span>
                         </div>
                         <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                      </a>
+                      </Link>
                     </li>
                   ))}
                 </ul>
@@ -70,8 +71,12 @@ export default function Header() {
             </SheetContent>
           </Sheet>
           <div className="flex items-center gap-1">
-             <Image src="/ak-logo.png" alt="AKADDA Logo" width={24} height={24} />
-            <h1 className="text-xl font-headline font-bold">AKADDA</h1>
+            <Link href="/">
+              <Image src="/ak-logo.png" alt="AKADDA Logo" width={24} height={24} />
+            </Link>
+            <Link href="/">
+              <h1 className="text-xl font-headline font-bold">AKADDA</h1>
+            </Link>
           </div>
         </div>
 
