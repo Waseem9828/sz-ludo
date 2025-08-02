@@ -16,6 +16,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { updateProfile } from 'firebase/auth';
 import { SplashScreen } from '@/components/ui/splash-screen';
+import { Badge } from '@/components/ui/badge';
 
 const MetricCard = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) => (
     <Card className="bg-secondary/50">
@@ -97,6 +98,21 @@ export default function ProfilePage() {
     if (loading || !user || !appUser) {
         return <SplashScreen />;
     }
+    
+    const isKycPending = !appUser.kycStatus || appUser.kycStatus === 'Pending' || appUser.kycStatus === 'Rejected';
+
+    const getKycBadgeVariant = (status?: 'Pending' | 'Verified' | 'Rejected') => {
+        switch (status) {
+            case 'Verified':
+                return 'default';
+            case 'Pending':
+                return 'secondary';
+            case 'Rejected':
+                return 'destructive';
+            default:
+                return 'outline';
+        }
+    };
 
     const getInitials = (name: string) => {
         return name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U';
@@ -145,18 +161,28 @@ export default function ProfilePage() {
                                 <Input id="phone" type="text" value={appUser.phone || ''} className="mt-1 bg-muted" readOnly />
                             </div>
                         </div>
-
-                        <Card className="bg-destructive/10 border-destructive/50">
-                            <CardContent className="p-3 flex justify-between items-center">
-                                <div className="flex items-center gap-2">
-                                    <AlertCircle className="h-5 w-5 text-destructive" />
-                                    <span className="font-semibold text-destructive">KYC Pending</span>
-                                </div>
-                                <Link href="/kyc">
-                                    <Button variant="destructive" size="sm">Complete Here</Button>
-                                </Link>
-                            </CardContent>
-                        </Card>
+                        
+                        {isKycPending ? (
+                            <Card className="bg-destructive/10 border-destructive/50">
+                                <CardContent className="p-3 flex justify-between items-center">
+                                    <div className="flex items-center gap-2">
+                                        <AlertCircle className="h-5 w-5 text-destructive" />
+                                        <span className="font-semibold text-destructive">KYC Pending</span>
+                                    </div>
+                                    <Link href="/kyc">
+                                        <Button variant="destructive" size="sm">Complete Here</Button>
+                                    </Link>
+                                </CardContent>
+                            </Card>
+                        ) : (
+                             <Card className="bg-green-600/10 border-green-600/50">
+                                <CardContent className="p-3 flex justify-between items-center">
+                                     <div className="flex items-center gap-2">
+                                        <Badge variant={getKycBadgeVariant(appUser.kycStatus)}>KYC {appUser.kycStatus}</Badge>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
                     </CardContent>
                 </Card>
 

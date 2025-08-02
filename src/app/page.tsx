@@ -11,7 +11,7 @@ import { useEffect } from 'react';
 import { SplashScreen } from '@/components/ui/splash-screen';
 
 export default function Home() {
-  const { user, loading } = useAuth();
+  const { user, appUser, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -20,9 +20,11 @@ export default function Home() {
     }
   }, [user, loading, router]);
 
-  if (loading || !user) {
+  if (loading || !user || !appUser) {
     return <SplashScreen />;
   }
+
+  const isKycPending = !appUser.kycStatus || appUser.kycStatus === 'Pending' || appUser.kycStatus === 'Rejected';
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
@@ -31,10 +33,12 @@ export default function Home() {
         Commission 4.5%: referral 2% for all games
       </div>
       <main className="flex-grow container mx-auto px-4 py-6 space-y-8">
-        <KycInfo 
-          title="Verify Your Account"
-          description="Complete KYC to unlock all features."
-        />
+        {isKycPending && (
+          <KycInfo 
+            title="Verify Your Account"
+            description="Complete KYC to unlock all features."
+          />
+        )}
         <GameListing />
       </main>
       {/* Spacer to prevent content from being hidden by the fixed bottom nav */}
