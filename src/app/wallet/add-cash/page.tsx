@@ -40,8 +40,6 @@ export default function AddCashPage() {
   const [loadingSettings, setLoadingSettings] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const payeeName = 'SZ LUDO';
-
   useEffect(() => {
     async function fetchSettings() {
       try {
@@ -88,7 +86,7 @@ export default function AddCashPage() {
       return;
     }
 
-    const upiUrl = `upi://pay?pa=${activeUpi.id}&pn=${payeeName}&am=${numericAmount.toFixed(2)}&cu=INR`;
+    const upiUrl = `upi://pay?pa=${activeUpi.id}&pn=${encodeURIComponent(activeUpi.name)}&am=${numericAmount.toFixed(2)}&cu=INR`;
     const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiUrl)}`;
     setQrCodeUrl(qrApiUrl);
     setShowQr(true);
@@ -192,6 +190,12 @@ export default function AddCashPage() {
                         <CardTitle className="text-center text-red-600">Scan & Pay</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4 text-center">
+                        {activeUpi?.name && (
+                            <div className="text-center">
+                                <p className="text-sm text-muted-foreground">Payee Name</p>
+                                <p className="font-bold text-lg">{activeUpi.name}</p>
+                            </div>
+                        )}
                         <p className="text-sm text-muted-foreground">
                         Scan the QR code with your UPI app to pay ₹{amount}
                         </p>

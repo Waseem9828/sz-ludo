@@ -49,7 +49,7 @@ export default function SettingsPage() {
   };
 
   const addUpiId = () => {
-    setUpiIds([...upiIds, { id: '', limit: 50000, currentAmount: 0 }]);
+    setUpiIds([...upiIds, { id: '', name: '', limit: 50000, currentAmount: 0 }]);
   };
 
   const removeUpiId = (index: number) => {
@@ -118,7 +118,7 @@ export default function SettingsPage() {
             const progress = upi.limit > 0 ? (upi.currentAmount / upi.limit) * 100 : 0;
             return (
               <Card key={index} className="p-4 relative bg-muted/50">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor={`upiId-${index}`}>UPI ID</Label>
                     <Input
@@ -126,6 +126,15 @@ export default function SettingsPage() {
                       value={upi.id}
                       onChange={(e) => handleUpiIdChange(index, 'id', e.target.value)}
                       placeholder="your-upi-id@okhdfcbank"
+                    />
+                  </div>
+                   <div className="space-y-2">
+                    <Label htmlFor={`upiName-${index}`}>Account Holder Name</Label>
+                    <Input
+                      id={`upiName-${index}`}
+                      value={upi.name}
+                      onChange={(e) => handleUpiIdChange(index, 'name', e.target.value)}
+                      placeholder="John Doe"
                     />
                   </div>
                   <div className="space-y-2">

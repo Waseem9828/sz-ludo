@@ -7,6 +7,7 @@ const APP_CONFIG_DOC = 'app-config';
 
 export interface UpiId {
     id: string;
+    name: string;
     limit: number;
     currentAmount: number;
 }
@@ -23,7 +24,8 @@ export const getSettings = async (): Promise<AppSettings> => {
   if (docSnap.exists()) {
     const data = docSnap.data() as AppSettings;
     // Ensure upiIds is always an array
-    return { ...data, upiIds: data.upiIds || [] };
+    const upiIds = (data.upiIds || []).map(upi => ({ name: '', ...upi }));
+    return { ...data, upiIds: upiIds };
   } else {
     // If the document doesn't exist, create it with default values
     const initialSettings: AppSettings = { upiIds: [] };
