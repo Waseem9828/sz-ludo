@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ChevronLeft, Info, Upload } from 'lucide-react';
+import { ChevronLeft, Info, Upload, PartyPopper, Frown } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
@@ -14,6 +14,7 @@ import { Suspense, useState, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ResultDialog } from '@/components/play/result-dialog';
 
 
 const penalties = [
@@ -30,12 +31,17 @@ function GamePageComponent() {
     const [selectedResult, setSelectedResult] = useState<string | null>(null);
     const [screenshot, setScreenshot] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isResultDialogOpen, setIsResultDialogOpen] = useState(false);
+    const [resultDialogProps, setResultDialogProps] = useState({
+        variant: 'won' as 'won' | 'lost',
+        title: '',
+        description: '',
+    });
 
 
     const handleResultClick = (result: string) => {
         setSelectedResult(result);
         if (result === 'LOST' || result === 'CANCEL') {
-            // Submit result directly if lost or cancelled
             handleSubmit(result, null);
         }
     };
@@ -52,14 +58,32 @@ function GamePageComponent() {
             return;
         }
 
-        // In a real app, you would upload the file to Firebase Storage
-        // and then save the result with the screenshot URL to Firestore.
         console.log({ result, screenshot: file?.name });
         
-        toast({
-            title: `Game Result Submitted`,
-            description: `You have declared that you ${result}. Your result is under review.`,
-        });
+        if (result === 'WON') {
+             setResultDialogProps({
+                variant: 'won',
+                title: 'Congratulations!',
+                description: `You won ₹${amount}! Your result is under review.`,
+            });
+        } else if (result === 'LOST') {
+            setResultDialogProps({
+                variant: 'lost',
+                title: 'Better Luck Next Time!',
+                description: 'You have declared that you lost the game.',
+            });
+        }
+        
+        if(result === 'WON' || result === 'LOST') {
+            setIsResultDialogOpen(true);
+        }
+
+        if (result === 'CANCEL') {
+            toast({
+                title: 'Game Cancelled',
+                description: 'Your cancellation request has been submitted.'
+            });
+        }
 
         // Reset state
         setSelectedResult(null);
@@ -71,6 +95,14 @@ function GamePageComponent() {
 
 
     return (
+        <>
+        <ResultDialog
+            isOpen={isResultDialogOpen}
+            setIsOpen={setIsResultDialogOpen}
+            variant={resultDialogProps.variant}
+            title={resultDialogProps.title}
+            description={resultDialogProps.description}
+        />
         <div className="flex flex-col min-h-screen bg-background font-body">
             <Header />
             <main className="flex-grow container mx-auto px-4 py-6 space-y-6">
@@ -182,6 +214,7 @@ function GamePageComponent() {
                 </Card>
             </main>
         </div>
+        </>
     );
 }
 
