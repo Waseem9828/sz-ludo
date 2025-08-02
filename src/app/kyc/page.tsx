@@ -15,9 +15,11 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Header from '@/components/play/header';
 import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 const kycFormSchema = z.object({
   aadhaar: z.string().regex(/^[0-9]{12}$/, 'Aadhaar number must be 12 digits.'),
@@ -25,6 +27,7 @@ const kycFormSchema = z.object({
   bankAccount: z.string().min(1, 'Bank account number is required.'),
   ifsc: z.string().min(1, 'IFSC code is required.'),
   bankName: z.string().min(1, 'Bank name is required.'),
+  upiId: z.string().min(1, 'UPI ID is required.'),
 });
 
 export default function KycPage() {
@@ -37,6 +40,7 @@ export default function KycPage() {
             bankAccount: '',
             ifsc: '',
             bankName: '',
+            upiId: '',
         },
     });
 
@@ -107,6 +111,7 @@ export default function KycPage() {
                                 <Card>
                                     <CardHeader>
                                         <CardTitle className="text-lg">Bank Account Details</CardTitle>
+                                        <CardDescription>For receiving deposit and withdrawal confirmations.</CardDescription>
                                     </CardHeader>
                                     <CardContent className="space-y-4">
                                         <FormField
@@ -148,8 +153,29 @@ export default function KycPage() {
                                                 </FormItem>
                                             )}
                                         />
+                                        <FormField
+                                            control={form.control}
+                                            name="upiId"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>UPI ID</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="Enter your UPI ID" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
                                     </CardContent>
                                 </Card>
+                                
+                                <Alert variant="destructive">
+                                    <AlertCircle className="h-4 w-4" />
+                                    <AlertTitle>Important Notice</AlertTitle>
+                                    <AlertDescription>
+                                    To ensure successful transactions, please make sure the name on your bank account matches the name on your Aadhaar card. We will be unable to process payments and update your wallet balance if the names do not match.
+                                    </AlertDescription>
+                                </Alert>
 
                                 <Button type="submit" className="w-full font-bold text-lg py-6">
                                     Submit for Verification
