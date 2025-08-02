@@ -10,7 +10,9 @@ import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronLeft, Loader } from 'lucide-react';
-import { getSettings } from '@/lib/firebase/settings';
+import { getActiveUpiId, UpiId } from '@/lib/firebase/settings';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 const quickAmounts = [100, 200, 500, 1000, 2000, 5000, 7500, 10000];
 
@@ -34,26 +36,29 @@ export default function AddCashPage() {
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [showQr, setShowQr] = useState(false);
   const { toast } = useToast();
-  const [upiId, setUpiId] = useState('');
+  const [activeUpi, setActiveUpi] = useState<UpiId | null>(null);
   const [loadingSettings, setLoadingSettings] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const payeeName = 'SZ LUDO';
 
   useEffect(() => {
     async function fetchSettings() {
       try {
-        const settings = await getSettings();
-        if (settings && settings.upiId) {
-          setUpiId(settings.upiId);
+        const upiId = await getActiveUpiId();
+        if (upiId) {
+          setActiveUpi(upiId);
         } else {
+            setError('No active payment methods available. Please contact support.');
             toast({
                 title: 'Configuration Error',
-                description: 'UPI ID is not set. Please contact support.',
+                description: 'No active UPI IDs are configured. Please contact support.',
                 variant: 'destructive'
             })
         }
-      } catch (error) {
-        console.error("Error fetching settings: ", error);
+      } catch (err) {
+        console.error("Error fetching settings: ", err);
+        setError('Could not load payment settings. Please try again later.');
       } finally {
         setLoadingSettings(false);
       }
@@ -62,10 +67,10 @@ export default function AddCashPage() {
   }, [toast]);
 
   const handleProceed = () => {
-    if (!upiId) {
+    if (!activeUpi) {
        toast({
         title: 'Cannot Proceed',
-        description: 'Payment UPI ID is not configured by the admin.',
+        description: 'No active payment methods available. Please contact support.',
         variant: 'destructive',
       });
       return;
@@ -83,13 +88,16 @@ export default function AddCashPage() {
       return;
     }
 
-    const upiUrl = `upi://pay?pa=${upiId}&pn=${payeeName}&am=${numericAmount.toFixed(2)}&cu=INR`;
+    const upiUrl = `upi://pay?pa=${activeUpi.id}&pn=${payeeName}&am=${numericAmount.toFixed(2)}&cu=INR`;
     const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiUrl)}`;
     setQrCodeUrl(qrApiUrl);
     setShowQr(true);
   };
 
   const handlePaymentDone = () => {
+    // In a real app, you would have a webhook or a manual process
+    // to verify the payment and then update the user's wallet
+    // and the upiId's currentAmount in Firestore.
     toast({
       title: 'Payment Confirmation Sent',
       description: 'Your request has been sent to the admin. Your balance will be updated after verification.',
@@ -136,6 +144,14 @@ export default function AddCashPage() {
                 </Button>
             </Link>
         </div>
+        
+        {error && (
+            <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+            </Alert>
+        )}
 
         <Card className="max-w-md mx-auto">
           <CardHeader>
@@ -152,6 +168,7 @@ export default function AddCashPage() {
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   className="bg-card pl-8 text-lg"
+                  disabled={!!error}
                 />
               </div>
               <div className="grid grid-cols-4 gap-2">
@@ -160,12 +177,13 @@ export default function AddCashPage() {
                     key={qAmount}
                     variant="outline"
                     onClick={() => setAmount(qAmount.toString())}
+                    disabled={!!error}
                    >
                     ₹{qAmount}
                    </Button>
                 ))}
               </div>
-              <Button onClick={handleProceed} className="w-full font-bold text-lg py-6">Proceed</Button>
+              <Button onClick={handleProceed} className="w-full font-bold text-lg py-6" disabled={!!error || showQr}>Proceed</Button>
             </div>
             
              {showQr ? (
@@ -178,7 +196,7 @@ export default function AddCashPage() {
                         Scan the QR code with your UPI app to pay ₹{amount}
                         </p>
                         <div className="flex justify-center p-4 bg-white rounded-md border">
-                        <Image src={qrCodeUrl} alt="UPI QR Code" width={200} height={200} />
+                        {qrCodeUrl ? <Image src={qrCodeUrl} alt="UPI QR Code" width={200} height={200} /> : <Loader className="h-10 w-10 animate-spin" />}
                         </div>
                         <Button onClick={handlePaymentDone} className="w-full font-bold text-lg py-6 bg-green-600 hover:bg-green-700 text-white">
                         I have paid
@@ -186,46 +204,48 @@ export default function AddCashPage() {
                     </CardContent>
                 </Card>
              ) : (
-                <>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-center text-lg text-red-600">Summary</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-3 text-sm">
-                           <div className="flex justify-between">
-                                <span>Deposit Amount (Excl. Govt. Tax) A</span>
-                                <span>₹{summary.depositAmount}</span>
-                           </div>
-                           <div className="flex justify-between">
-                                <span>Govt. Tax (28% GST)</span>
-                                <span>₹{summary.taxAmount}</span>
-                           </div>
-                           <hr/>
-                           <div className="flex justify-between font-bold">
-                                <span>Total</span>
-                                <span>₹{summary.total}</span>
-                           </div>
-                           <div className="flex justify-between">
-                                <span>Cashback Bonus B</span>
-                                <span>₹{summary.cashback}</span>
-                           </div>
-                           <hr/>
-                           <div className="flex justify-between font-bold">
-                                <span>Add To Wallet Balance A + B</span>
-                                <span>₹{summary.walletBalance}</span>
-                           </div>
-                        </CardContent>
-                    </Card>
+                !error && (
+                    <>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-center text-lg text-red-600">Summary</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-3 text-sm">
+                            <div className="flex justify-between">
+                                    <span>Deposit Amount (Excl. Govt. Tax) A</span>
+                                    <span>₹{summary.depositAmount}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                    <span>Govt. Tax (28% GST)</span>
+                                    <span>₹{summary.taxAmount}</span>
+                            </div>
+                            <hr/>
+                            <div className="flex justify-between font-bold">
+                                    <span>Total</span>
+                                    <span>₹{summary.total}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                    <span>Cashback Bonus B</span>
+                                    <span>₹{summary.cashback}</span>
+                            </div>
+                            <hr/>
+                            <div className="flex justify-between font-bold">
+                                    <span>Add To Wallet Balance A + B</span>
+                                    <span>₹{summary.walletBalance}</span>
+                            </div>
+                            </CardContent>
+                        </Card>
 
-                    <Card>
-                         <CardHeader>
-                            <CardTitle className="text-center text-lg text-red-600">Payments Secured By</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <PaymentLogos />
-                        </CardContent>
-                    </Card>
-                </>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-center text-lg text-red-600">Payments Secured By</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <PaymentLogos />
+                            </CardContent>
+                        </Card>
+                    </>
+                )
              )}
           </CardContent>
         </Card>

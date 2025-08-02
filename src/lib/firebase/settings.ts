@@ -5,20 +5,28 @@ import { db } from './config';
 const SETTINGS_COLLECTION = 'settings';
 const APP_CONFIG_DOC = 'app-config';
 
+export interface UpiId {
+    id: string;
+    limit: number;
+    currentAmount: number;
+}
+
 export interface AppSettings {
-  upiId?: string;
+  upiIds?: UpiId[];
   // Add other settings here in the future
 }
 
-export const getSettings = async (): Promise<AppSettings | null> => {
+export const getSettings = async (): Promise<AppSettings> => {
   const docRef = doc(db, SETTINGS_COLLECTION, APP_CONFIG_DOC);
   const docSnap = await getDoc(docRef);
 
   if (docSnap.exists()) {
-    return docSnap.data() as AppSettings;
+    const data = docSnap.data() as AppSettings;
+    // Ensure upiIds is always an array
+    return { ...data, upiIds: data.upiIds || [] };
   } else {
     // If the document doesn't exist, create it with default values
-    const initialSettings: AppSettings = { upiId: '' };
+    const initialSettings: AppSettings = { upiIds: [] };
     await setDoc(docRef, initialSettings);
     return initialSettings;
   }
@@ -26,8 +34,18 @@ export const getSettings = async (): Promise<AppSettings | null> => {
 
 export const updateSettings = async (settings: Partial<AppSettings>): Promise<void> => {
   const docRef = doc(db, SETTINGS_COLLECTION, APP_CONFIG_DOC);
-  // Use updateDoc to avoid overwriting the entire document
-  // if we only want to change one field.
-  // setDoc with merge:true would also work.
   await updateDoc(docRef, settings);
 };
+
+
+export const getActiveUpiId = async (): Promise<UpiId | null> => {
+    const settings = await getSettings();
+    if (!settings.upiIds || settings.upiIds.length === 0) {
+        return null;
+    }
+
+    // Find the first UPI ID that has not reached its limit
+    const activeUpi = settings.upiIds.find(upi => upi.currentAmount < upi.limit);
+
+    return activeUpi || null;
+}

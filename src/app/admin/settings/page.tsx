@@ -3,15 +3,16 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { getSettings, updateSettings } from '@/lib/firebase/settings';
-import { Loader } from 'lucide-react';
+import { getSettings, updateSettings, UpiId } from '@/lib/firebase/settings';
+import { Loader, Trash2, PlusCircle } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 
 export default function SettingsPage() {
-  const [upiId, setUpiId] = useState('');
+  const [upiIds, setUpiIds] = useState<UpiId[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
@@ -20,8 +21,8 @@ export default function SettingsPage() {
     async function fetchSettings() {
       try {
         const settings = await getSettings();
-        if (settings && settings.upiId) {
-          setUpiId(settings.upiId);
+        if (settings && settings.upiIds) {
+          setUpiIds(settings.upiIds);
         }
       } catch (error) {
         console.error("Error fetching settings: ", error);
@@ -37,10 +38,29 @@ export default function SettingsPage() {
     fetchSettings();
   }, [toast]);
 
+  const handleUpiIdChange = (index: number, field: keyof UpiId, value: string | number) => {
+    const newUpiIds = [...upiIds];
+    if (typeof newUpiIds[index][field] === 'number') {
+        newUpiIds[index] = { ...newUpiIds[index], [field]: Number(value) };
+    } else {
+        newUpiIds[index] = { ...newUpiIds[index], [field]: value };
+    }
+    setUpiIds(newUpiIds);
+  };
+
+  const addUpiId = () => {
+    setUpiIds([...upiIds, { id: '', limit: 50000, currentAmount: 0 }]);
+  };
+
+  const removeUpiId = (index: number) => {
+    const newUpiIds = upiIds.filter((_, i) => i !== index);
+    setUpiIds(newUpiIds);
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await updateSettings({ upiId });
+      await updateSettings({ upiIds });
       toast({
         title: 'Success',
         description: 'Settings updated successfully!',
@@ -56,6 +76,27 @@ export default function SettingsPage() {
       setIsSaving(false);
     }
   };
+  
+  const resetDailyLimits = async () => {
+      setIsSaving(true);
+      try {
+        const resetUpiIds = upiIds.map(upi => ({ ...upi, currentAmount: 0 }));
+        await updateSettings({ upiIds: resetUpiIds });
+        setUpiIds(resetUpiIds);
+        toast({
+            title: 'Success',
+            description: 'Daily limits have been reset.',
+        });
+      } catch (error) {
+        toast({
+            title: 'Error',
+            description: 'Could not reset daily limits.',
+            variant: 'destructive'
+        });
+      } finally {
+        setIsSaving(false);
+      }
+  }
 
   if (loading) {
     return (
@@ -66,26 +107,67 @@ export default function SettingsPage() {
   }
 
   return (
-      <Card>
-          <CardHeader>
-              <CardTitle>Payment Settings</CardTitle>
-          </CardHeader>
-          <CardContent>
-              <div className="space-y-4">
+    <Card>
+      <CardHeader>
+        <CardTitle>Payment Settings</CardTitle>
+        <CardDescription>Manage UPI IDs for payments. The system will automatically rotate to the next available UPI ID once a limit is reached.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-6">
+          {upiIds.map((upi, index) => {
+            const progress = upi.limit > 0 ? (upi.currentAmount / upi.limit) * 100 : 0;
+            return (
+              <Card key={index} className="p-4 relative bg-muted/50">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                      <Label htmlFor="upiId">UPI ID</Label>
-                      <Input
-                      id="upiId"
-                      value={upiId}
-                      onChange={(e) => setUpiId(e.target.value)}
+                    <Label htmlFor={`upiId-${index}`}>UPI ID</Label>
+                    <Input
+                      id={`upiId-${index}`}
+                      value={upi.id}
+                      onChange={(e) => handleUpiIdChange(index, 'id', e.target.value)}
                       placeholder="your-upi-id@okhdfcbank"
-                      />
+                    />
                   </div>
-                  <Button onClick={handleSave} disabled={isSaving}>
-                      {isSaving ? 'Saving...' : 'Save Settings'}
-                  </Button>
-              </div>
-          </CardContent>
-      </Card>
+                  <div className="space-y-2">
+                    <Label htmlFor={`upiLimit-${index}`}>Daily Limit (₹)</Label>
+                    <Input
+                      id={`upiLimit-${index}`}
+                      type="number"
+                      value={upi.limit}
+                      onChange={(e) => handleUpiIdChange(index, 'limit', e.target.value)}
+                      placeholder="50000"
+                    />
+                  </div>
+                </div>
+                <div className="mt-4">
+                    <Label>Daily Progress</Label>
+                    <div className="flex items-center gap-4 mt-1">
+                        <Progress value={progress} className="w-full" />
+                        <span className="text-sm font-mono whitespace-nowrap">₹{upi.currentAmount.toLocaleString()} / ₹{upi.limit.toLocaleString()}</span>
+                    </div>
+                </div>
+                <Button variant="ghost" size="icon" className="absolute top-2 right-2 text-destructive" onClick={() => removeUpiId(index)}>
+                    <Trash2 className="h-4 w-4" />
+                </Button>
+              </Card>
+            )
+          })}
+
+          <Button variant="outline" onClick={addUpiId}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Add UPI ID
+          </Button>
+          
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button onClick={handleSave} disabled={isSaving}>
+              {isSaving ? 'Saving...' : 'Save Settings'}
+            </Button>
+             <Button onClick={resetDailyLimits} variant="destructive" disabled={isSaving}>
+              {isSaving ? 'Resetting...' : 'Reset All Daily Limits'}
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
