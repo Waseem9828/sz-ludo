@@ -74,7 +74,7 @@ export default function Header() {
           </Sheet>
           <div className="flex items-center gap-1">
             <Link href="/">
-              <Image src="/(1).png" alt="AKADDA Logo" width={24} height={24} />
+              <Image src="/ak-logo.png" alt="AKADDA Logo" width={24} height={24} />
             </Link>
             <Link href="/">
               <h1 className="text-xl font-headline font-bold">AKADDA</h1>
