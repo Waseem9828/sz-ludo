@@ -6,12 +6,14 @@ import Link from "next/link";
 
 const challenges = [
   {
+    id: "cl1",
     name: "bos...",
     amount: 50,
     avatar: "https://placehold.co/40x40/E62E2D/FFFFFF.png",
     avatarFallback: "B"
   },
   {
+    id: "cl2",
     name: "Tahir...",
     amount: 500,
     avatar: "https://placehold.co/40x40/F5A623/FFFFFF.png",
@@ -23,7 +25,7 @@ export default function ChallengeList() {
   return (
     <div className="space-y-4">
       {challenges.map((challenge, index) => (
-        <Card key={index} className="bg-card shadow-sm">
+        <Card key={challenge.id} className="bg-card shadow-sm">
           <CardContent className="p-3 flex items-center justify-between">
             <div className="flex flex-col">
                 <span className="text-xs text-muted-foreground">Challenge set by</span>
