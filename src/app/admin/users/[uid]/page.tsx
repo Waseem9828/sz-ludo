@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { getUser, AppUser, updateUserWallet, updateUserKycStatus } from '@/lib/firebase/users';
+import { getUser, AppUser, updateUserWallet, updateUserKycStatus, updateUserStatus } from '@/lib/firebase/users';
 import { listenForUserTransactions, Transaction } from '@/lib/firebase/transactions';
 import { SplashScreen } from '@/components/ui/splash-screen';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -119,6 +119,21 @@ export default function UserProfilePage() {
             setIsSubmitting(false);
         }
     };
+    
+    const handleUserStatusUpdate = async (status: AppUser['status']) => {
+        if (!user) return;
+        setIsSubmitting(true);
+        try {
+            await updateUserStatus(user.uid, status);
+            toast({ title: "Success", description: `User status updated to ${status}.` });
+            setUser(prevUser => prevUser ? { ...prevUser, status: status } : null);
+        } catch (error: any) {
+            toast({ title: "Error", description: error.message, variant: 'destructive' });
+        } finally {
+            setIsSubmitting(false);
+        }
+    }
+
 
     const getInitials = (name?: string | null) => {
         return name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U';
@@ -132,6 +147,14 @@ export default function UserProfilePage() {
             default: return 'outline';
         }
     };
+    
+    const getStatusBadgeVariant = (status?: string) => {
+        switch (status) {
+            case 'active': return 'default';
+            case 'suspended': return 'destructive';
+            default: return 'secondary';
+        }
+    }
 
     if (loading) {
         return <SplashScreen />;
@@ -161,6 +184,7 @@ export default function UserProfilePage() {
                         <p className="text-sm text-muted-foreground">{user.phone}</p>
                         <div className="flex items-center gap-2 pt-2">
                              <Badge variant={getKycBadgeVariant(user.kycStatus)}>{user.kycStatus || 'Pending'}</Badge>
+                             <Badge variant={getStatusBadgeVariant(user.status)}>{user.status || 'active'}</Badge>
                              <span className="text-xs text-muted-foreground">User ID: {user.uid}</span>
                         </div>
                     </div>
@@ -223,7 +247,15 @@ export default function UserProfilePage() {
                     
                     <Button variant="default" onClick={() => handleKycUpdate('Verified')} disabled={user.kycStatus === 'Verified' || isSubmitting}><Check className="mr-2 h-4 w-4" /> Approve KYC</Button>
                     <Button variant="destructive" onClick={() => handleKycUpdate('Rejected')} disabled={user.kycStatus === 'Rejected' || isSubmitting}><X className="mr-2 h-4 w-4" /> Reject KYC</Button>
-                    <Button variant="outline"><Ban className="mr-2 h-4 w-4" /> Suspend User</Button>
+                    {user.status !== 'suspended' ? (
+                        <Button variant="destructive" onClick={() => handleUserStatusUpdate('suspended')} disabled={isSubmitting}>
+                            <Ban className="mr-2 h-4 w-4" /> Suspend User
+                        </Button>
+                    ) : (
+                         <Button variant="default" onClick={() => handleUserStatusUpdate('active')} disabled={isSubmitting}>
+                            <Check className="mr-2 h-4 w-4" /> Un-suspend User
+                        </Button>
+                    )}
                 </CardContent>
             </Card>
 
@@ -264,3 +296,5 @@ export default function UserProfilePage() {
         </div>
     );
 }
+
+    

@@ -48,6 +48,12 @@ export default function WalletPage() {
 
     const handleWithdrawChips = async () => {
         if (!user || !appUser) return;
+        
+        if (appUser.kycStatus !== 'Verified') {
+            toast({ title: "KYC Not Verified", description: "Please complete and verify your KYC to enable withdrawals.", variant: "destructive" });
+            return;
+        }
+
         const amount = parseFloat(withdrawAmount);
         
         if (isNaN(amount) || amount <= 0) {
@@ -95,7 +101,7 @@ export default function WalletPage() {
     }
 
     const totalBalance = (appUser.wallet?.balance || 0) + (appUser.wallet?.winnings || 0);
-    const isKycPending = !appUser.kycStatus || appUser.kycStatus === 'Pending' || appUser.kycStatus === 'Rejected';
+    const isKycPending = appUser.kycStatus !== 'Verified';
 
     return (
         <div className="flex flex-col min-h-screen bg-background font-body">
@@ -123,10 +129,10 @@ export default function WalletPage() {
                         <CardContent className="p-3 flex justify-between items-center">
                             <div className="flex items-center gap-2">
                                 <AlertCircle className="h-5 w-5 text-destructive" />
-                                <span className="font-semibold text-destructive">KYC Pending</span>
+                                <span className="font-semibold text-destructive">KYC Not Verified</span>
                             </div>
                             <Link href="/kyc">
-                                <Button variant="destructive" size="sm">Complete Here</Button>
+                                <Button variant="destructive" size="sm">Complete Now</Button>
                             </Link>
                         </CardContent>
                     </Card>
@@ -209,3 +215,5 @@ export default function WalletPage() {
         </div>
     );
 }
+
+    

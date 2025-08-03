@@ -1,6 +1,6 @@
 
 
-import { collection, addDoc, serverTimestamp, where, query, onSnapshot, updateDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, where, query, onSnapshot, updateDoc, doc, writeBatch } from 'firebase/firestore';
 import { db, storage } from './config';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
@@ -8,7 +8,7 @@ const TRANSACTIONS_COLLECTION = 'transactions';
 export const DEPOSITS_COLLECTION = 'deposits';
 
 
-export type TransactionType = 'deposit' | 'withdrawal' | 'winnings' | 'game_fee' | 'penalty' | 'refund' | 'deposit_manual' | 'withdrawal_manual';
+export type TransactionType = 'deposit' | 'withdrawal' | 'winnings' | 'game_fee' | 'penalty' | 'refund' | 'deposit_manual' | 'withdrawal_manual' | 'withdrawal_rejection';
 export type TransactionStatus = 'pending' | 'completed' | 'failed' | 'rejected' | 'approved';
 
 export interface Transaction {
@@ -19,8 +19,7 @@ export interface Transaction {
     type: TransactionType;
     status: TransactionStatus;
     createdAt: any;
-    relatedGameId?: string;
-    upiId?: string; // For deposits and withdrawals
+    relatedId?: string; // For deposits, withdrawals, games etc.
     notes?: string; // For manual adjustments
 }
 
@@ -53,11 +52,31 @@ export const createDepositRequest = async (data: {
 
     // 2. Create the document in Firestore
     const { screenshotFile, ...firestoreData } = data;
-    return await addDoc(collection(db, DEPOSITS_COLLECTION), {
+    
+    const depositRef = doc(collection(db, DEPOSITS_COLLECTION));
+    
+    const batch = writeBatch(db);
+    
+    batch.set(depositRef, {
         ...firestoreData,
         screenshotUrl,
         createdAt: serverTimestamp(),
     });
+    
+    // Create a corresponding transaction log
+    createTransaction({
+        userId: data.userId,
+        userName: data.userName,
+        amount: data.amount,
+        type: 'deposit',
+        status: 'pending',
+        relatedId: depositRef.id,
+        notes: `Deposit request to ${data.upiId}`
+    });
+    
+    await batch.commit();
+
+    return depositRef;
 };
 
 export const updateDepositStatus = async (id: string, status: DepositRequest['status']) => {
@@ -119,3 +138,5 @@ export const listenForUserTransactions = (
 
     return unsubscribe;
 };
+
+    

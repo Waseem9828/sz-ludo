@@ -9,7 +9,8 @@ import {
     doc,
     updateDoc,
     writeBatch,
-    increment
+    increment,
+    getDoc
 } from 'firebase/firestore';
 import { db } from './config';
 import { createTransaction } from './transactions';
@@ -39,12 +40,29 @@ export const createWithdrawalRequest = async (data: {
      const userRef = doc(db, 'users', data.userId);
      const withdrawalRef = doc(collection(db, WITHDRAWALS_COLLECTION));
 
+     const userSnap = await getDoc(userRef);
+     if (!userSnap.exists() || userSnap.data().wallet.winnings < data.amount) {
+         throw new Error("Insufficient winning balance.");
+     }
+
      // 1. Decrement user's winnings
      batch.update(userRef, { 'wallet.winnings': increment(-data.amount) });
 
      // 2. Create withdrawal request
      batch.set(withdrawalRef, {
         ...data,
+        createdAt: serverTimestamp()
+     });
+
+     // 3. Create a pending transaction log
+     const transactionRef = doc(collection(db, 'transactions'));
+     batch.set(transactionRef, {
+        userId: data.userId,
+        userName: data.userName,
+        amount: data.amount,
+        type: 'withdrawal',
+        status: 'pending',
+        relatedId: withdrawalRef.id,
         createdAt: serverTimestamp()
      });
 
@@ -80,3 +98,5 @@ export const listenForWithdrawals = (
 
     return unsubscribe;
 };
+
+    

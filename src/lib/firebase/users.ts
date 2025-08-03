@@ -1,6 +1,7 @@
+
 import { doc, getDoc, updateDoc, increment, collection, onSnapshot, writeBatch } from 'firebase/firestore';
 import { db } from './config';
-import { createTransaction } from './transactions';
+import { createTransaction, TransactionType } from './transactions';
 
 export interface AppUser {
     uid: string;
@@ -8,6 +9,7 @@ export interface AppUser {
     displayName: string | null;
     phone?: string;
     photoURL?: string | null;
+    status?: 'active' | 'suspended';
     wallet?: {
         balance: number;
         winnings: number;
@@ -37,7 +39,7 @@ export const getUser = async (uid: string): Promise<AppUser | null> => {
 }
 
 
-export const updateUserWallet = async (uid: string, amount: number, type: 'balance' | 'winnings', notes?: string) => {
+export const updateUserWallet = async (uid: string, amount: number, type: 'balance' | 'winnings', transactionType?: TransactionType, notes?: string) => {
     const userRef = doc(db, 'users', uid);
     const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) throw new Error("User not found");
@@ -52,18 +54,22 @@ export const updateUserWallet = async (uid: string, amount: number, type: 'balan
     });
 
     // Create a transaction log
-    let transactionType;
-    if (amount > 0) {
-        transactionType = type === 'balance' ? 'deposit_manual' : 'winnings';
+    let finalTransactionType: TransactionType;
+    if (transactionType) {
+        finalTransactionType = transactionType;
     } else {
-        transactionType = type === 'balance' ? 'game_fee' : 'withdrawal_manual';
+        if (amount > 0) {
+            finalTransactionType = type === 'balance' ? 'deposit_manual' : 'winnings';
+        } else {
+            finalTransactionType = type === 'balance' ? 'game_fee' : 'withdrawal_manual';
+        }
     }
     
      await createTransaction({
         userId: uid,
         userName: userData.displayName || 'N/A',
         amount: Math.abs(amount),
-        type: transactionType,
+        type: finalTransactionType,
         status: 'completed',
         notes: notes || (amount > 0 ? 'Admin Credit' : 'Admin Debit'),
     });
@@ -75,6 +81,11 @@ export const updateUserKycStatus = async (uid: string, status: AppUser['kycStatu
     const userRef = doc(db, 'users', uid);
     return await updateDoc(userRef, { kycStatus: status });
 }
+
+export const updateUserStatus = async (uid: string, status: AppUser['status']) => {
+    const userRef = doc(db, 'users', uid);
+    return await updateDoc(userRef, { status: status });
+};
 
 
 export const listenForAllUsers = (
@@ -98,3 +109,5 @@ export const listenForAllUsers = (
 
     return unsubscribe;
 }
+
+    

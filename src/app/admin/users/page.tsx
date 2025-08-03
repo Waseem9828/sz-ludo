@@ -53,6 +53,17 @@ export default function UsersPage() {
                 return 'outline';
         }
     };
+
+    const getStatusBadgeVariant = (status?: string) => {
+        switch (status) {
+            case 'active':
+                return 'default';
+            case 'suspended':
+                return 'destructive';
+            default:
+                return 'secondary';
+        }
+    };
     
     const getInitials = (name?: string | null) => {
         return name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U';
@@ -80,6 +91,7 @@ export default function UsersPage() {
               <TableHead>Wallet (Dep / Win)</TableHead>
               <TableHead>Lifetime (Dep / With)</TableHead>
               <TableHead>Game Stats (P / W / L)</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead>KYC Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -124,6 +136,9 @@ export default function UsersPage() {
                     </div>
                 </TableCell>
                 <TableCell>
+                    <Badge variant={getStatusBadgeVariant(user.status || 'active') as any}>{user.status || 'active'}</Badge>
+                </TableCell>
+                <TableCell>
                     <Badge variant={getKycBadgeVariant(user.kycStatus || 'Pending') as any}>{user.kycStatus || 'Pending'}</Badge>
                 </TableCell>
                 <TableCell className="text-right">
@@ -148,3 +163,5 @@ export default function UsersPage() {
     </Card>
   );
 }
+
+    
