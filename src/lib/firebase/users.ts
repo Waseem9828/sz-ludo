@@ -1,7 +1,7 @@
 
-import { doc, getDoc, updateDoc, increment, collection, onSnapshot, writeBatch } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, increment, collection, onSnapshot, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { db } from './config';
-import { createTransaction, TransactionType } from './transactions';
+import { TransactionType } from './transactions';
 
 export interface AppUser {
     uid: string;
@@ -59,21 +59,24 @@ export const updateUserWallet = async (uid: string, amount: number, type: 'balan
             'lifetimeStats.totalDeposits': increment(amount)
         });
     } else if (transactionType === 'withdrawal') {
-        // For withdrawals, the amount is deducted from winnings, but the stat is a positive number
+        // For withdrawals, the amount is already positive from the withdrawal request, just increment the stat
          batch.update(userRef, {
-            'lifetimeStats.totalWithdrawals': increment(Math.abs(amount))
+            'lifetimeStats.totalWithdrawals': increment(amount)
         });
     }
 
-    // Create a transaction log
-     await createTransaction({
+    // Create a transaction log in the same batch
+    const transactionRef = doc(collection(db, 'transactions'));
+    batch.set(transactionRef, {
         userId: uid,
         userName: userData.displayName || 'N/A',
         amount: Math.abs(amount),
         type: transactionType,
         status: 'completed',
         notes: notes || (amount > 0 ? 'Admin Credit' : 'Admin Debit'),
+        createdAt: serverTimestamp(),
     });
+
 
     return batch.commit();
 }

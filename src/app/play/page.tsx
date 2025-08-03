@@ -58,9 +58,10 @@ export default function PlayPage() {
   const handleChallengeCreated = async (roomCode: string) => {
     if (!user || !appUser || !challengeAmount) return;
     try {
-        // Deduct amount from user's wallet
+        // First, deduct the amount from user's wallet
         await updateUserWallet(user.uid, -challengeAmount, 'balance', 'game_fee', 'Challenge Created');
 
+        // Then, create the challenge
         await createChallenge({
             amount: challengeAmount,
             createdBy: {
@@ -78,11 +79,25 @@ export default function PlayPage() {
         setAmount('');
         setChallengeAmount(0);
     } catch(error: any) {
-        // Re-credit user if challenge creation fails
-        await updateUserWallet(user.uid, challengeAmount, 'balance', 'refund', 'Challenge Creation Failed');
+        // If challenge creation fails for any reason, refund the user.
+        // The wallet update should be robust enough to handle this.
+        // We will try to refund the user.
+        try {
+            await updateUserWallet(user.uid, challengeAmount, 'balance', 'refund', 'Challenge Creation Failed');
+        } catch (refundError: any) {
+            // If refund fails, log it and notify user to contact support
+             toast({
+                title: 'Critical Error!',
+                description: `Failed to create challenge AND failed to refund your balance. Please contact support immediately. Error: ${refundError.message}`,
+                variant: 'destructive',
+                duration: 10000,
+            });
+            return;
+        }
+
         toast({
             title: 'Error Creating Challenge',
-            description: error.message,
+            description: `Something went wrong: ${error.message}. Your balance has been refunded.`,
             variant: 'destructive',
         });
     }
