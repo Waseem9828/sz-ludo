@@ -1,6 +1,6 @@
 
 
-import { collection, addDoc, serverTimestamp, where, query, onSnapshot, updateDoc, doc, writeBatch, orderBy } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, where, query, onSnapshot, updateDoc, doc, writeBatch, orderBy, getDocs } from 'firebase/firestore';
 import { db, storage } from './config';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
@@ -68,18 +68,14 @@ export const updateDepositStatus = async (id: string, status: DepositRequest['st
 
     // Also update the corresponding transaction log if it exists
     const q = query(collection(db, TRANSACTIONS_COLLECTION), where("relatedId", "==", id));
-    const querySnapshot = await onSnapshot(q, (snapshot) => {
-        snapshot.docs.forEach((doc) => {
-            if (doc.exists()) {
-                const transactionRef = doc.ref;
-                batch.update(transactionRef, { status: status === 'approved' ? 'completed' : status });
-            }
-        });
+    const querySnapshot = await getDocs(q);
+
+    querySnapshot.forEach((doc) => {
+        if (doc.exists()) {
+            const transactionRef = doc.ref;
+            batch.update(transactionRef, { status: status === 'approved' ? 'completed' : status });
+        }
     });
-    
-    // Unsubscribe after first snapshot to avoid memory leaks
-    const unsubscribe = onSnapshot(q, () => {});
-    unsubscribe();
 
     return batch.commit();
 }
