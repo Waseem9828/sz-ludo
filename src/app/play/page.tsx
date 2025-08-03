@@ -59,7 +59,7 @@ export default function PlayPage() {
     if (!user || !appUser || !challengeAmount) return;
     try {
         // Deduct amount from user's wallet
-        await updateUserWallet(user.uid, -challengeAmount, 'balance');
+        await updateUserWallet(user.uid, -challengeAmount, 'balance', 'game_fee', 'Challenge Created');
 
         await createChallenge({
             amount: challengeAmount,
@@ -79,7 +79,7 @@ export default function PlayPage() {
         setChallengeAmount(0);
     } catch(error: any) {
         // Re-credit user if challenge creation fails
-        await updateUserWallet(user.uid, challengeAmount, 'balance');
+        await updateUserWallet(user.uid, challengeAmount, 'balance', 'refund', 'Challenge Creation Failed');
         toast({
             title: 'Error Creating Challenge',
             description: error.message,
