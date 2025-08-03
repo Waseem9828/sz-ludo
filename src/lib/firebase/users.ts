@@ -39,46 +39,50 @@ export const getUser = async (uid: string): Promise<AppUser | null> => {
 }
 
 
-export const updateUserWallet = async (uid: string, amount: number, type: 'balance' | 'winnings', transactionType: TransactionType, notes?: string) => {
+export const updateUserWallet = async (uid: string, amount: number, type: 'balance' | 'winnings', transactionType: TransactionType, notes?: string, relatedId?: string) => {
     const userRef = doc(db, 'users', uid);
-    const userSnap = await getDoc(userRef);
-    if (!userSnap.exists()) throw new Error("User not found");
-    const userData = userSnap.data() as AppUser;
-
-    const batch = writeBatch(db);
     
-    // Update wallet balance
-    const fieldToUpdate = type === 'balance' ? 'wallet.balance' : 'wallet.winnings';
-    batch.update(userRef, {
-        [fieldToUpdate]: increment(amount)
-    });
+    return db.runTransaction(async (transaction) => {
+        const userSnap = await transaction.get(userRef);
+        if (!userSnap.exists()) {
+            throw new Error("User not found");
+        }
+        const userData = userSnap.data() as AppUser;
 
-    // Update lifetime stats if it's a deposit or withdrawal
-    if (transactionType === 'deposit') {
-        batch.update(userRef, {
-            'lifetimeStats.totalDeposits': increment(amount)
+        // Determine the wallet field to update
+        const fieldToUpdate = type === 'balance' ? 'wallet.balance' : 'wallet.winnings';
+        const currentBalance = userData.wallet ? userData.wallet[type] : 0;
+
+        // Check for sufficient funds if amount is negative
+        if (amount < 0 && currentBalance < Math.abs(amount)) {
+            throw new Error(`Insufficient ${type} balance.`);
+        }
+        
+        // --- Start Batch Operations ---
+        transaction.update(userRef, {
+            [fieldToUpdate]: increment(amount)
         });
-    } else if (transactionType === 'withdrawal') {
-        // For withdrawals, the amount is already positive from the withdrawal request, just increment the stat
-         batch.update(userRef, {
-            'lifetimeStats.totalWithdrawals': increment(amount)
+
+        // Update lifetime stats for deposits or approved withdrawals
+        if (transactionType === 'deposit') {
+            transaction.update(userRef, { 'lifetimeStats.totalDeposits': increment(amount) });
+        } else if (transactionType === 'withdrawal' && notes === 'Withdrawal Approved') {
+            transaction.update(userRef, { 'lifetimeStats.totalWithdrawals': increment(amount) });
+        }
+
+        // Create a transaction log
+        const transactionRef = doc(collection(db, 'transactions'));
+        transaction.set(transactionRef, {
+            userId: uid,
+            userName: userData.displayName || 'N/A',
+            amount: Math.abs(amount),
+            type: transactionType,
+            status: 'completed', // Default to completed for direct updates
+            notes: notes,
+            relatedId: relatedId || null,
+            createdAt: serverTimestamp(),
         });
-    }
-
-    // Create a transaction log in the same batch
-    const transactionRef = doc(collection(db, 'transactions'));
-    batch.set(transactionRef, {
-        userId: uid,
-        userName: userData.displayName || 'N/A',
-        amount: Math.abs(amount),
-        type: transactionType,
-        status: 'completed',
-        notes: notes || (amount > 0 ? 'Admin Credit' : 'Admin Debit'),
-        createdAt: serverTimestamp(),
     });
-
-
-    return batch.commit();
 }
 
 export const updateUserKycStatus = async (uid: string, status: AppUser['kycStatus']) => {

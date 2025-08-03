@@ -4,23 +4,35 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import Header from '@/components/play/header';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronLeft, Loader } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import Script from 'next/script';
+import { SplashScreen } from '@/components/ui/splash-screen';
+import { useSearchParams } from 'next/navigation';
 
 const quickAmounts = [100, 200, 500, 1000, 2000, 5000, 7500, 10000];
 
-export default function AddCashPage() {
+function AddCashPageComponent() {
   const [amount, setAmount] = useState('100');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [paytmConfig, setPaytmConfig] = useState<any>(null);
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, appUser, loading } = useAuth();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const paymentStatus = searchParams.get('payment');
+    if (paymentStatus === 'success') {
+      toast({ title: 'Payment Successful', description: 'Your wallet has been credited.' });
+    } else if (paymentStatus === 'failed') {
+      toast({ title: 'Payment Failed', description: 'Your payment could not be completed. Please try again.', variant: 'destructive' });
+    } else if (paymentStatus === 'error') {
+      toast({ title: 'Payment Error', description: 'An unexpected error occurred. Please contact support.', variant: 'destructive' });
+    }
+  }, [searchParams, toast]);
   
   const handleProceed = async () => {
     if (!user) {
@@ -29,8 +41,8 @@ export default function AddCashPage() {
     }
 
     const numericAmount = parseFloat(amount);
-    if (isNaN(numericAmount) || numericAmount <= 0) {
-      toast({ title: 'Invalid Amount', description: 'Please enter a valid amount to add.', variant: 'destructive' });
+    if (isNaN(numericAmount) || numericAmount < 10) {
+      toast({ title: 'Invalid Amount', description: 'Please enter an amount of at least ₹10.', variant: 'destructive' });
       return;
     }
     
@@ -49,27 +61,19 @@ export default function AddCashPage() {
 
       const data = await response.json();
       
-      if (response.ok) {
-        setPaytmConfig(data);
-      } else {
+      if (!response.ok) {
         throw new Error(data.error || 'Failed to initiate transaction.');
       }
-    } catch (error: any) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
-      setIsSubmitting(false);
-    }
-  };
-
-  useEffect(() => {
-    if (paytmConfig && (window as any).Paytm && (window as any).Paytm.CheckoutJS) {
+      
+      // We have the token, now invoke Paytm Checkout
       const config = {
         "root": "",
         "flow": "DEFAULT",
         "data": {
-          "orderId": paytmConfig.orderId,
-          "token": paytmConfig.txnToken,
+          "orderId": data.orderId,
+          "token": data.txnToken,
           "tokenType": "TXN_TOKEN",
-          "amount": paytmConfig.amount
+          "amount": data.amount
         },
         "handler": {
           "notifyMerchant": function(eventName: string, data: any) {
@@ -79,18 +83,24 @@ export default function AddCashPage() {
           }
         }
       };
-      
-      (window as any).Paytm.CheckoutJS.init(config).then(function onSuccess() {
-        (window as any).Paytm.CheckoutJS.invoke();
-        setIsSubmitting(false);
-        setPaytmConfig(null);
-      }).catch(function onError(error: any) {
-        toast({ title: 'Paytm Error', description: error.message, variant: 'destructive' });
-        setIsSubmitting(false);
-        setPaytmConfig(null);
-      });
+
+      if ((window as any).Paytm && (window as any).Paytm.CheckoutJS) {
+        (window as any).Paytm.CheckoutJS.init(config).then(function onSuccess() {
+            (window as any).Paytm.CheckoutJS.invoke();
+        }).catch(function onError(error: any) {
+            console.error("Paytm CheckoutJS Error: ", error);
+            toast({ title: 'Paytm Error', description: `Could not start payment flow: ${error.message}`, variant: 'destructive' });
+            setIsSubmitting(false);
+        });
+      } else {
+        throw new Error("Paytm CheckoutJS is not loaded.");
+      }
+
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      setIsSubmitting(false);
     }
-  }, [paytmConfig, toast]);
+  };
 
 
   const summary = useMemo(() => {
@@ -106,13 +116,19 @@ export default function AddCashPage() {
         walletBalance: numericAmount.toFixed(2)
     }
   }, [amount]);
+  
+  if (loading) {
+    return <SplashScreen />;
+  }
 
   return (
     <>
       <Script
+        id="paytm-checkout-js"
         type="application/javascript"
-        crossOrigin="anonymous"
         src={`https://securegw-stage.paytm.in/merchantpgpui/checkoutjs/merchants/${process.env.NEXT_PUBLIC_PAYTM_MID}.js`}
+        onLoad={() => console.log('Paytm CheckoutJS script loaded.')}
+        onError={(e) => console.error('Error loading Paytm script:', e)}
       />
       <div className="flex flex-col min-h-screen bg-background font-body">
         <Header />
@@ -129,6 +145,7 @@ export default function AddCashPage() {
           <Card className="max-w-md mx-auto">
             <CardHeader>
               <CardTitle className="text-center text-xl font-semibold text-red-600">Add Cash to Wallet</CardTitle>
+              <CardDescription className="text-center">100% Safe and Secure Payments</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
@@ -180,13 +197,13 @@ export default function AddCashPage() {
                           <span>Total</span>
                           <span>₹{summary.total}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-green-600">
                           <span>Cashback Bonus B</span>
                           <span>₹{summary.cashback}</span>
                   </div>
                   <hr/>
                   <div className="flex justify-between font-bold">
-                          <span>Add To Wallet Balance A + B</span>
+                          <span>Add To Wallet Balance (A + B)</span>
                           <span>₹{summary.walletBalance}</span>
                   </div>
                   </CardContent>
@@ -198,3 +215,13 @@ export default function AddCashPage() {
     </>
   );
 }
+
+
+export default function AddCashPage() {
+    return (
+        <React.Suspense fallback={<SplashScreen />}>
+            <AddCashPageComponent />
+        </React.Suspense>
+    );
+}
+
