@@ -70,7 +70,7 @@ export default function DepositsPage() {
                 description: 'The deposit request has been rejected.',
                 variant: 'destructive'
             });
-        } catch (error: any) => {
+        } catch (error: any) {
             toast({
                 title: 'Rejection Failed',
                 description: error.message,
