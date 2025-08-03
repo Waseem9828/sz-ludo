@@ -7,12 +7,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { getSettings, updateSettings, UpiId } from '@/lib/firebase/settings';
+import { getSettings, updateSettings, UpiId, AppSettings } from '@/lib/firebase/settings';
 import { Loader, Trash2, PlusCircle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function SettingsPage() {
-  const [upiIds, setUpiIds] = useState<UpiId[]>([]);
+  const [settings, setSettings] = useState<AppSettings>({ upiIds: [] });
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
@@ -20,10 +22,8 @@ export default function SettingsPage() {
   useEffect(() => {
     async function fetchSettings() {
       try {
-        const settings = await getSettings();
-        if (settings && settings.upiIds) {
-          setUpiIds(settings.upiIds);
-        }
+        const fetchedSettings = await getSettings();
+        setSettings(fetchedSettings);
       } catch (error) {
         console.error("Error fetching settings: ", error);
         toast({
@@ -39,28 +39,34 @@ export default function SettingsPage() {
   }, [toast]);
 
   const handleUpiIdChange = (index: number, field: keyof UpiId, value: string | number) => {
-    const newUpiIds = [...upiIds];
-    if (typeof newUpiIds[index][field] === 'number') {
-        newUpiIds[index] = { ...newUpiIds[index], [field]: Number(value) };
+    const newUpiIds = [...(settings.upiIds || [])];
+    const upi = newUpiIds[index];
+    if (typeof upi[field] === 'number') {
+        newUpiIds[index] = { ...upi, [field]: Number(value) };
     } else {
-        newUpiIds[index] = { ...newUpiIds[index], [field]: value };
+        newUpiIds[index] = { ...upi, [field]: value };
     }
-    setUpiIds(newUpiIds);
+    setSettings(prev => ({ ...prev, upiIds: newUpiIds }));
   };
+  
+  const handleContentChange = (field: keyof AppSettings, value: string) => {
+      setSettings(prev => ({ ...prev, [field]: value }));
+  }
 
   const addUpiId = () => {
-    setUpiIds([...upiIds, { id: '', name: '', limit: 50000, currentAmount: 0 }]);
+    const newUpiIds = [...(settings.upiIds || []), { id: '', name: '', limit: 50000, currentAmount: 0 }];
+    setSettings(prev => ({ ...prev, upiIds: newUpiIds }));
   };
 
   const removeUpiId = (index: number) => {
-    const newUpiIds = upiIds.filter((_, i) => i !== index);
-    setUpiIds(newUpiIds);
+    const newUpiIds = (settings.upiIds || []).filter((_, i) => i !== index);
+    setSettings(prev => ({ ...prev, upiIds: newUpiIds }));
   };
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await updateSettings({ upiIds });
+      await updateSettings(settings);
       toast({
         title: 'Success',
         description: 'Settings updated successfully!',
@@ -80,9 +86,9 @@ export default function SettingsPage() {
   const resetDailyLimits = async () => {
       setIsSaving(true);
       try {
-        const resetUpiIds = upiIds.map(upi => ({ ...upi, currentAmount: 0 }));
-        await updateSettings({ upiIds: resetUpiIds });
-        setUpiIds(resetUpiIds);
+        const resetUpiIds = (settings.upiIds || []).map(upi => ({ ...upi, currentAmount: 0 }));
+        await updateSettings({ ...settings, upiIds: resetUpiIds });
+        setSettings(prev => ({...prev, upiIds: resetUpiIds}));
         toast({
             title: 'Success',
             description: 'Daily limits have been reset.',
@@ -108,75 +114,124 @@ export default function SettingsPage() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Payment Settings</CardTitle>
-        <CardDescription>Manage UPI IDs for payments. The system will automatically rotate to the next available UPI ID once a limit is reached.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-6">
-          {upiIds.map((upi, index) => {
-            const progress = upi.limit > 0 ? (upi.currentAmount / upi.limit) * 100 : 0;
-            return (
-              <Card key={index} className="p-4 relative bg-muted/50">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor={`upiId-${index}`}>UPI ID</Label>
-                    <Input
-                      id={`upiId-${index}`}
-                      value={upi.id}
-                      onChange={(e) => handleUpiIdChange(index, 'id', e.target.value)}
-                      placeholder="your-upi-id@okhdfcbank"
-                    />
-                  </div>
-                   <div className="space-y-2">
-                    <Label htmlFor={`upiName-${index}`}>Account Holder Name</Label>
-                    <Input
-                      id={`upiName-${index}`}
-                      value={upi.name}
-                      onChange={(e) => handleUpiIdChange(index, 'name', e.target.value)}
-                      placeholder="John Doe"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor={`upiLimit-${index}`}>Daily Limit (₹)</Label>
-                    <Input
-                      id={`upiLimit-${index}`}
-                      type="number"
-                      value={upi.limit}
-                      onChange={(e) => handleUpiIdChange(index, 'limit', e.target.value)}
-                      placeholder="50000"
-                    />
-                  </div>
-                </div>
-                <div className="mt-4">
-                    <Label>Daily Progress</Label>
-                    <div className="flex items-center gap-4 mt-1">
-                        <Progress value={progress} className="w-full" />
-                        <span className="text-sm font-mono whitespace-nowrap">₹{upi.currentAmount.toLocaleString()} / ₹{upi.limit.toLocaleString()}</span>
-                    </div>
-                </div>
-                <Button variant="ghost" size="icon" className="absolute top-2 right-2 text-destructive" onClick={() => removeUpiId(index)}>
-                    <Trash2 className="h-4 w-4" />
-                </Button>
-              </Card>
-            )
-          })}
+        <CardHeader>
+            <CardTitle>App Settings</CardTitle>
+            <CardDescription>Manage your application's settings from one place.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <Tabs defaultValue="payments">
+                <TabsList className="mb-4">
+                    <TabsTrigger value="payments">Payment Settings</TabsTrigger>
+                    <TabsTrigger value="content">Content Management</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="payments">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Payment Settings</CardTitle>
+                            <CardDescription>Manage UPI IDs for payments. The system will automatically rotate to the next available UPI ID once a limit is reached.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-6">
+                            {(settings.upiIds || []).map((upi, index) => {
+                                const progress = upi.limit > 0 ? (upi.currentAmount / upi.limit) * 100 : 0;
+                                return (
+                                <Card key={index} className="p-4 relative bg-muted/50">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor={`upiId-${index}`}>UPI ID</Label>
+                                        <Input
+                                        id={`upiId-${index}`}
+                                        value={upi.id}
+                                        onChange={(e) => handleUpiIdChange(index, 'id', e.target.value)}
+                                        placeholder="your-upi-id@okhdfcbank"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor={`upiName-${index}`}>Account Holder Name</Label>
+                                        <Input
+                                        id={`upiName-${index}`}
+                                        value={upi.name}
+                                        onChange={(e) => handleUpiIdChange(index, 'name', e.target.value)}
+                                        placeholder="John Doe"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor={`upiLimit-${index}`}>Daily Limit (₹)</Label>
+                                        <Input
+                                        id={`upiLimit-${index}`}
+                                        type="number"
+                                        value={upi.limit}
+                                        onChange={(e) => handleUpiIdChange(index, 'limit', e.target.value)}
+                                        placeholder="50000"
+                                        />
+                                    </div>
+                                    </div>
+                                    <div className="mt-4">
+                                        <Label>Daily Progress</Label>
+                                        <div className="flex items-center gap-4 mt-1">
+                                            <Progress value={progress} className="w-full" />
+                                            <span className="text-sm font-mono whitespace-nowrap">₹{upi.currentAmount.toLocaleString()} / ₹{upi.limit.toLocaleString()}</span>
+                                        </div>
+                                    </div>
+                                    <Button variant="ghost" size="icon" className="absolute top-2 right-2 text-destructive" onClick={() => removeUpiId(index)}>
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </Card>
+                                )
+                            })}
 
-          <Button variant="outline" onClick={addUpiId}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Add UPI ID
-          </Button>
-          
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Button onClick={handleSave} disabled={isSaving}>
-              {isSaving ? 'Saving...' : 'Save Settings'}
-            </Button>
-             <Button onClick={resetDailyLimits} variant="destructive" disabled={isSaving}>
-              {isSaving ? 'Resetting...' : 'Reset All Daily Limits'}
-            </Button>
-          </div>
-        </div>
-      </CardContent>
+                            <Button variant="outline" onClick={addUpiId}>
+                                <PlusCircle className="mr-2 h-4 w-4" />
+                                Add UPI ID
+                            </Button>
+                            
+                            <div className="flex flex-col sm:flex-row gap-2">
+                                <Button onClick={handleSave} disabled={isSaving}>
+                                {isSaving ? 'Saving...' : 'Save All Settings'}
+                                </Button>
+                                <Button onClick={resetDailyLimits} variant="destructive" disabled={isSaving}>
+                                {isSaving ? 'Resetting...' : 'Reset All Daily Limits'}
+                                </Button>
+                            </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="content">
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>Content Management</CardTitle>
+                            <CardDescription>Update the text for your legal and information pages here. Use Markdown for formatting.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="terms-content">Terms and Conditions</Label>
+                                <Textarea id="terms-content" value={settings.termsContent || ''} onChange={(e) => handleContentChange('termsContent', e.target.value)} rows={15} />
+                            </div>
+                             <div className="space-y-2">
+                                <Label htmlFor="privacy-content">Privacy Policy</Label>
+                                <Textarea id="privacy-content" value={settings.privacyContent || ''} onChange={(e) => handleContentChange('privacyContent', e.target.value)} rows={15} />
+                            </div>
+                             <div className="space-y-2">
+                                <Label htmlFor="refund-content">Refund Policy</Label>
+                                <Textarea id="refund-content" value={settings.refundContent || ''} onChange={(e) => handleContentChange('refundContent', e.target.value)} rows={15} />
+                            </div>
+                             <div className="space-y-2">
+                                <Label htmlFor="gst-content">GST Policy</Label>
+                                <Textarea id="gst-content" value={settings.gstContent || ''} onChange={(e) => handleContentChange('gstContent', e.target.value)} rows={15} />
+                            </div>
+                             <div className="flex flex-col sm:flex-row gap-2">
+                                <Button onClick={handleSave} disabled={isSaving}>
+                                {isSaving ? 'Saving...' : 'Save All Settings'}
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+            </Tabs>
+        </CardContent>
     </Card>
   );
 }

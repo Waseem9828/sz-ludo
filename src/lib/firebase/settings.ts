@@ -14,7 +14,11 @@ export interface UpiId {
 
 export interface AppSettings {
   upiIds?: UpiId[];
-  // Add other settings here in the future
+  // Content Management
+  termsContent?: string;
+  privacyContent?: string;
+  refundContent?: string;
+  gstContent?: string;
 }
 
 export const getSettings = async (): Promise<AppSettings> => {
@@ -28,7 +32,13 @@ export const getSettings = async (): Promise<AppSettings> => {
     return { ...data, upiIds: upiIds };
   } else {
     // If the document doesn't exist, create it with default values
-    const initialSettings: AppSettings = { upiIds: [] };
+    const initialSettings: AppSettings = { 
+        upiIds: [],
+        termsContent: '',
+        privacyContent: '',
+        refundContent: '',
+        gstContent: '',
+    };
     await setDoc(docRef, initialSettings);
     return initialSettings;
   }
@@ -36,7 +46,7 @@ export const getSettings = async (): Promise<AppSettings> => {
 
 export const updateSettings = async (settings: Partial<AppSettings>): Promise<void> => {
   const docRef = doc(db, SETTINGS_COLLECTION, APP_CONFIG_DOC);
-  await updateDoc(docRef, settings);
+  await setDoc(docRef, settings, { merge: true });
 };
 
 
