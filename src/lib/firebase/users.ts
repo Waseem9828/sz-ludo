@@ -39,37 +39,38 @@ export const getUser = async (uid: string): Promise<AppUser | null> => {
 }
 
 
-export const updateUserWallet = async (uid: string, amount: number, type: 'balance' | 'winnings', transactionType?: TransactionType, notes?: string) => {
+export const updateUserWallet = async (uid: string, amount: number, type: 'balance' | 'winnings', transactionType: TransactionType, notes?: string) => {
     const userRef = doc(db, 'users', uid);
     const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) throw new Error("User not found");
     const userData = userSnap.data() as AppUser;
 
-    const fieldToUpdate = type === 'balance' ? 'wallet.balance' : 'wallet.winnings';
-    
     const batch = writeBatch(db);
-
+    
+    // Update wallet balance
+    const fieldToUpdate = type === 'balance' ? 'wallet.balance' : 'wallet.winnings';
     batch.update(userRef, {
         [fieldToUpdate]: increment(amount)
     });
 
-    // Create a transaction log
-    let finalTransactionType: TransactionType;
-    if (transactionType) {
-        finalTransactionType = transactionType;
-    } else {
-        if (amount > 0) {
-            finalTransactionType = type === 'balance' ? 'deposit_manual' : 'winnings';
-        } else {
-            finalTransactionType = type === 'balance' ? 'game_fee' : 'withdrawal_manual';
-        }
+    // Update lifetime stats if it's a deposit or withdrawal
+    if (transactionType === 'deposit') {
+        batch.update(userRef, {
+            'lifetimeStats.totalDeposits': increment(amount)
+        });
+    } else if (transactionType === 'withdrawal') {
+        // For withdrawals, the amount is deducted from winnings, but the stat is a positive number
+         batch.update(userRef, {
+            'lifetimeStats.totalWithdrawals': increment(Math.abs(amount))
+        });
     }
-    
+
+    // Create a transaction log
      await createTransaction({
         userId: uid,
         userName: userData.displayName || 'N/A',
         amount: Math.abs(amount),
-        type: finalTransactionType,
+        type: transactionType,
         status: 'completed',
         notes: notes || (amount > 0 ? 'Admin Credit' : 'Admin Debit'),
     });
@@ -109,5 +110,3 @@ export const listenForAllUsers = (
 
     return unsubscribe;
 }
-
-    

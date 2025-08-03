@@ -10,10 +10,12 @@ import {
     updateDoc,
     writeBatch,
     increment,
-    getDoc
+    getDoc,
+    orderBy
 } from 'firebase/firestore';
 import { db } from './config';
 import { createTransaction } from './transactions';
+import { updateUserWallet } from './users';
 
 export interface Withdrawal {
     id: string;
@@ -41,7 +43,7 @@ export const createWithdrawalRequest = async (data: {
      const withdrawalRef = doc(collection(db, WITHDRAWALS_COLLECTION));
 
      const userSnap = await getDoc(userRef);
-     if (!userSnap.exists() || userSnap.data().wallet.winnings < data.amount) {
+     if (!userSnap.exists() || (userSnap.data().wallet?.winnings || 0) < data.amount) {
          throw new Error("Insufficient winning balance.");
      }
 
@@ -55,15 +57,13 @@ export const createWithdrawalRequest = async (data: {
      });
 
      // 3. Create a pending transaction log
-     const transactionRef = doc(collection(db, 'transactions'));
-     batch.set(transactionRef, {
+     await createTransaction({
         userId: data.userId,
         userName: data.userName,
         amount: data.amount,
         type: 'withdrawal',
         status: 'pending',
         relatedId: withdrawalRef.id,
-        createdAt: serverTimestamp()
      });
 
      await batch.commit();
@@ -73,7 +73,16 @@ export const createWithdrawalRequest = async (data: {
 
 export const updateWithdrawalStatus = async (id: string, status: Withdrawal['status']) => {
     const withdrawalRef = doc(db, WITHDRAWALS_COLLECTION, id);
-    return updateDoc(withdrawalRef, { status });
+    const withdrawalSnap = await getDoc(withdrawalRef);
+    if (!withdrawalSnap.exists()) throw new Error("Withdrawal request not found");
+    const withdrawalData = withdrawalSnap.data() as Withdrawal;
+
+    await updateDoc(withdrawalRef, { status });
+
+    if (status === 'approved') {
+        // Update user's lifetime withdrawal stats
+        await updateUserWallet(withdrawalData.userId, withdrawalData.amount, 'winnings', 'withdrawal', 'Withdrawal Approved');
+    }
 }
 
 
@@ -81,14 +90,14 @@ export const listenForWithdrawals = (
     callback: (withdrawals: Withdrawal[]) => void,
     onError?: (error: Error) => void
 ) => {
-    const q = query(collection(db, WITHDRAWALS_COLLECTION));
+    const q = query(collection(db, WITHDRAWALS_COLLECTION), orderBy("createdAt", "desc"));
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const withdrawals: Withdrawal[] = [];
         querySnapshot.forEach((doc) => {
             withdrawals.push({ id: doc.id, ...doc.data() } as Withdrawal);
         });
-        callback(withdrawals.sort((a, b) => b.createdAt - a.createdAt));
+        callback(withdrawals);
     }, (error) => {
         console.error("Error listening for withdrawals: ", error);
         if (onError) {
@@ -98,5 +107,3 @@ export const listenForWithdrawals = (
 
     return unsubscribe;
 };
-
-    

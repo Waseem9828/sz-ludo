@@ -20,6 +20,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import Image from 'next/image';
+import { incrementUpiAmount } from '@/lib/firebase/settings';
 
 export default function DepositsPage() {
     const [deposits, setDeposits] = useState<DepositRequest[]>([]);
@@ -43,11 +44,14 @@ export default function DepositsPage() {
 
     const handleApprove = async (request: DepositRequest) => {
         try {
-            // First, update user's wallet
-            await updateUserWallet(request.userId, request.amount, 'balance', 'Deposit Approved');
+            // First, update user's wallet and lifetime stats
+            await updateUserWallet(request.userId, request.amount, 'balance', 'deposit');
             
             // Then, update the request status
             await updateDepositStatus(request.id, 'approved');
+
+            // Then, increment the UPI ID's current amount
+            await incrementUpiAmount(request.upiId, request.amount);
 
             toast({
                 title: 'Deposit Approved',

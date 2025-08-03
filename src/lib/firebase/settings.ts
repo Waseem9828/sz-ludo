@@ -1,5 +1,5 @@
 
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
 import { db } from './config';
 
 const SETTINGS_COLLECTION = 'settings';
@@ -24,7 +24,7 @@ export const getSettings = async (): Promise<AppSettings> => {
   if (docSnap.exists()) {
     const data = docSnap.data() as AppSettings;
     // Ensure upiIds is always an array
-    const upiIds = (data.upiIds || []).map(upi => ({ name: '', ...upi }));
+    const upiIds = (data.upiIds || []).map(upi => ({ name: '', currentAmount: 0, limit: 50000, ...upi }));
     return { ...data, upiIds: upiIds };
   } else {
     // If the document doesn't exist, create it with default values
@@ -51,3 +51,21 @@ export const getActiveUpiId = async (): Promise<UpiId | null> => {
 
     return activeUpi || null;
 }
+
+// Function to increment the currentAmount of a specific UPI ID
+export const incrementUpiAmount = async (upiId: string, amount: number) => {
+    const settings = await getSettings();
+    if (!settings.upiIds) return;
+
+    const newUpiIds = settings.upiIds.map(upi => {
+        if (upi.id === upiId) {
+            return {
+                ...upi,
+                currentAmount: upi.currentAmount + amount,
+            };
+        }
+        return upi;
+    });
+
+    await updateSettings({ upiIds: newUpiIds });
+};

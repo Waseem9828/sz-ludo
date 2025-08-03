@@ -1,6 +1,6 @@
 
 
-import { collection, addDoc, serverTimestamp, where, query, onSnapshot, updateDoc, doc, writeBatch } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, where, query, onSnapshot, updateDoc, doc, writeBatch, orderBy } from 'firebase/firestore';
 import { db, storage } from './config';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
@@ -53,35 +53,35 @@ export const createDepositRequest = async (data: {
     // 2. Create the document in Firestore
     const { screenshotFile, ...firestoreData } = data;
     
-    const depositRef = doc(collection(db, DEPOSITS_COLLECTION));
-    
-    const batch = writeBatch(db);
-    
-    batch.set(depositRef, {
+    await addDoc(collection(db, DEPOSITS_COLLECTION), {
         ...firestoreData,
         screenshotUrl,
         createdAt: serverTimestamp(),
     });
-    
-    // Create a corresponding transaction log
-    createTransaction({
-        userId: data.userId,
-        userName: data.userName,
-        amount: data.amount,
-        type: 'deposit',
-        status: 'pending',
-        relatedId: depositRef.id,
-        notes: `Deposit request to ${data.upiId}`
-    });
-    
-    await batch.commit();
-
-    return depositRef;
 };
 
 export const updateDepositStatus = async (id: string, status: DepositRequest['status']) => {
     const depositRef = doc(db, DEPOSITS_COLLECTION, id);
-    return updateDoc(depositRef, { status });
+    const batch = writeBatch(db);
+
+    batch.update(depositRef, { status });
+
+    // Also update the corresponding transaction log if it exists
+    const q = query(collection(db, TRANSACTIONS_COLLECTION), where("relatedId", "==", id));
+    const querySnapshot = await onSnapshot(q, (snapshot) => {
+        snapshot.docs.forEach((doc) => {
+            if (doc.exists()) {
+                const transactionRef = doc.ref;
+                batch.update(transactionRef, { status: status === 'approved' ? 'completed' : status });
+            }
+        });
+    });
+    
+    // Unsubscribe after first snapshot to avoid memory leaks
+    const unsubscribe = onSnapshot(q, () => {});
+    unsubscribe();
+
+    return batch.commit();
 }
 
 // Listen for all deposit requests
@@ -89,14 +89,14 @@ export const listenForDepositRequests = (
     callback: (requests: DepositRequest[]) => void,
     onError?: (error: Error) => void
 ) => {
-    const q = query(collection(db, DEPOSITS_COLLECTION));
+    const q = query(collection(db, DEPOSITS_COLLECTION), orderBy("createdAt", "desc"));
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const requests: DepositRequest[] = [];
         querySnapshot.forEach((doc) => {
             requests.push({ id: doc.id, ...doc.data() } as DepositRequest);
         });
-        callback(requests.sort((a, b) => b.createdAt - a.createdAt));
+        callback(requests);
     }, (error) => {
         console.error("Error listening for deposit requests: ", error);
         if (onError) onError(error);
@@ -121,14 +121,14 @@ export const listenForUserTransactions = (
     callback: (transactions: Transaction[]) => void,
     onError?: (error: Error) => void
 ) => {
-    const q = query(collection(db, TRANSACTIONS_COLLECTION), where("userId", "==", userId));
+    const q = query(collection(db, TRANSACTIONS_COLLECTION), where("userId", "==", userId), orderBy("createdAt", "desc"));
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const transactions: Transaction[] = [];
         querySnapshot.forEach((doc) => {
             transactions.push({ id: doc.id, ...doc.data() } as Transaction);
         });
-        callback(transactions.sort((a, b) => b.createdAt - a.createdAt));
+        callback(transactions);
     }, (error) => {
         console.error("Error listening for transactions: ", error);
         if (onError) {
@@ -138,5 +138,3 @@ export const listenForUserTransactions = (
 
     return unsubscribe;
 };
-
-    
