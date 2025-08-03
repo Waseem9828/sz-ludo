@@ -9,9 +9,17 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { DepositRequest, listenForDepositRequests, updateDepositStatus } from '@/lib/firebase/transactions';
-import { Loader } from 'lucide-react';
+import { Loader, Eye } from 'lucide-react';
 import { updateUserWallet } from '@/lib/firebase/users';
 import Link from 'next/link';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import Image from 'next/image';
 
 export default function DepositsPage() {
     const [deposits, setDeposits] = useState<DepositRequest[]>([]);
@@ -62,7 +70,7 @@ export default function DepositsPage() {
                 description: 'The deposit request has been rejected.',
                 variant: 'destructive'
             });
-        } catch (error: any) {
+        } catch (error: any) => {
             toast({
                 title: 'Rejection Failed',
                 description: error.message,
@@ -110,6 +118,7 @@ export default function DepositsPage() {
                             <TableHead>Amount</TableHead>
                             <TableHead>Paid To UPI</TableHead>
                             <TableHead>Date</TableHead>
+                            <TableHead>Screenshot</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Actions</TableHead>
                         </TableRow>
@@ -131,6 +140,27 @@ export default function DepositsPage() {
                                 <TableCell>₹{request.amount}</TableCell>
                                 <TableCell>{request.upiId}</TableCell>
                                 <TableCell>{new Date(request.createdAt?.toDate()).toLocaleString()}</TableCell>
+                                <TableCell>
+                                    {request.screenshotUrl ? (
+                                        <Dialog>
+                                            <DialogTrigger asChild>
+                                                <Button variant="outline" size="icon">
+                                                    <Eye className="h-4 w-4" />
+                                                </Button>
+                                            </DialogTrigger>
+                                            <DialogContent>
+                                                <DialogHeader>
+                                                    <DialogTitle>Payment Screenshot</DialogTitle>
+                                                </DialogHeader>
+                                                <div className="mt-4">
+                                                    <Image src={request.screenshotUrl} alt="Payment Screenshot" width={600} height={800} className="w-full h-auto rounded-md" />
+                                                </div>
+                                            </DialogContent>
+                                        </Dialog>
+                                    ) : (
+                                        <span>N/A</span>
+                                    )}
+                                </TableCell>
                                 <TableCell>
                                     <Badge variant={getStatusBadgeVariant(request.status)}>{request.status}</Badge>
                                 </TableCell>

@@ -1,7 +1,8 @@
 
 
 import { collection, addDoc, serverTimestamp, where, query, onSnapshot, updateDoc, doc } from 'firebase/firestore';
-import { db } from './config';
+import { db, storage } from './config';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const TRANSACTIONS_COLLECTION = 'transactions';
 export const DEPOSITS_COLLECTION = 'deposits';
@@ -32,6 +33,7 @@ export interface DepositRequest {
     upiId: string; // The UPI ID the user paid to
     status: 'pending' | 'approved' | 'rejected';
     createdAt: any; // Firestore timestamp
+    screenshotUrl?: string; // URL of the payment screenshot
 }
 
 // For creating deposit requests that an admin needs to approve
@@ -42,9 +44,18 @@ export const createDepositRequest = async (data: {
     amount: number;
     upiId: string;
     status: 'pending';
+    screenshotFile: File;
 }) => {
+    // 1. Upload screenshot to Firebase Storage
+    const screenshotRef = ref(storage, `deposit_screenshots/${data.userId}/${Date.now()}_${data.screenshotFile.name}`);
+    const uploadResult = await uploadBytes(screenshotRef, data.screenshotFile);
+    const screenshotUrl = await getDownloadURL(uploadResult.ref);
+
+    // 2. Create the document in Firestore
+    const { screenshotFile, ...firestoreData } = data;
     return await addDoc(collection(db, DEPOSITS_COLLECTION), {
-        ...data,
+        ...firestoreData,
+        screenshotUrl,
         createdAt: serverTimestamp(),
     });
 };

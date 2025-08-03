@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Header from '@/components/play/header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,12 +9,13 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronLeft, Loader } from 'lucide-react';
+import { ChevronLeft, Loader, Upload } from 'lucide-react';
 import { getActiveUpiId, UpiId } from '@/lib/firebase/settings';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 import { createDepositRequest } from '@/lib/firebase/transactions';
+import { Label } from '@/components/ui/label';
 
 const quickAmountsConfig = {
   '100': { limit: 10 },
@@ -54,6 +55,8 @@ export default function AddCashPage() {
   const [error, setError] = useState<string | null>(null);
   const { user, appUser } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [screenshot, setScreenshot] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [attempts, setAttempts] = useState(() => {
     const initialAttempts: { [key: number]: number } = {};
@@ -141,6 +144,11 @@ export default function AddCashPage() {
         toast({ title: "Error", description: "You must be logged in.", variant: "destructive" });
         return;
     }
+    if (!screenshot) {
+      toast({ title: "Screenshot Required", description: "Please upload a payment screenshot to verify your transaction.", variant: "destructive" });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
         await createDepositRequest({
@@ -149,7 +157,8 @@ export default function AddCashPage() {
             userAvatar: appUser.photoURL || '',
             amount: parseFloat(amount),
             upiId: activeUpi.id,
-            status: 'pending'
+            status: 'pending',
+            screenshotFile: screenshot,
         });
         toast({
             title: 'Payment Confirmation Sent',
@@ -158,6 +167,9 @@ export default function AddCashPage() {
         setAmount('100');
         setQrCodeUrl('');
         setShowQr(false);
+        setScreenshot(null);
+        if(fileInputRef.current) fileInputRef.current.value = '';
+
     } catch (err: any) {
          toast({ title: 'Error', description: err.message, variant: 'destructive' });
     } finally {
@@ -274,8 +286,23 @@ export default function AddCashPage() {
                         <div className="flex justify-center p-4 bg-white rounded-md border">
                         {qrCodeUrl ? <Image src={qrCodeUrl} alt="UPI QR Code" width={200} height={200} /> : <Loader className="h-10 w-10 animate-spin" />}
                         </div>
-                        <Button onClick={handlePaymentDone} className="w-full font-bold text-lg py-6 bg-green-600 hover:bg-green-700 text-white" disabled={isSubmitting}>
-                          {isSubmitting ? <Loader className="animate-spin" /> : 'I have paid'}
+                        
+                        <div className="p-4 border-2 border-dashed rounded-lg space-y-4">
+                           <Label htmlFor="screenshot" className="text-center block font-semibold text-primary">Attach Payment Screenshot</Label>
+                            <Input
+                                id="screenshot"
+                                type="file"
+                                accept="image/*"
+                                ref={fileInputRef}
+                                onChange={(e) => setScreenshot(e.target.files ? e.target.files[0] : null)}
+                                className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                                disabled={isSubmitting}
+                            />
+                            {screenshot && <p className="text-sm text-center text-muted-foreground">Selected: {screenshot.name}</p>}
+                        </div>
+
+                        <Button onClick={handlePaymentDone} className="w-full font-bold text-lg py-6 bg-green-600 hover:bg-green-700 text-white" disabled={isSubmitting || !screenshot}>
+                          {isSubmitting ? <Loader className="animate-spin" /> : 'Submit for Verification'}
                         </Button>
                     </CardContent>
                 </Card>
