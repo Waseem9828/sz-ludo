@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { AlertCircle, ArrowUp, BarChart2, Gift, Pencil, Trophy } from "lucide-react";
+import { AlertCircle, ArrowUp, BarChart2, Gift, Pencil, Trophy, ShieldCheck } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -99,7 +99,7 @@ export default function ProfilePage() {
         return <SplashScreen />;
     }
     
-    const isKycPending = !appUser.kycStatus || appUser.kycStatus === 'Pending' || appUser.kycStatus === 'Rejected';
+    const isKycVerified = appUser.kycStatus === 'Verified';
 
     const getKycBadgeVariant = (status?: 'Pending' | 'Verified' | 'Rejected') => {
         switch (status) {
@@ -141,14 +141,22 @@ export default function ProfilePage() {
                             <div>
                                 <label htmlFor="username" className="text-sm font-medium text-muted-foreground">Username</label>
                                 <div className="flex items-center gap-2 mt-1">
-                                    <Input 
-                                        id="username" 
-                                        type="text" 
-                                        value={isEditingUsername ? tempUsername : username} 
-                                        onChange={(e) => setTempUsername(e.target.value)}
-                                        readOnly={!isEditingUsername}
-                                        className={isEditingUsername ? "bg-card" : "bg-muted"}
-                                    />
+                                    <div className="flex-grow relative">
+                                        <Input 
+                                            id="username" 
+                                            type="text" 
+                                            value={isEditingUsername ? tempUsername : username} 
+                                            onChange={(e) => setTempUsername(e.target.value)}
+                                            readOnly={!isEditingUsername}
+                                            className={cn(
+                                                isEditingUsername ? "bg-card" : "bg-muted",
+                                                isKycVerified && !isEditingUsername ? "pr-8" : ""
+                                            )}
+                                        />
+                                        {isKycVerified && !isEditingUsername && (
+                                            <ShieldCheck className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 text-blue-500 fill-current" />
+                                        )}
+                                    </div>
                                     <Button onClick={handleEditUsername}>{isEditingUsername ? 'Save' : 'Edit'}</Button>
                                 </div>
                             </div>
@@ -162,23 +170,24 @@ export default function ProfilePage() {
                             </div>
                         </div>
                         
-                        {isKycPending ? (
+                        {!isKycVerified ? (
                             <Card className="bg-destructive/10 border-destructive/50">
                                 <CardContent className="p-3 flex justify-between items-center">
                                     <div className="flex items-center gap-2">
                                         <AlertCircle className="h-5 w-5 text-destructive" />
-                                        <span className="font-semibold text-destructive">KYC Pending</span>
+                                        <span className="font-semibold text-destructive">KYC Not Verified</span>
                                     </div>
                                     <Link href="/kyc">
-                                        <Button variant="destructive" size="sm">Complete Here</Button>
+                                        <Button variant="destructive" size="sm">Complete Now</Button>
                                     </Link>
                                 </CardContent>
                             </Card>
                         ) : (
                              <Card className="bg-green-600/10 border-green-600/50">
-                                <CardContent className="p-3 flex justify-between items-center">
+                                <CardContent className="p-3">
                                      <div className="flex items-center gap-2">
-                                        <Badge variant={getKycBadgeVariant(appUser.kycStatus)}>KYC {appUser.kycStatus}</Badge>
+                                        <ShieldCheck className="h-5 w-5 text-green-600"/>
+                                        <span className="font-semibold text-green-700 dark:text-green-500">KYC Verified</span>
                                     </div>
                                 </CardContent>
                             </Card>
