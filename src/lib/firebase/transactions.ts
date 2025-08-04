@@ -1,6 +1,6 @@
 
 
-import { collection, addDoc, serverTimestamp, where, query, onSnapshot, updateDoc, doc, writeBatch, orderBy, getDocs } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, where, query, onSnapshot, updateDoc, doc, writeBatch, orderBy, getDocs, limit } from 'firebase/firestore';
 import { db } from './config';
 
 const TRANSACTIONS_COLLECTION = 'transactions';
@@ -55,11 +55,16 @@ export const listenForUserTransactions = (
 
 // Listen for all transactions for admin dashboard
 export const listenForAllTransactions = (
-    limit: number,
+    limitCount: number,
     callback: (transactions: Transaction[]) => void,
     onError?: (error: Error) => void
 ) => {
-     const q = query(collection(db, TRANSACTIONS_COLLECTION), orderBy("createdAt", "desc"), where("status", "in", ["completed", "approved", "pending", "rejected"]), limit(limit));
+     const q = query(
+        collection(db, TRANSACTIONS_COLLECTION), 
+        orderBy("createdAt", "desc"), 
+        where("status", "in", ["completed", "approved", "pending", "rejected"]), 
+        limit(limitCount)
+    );
 
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const transactions: Transaction[] = [];
