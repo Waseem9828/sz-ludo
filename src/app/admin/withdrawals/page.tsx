@@ -79,7 +79,7 @@ export default function WithdrawalsPage() {
                 description: 'The withdrawal request has been rejected. The funds have been returned to the user\'s wallet.',
                 variant: 'destructive'
             });
-        } catch (error: any) => {
+        } catch (error: any) {
             toast({
                 title: 'Rejection Failed',
                 description: error.message,
