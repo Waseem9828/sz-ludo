@@ -23,6 +23,7 @@ export interface Game {
     id: string;
     amount: number;
     status: 'challenge' | 'ongoing' | 'under_review' | 'completed' | 'cancelled' | 'disputed';
+    type?: 'user' | 'computer';
     createdBy: PlayerInfo;
     player1: PlayerInfo;
     player2?: PlayerInfo;
@@ -40,6 +41,7 @@ export const createChallenge = async (data: { amount: number; createdBy: PlayerI
         ...data,
         player1: data.createdBy,
         status: 'challenge',
+        type: 'user',
         createdAt: serverTimestamp(),
     });
 };
@@ -126,9 +128,9 @@ export const listenForGames = (
 ) => {
     let q;
     if (status) {
-        q = query(collection(db, GAMES_COLLECTION), where("status", "==", status));
+        q = query(collection(db, GAMES_COLLECTION), where("status", "==", status), where("type", "==", "user"));
     } else {
-        q = query(collection(db, GAMES_COLLECTION));
+        q = query(collection(db, GAMES_COLLECTION), where("type", "==", "user"));
     }
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -139,6 +141,30 @@ export const listenForGames = (
         callback(games);
     }, (error) => {
         console.error("Error listening for games: ", error);
+        if (onError) {
+            onError(error);
+        }
+    });
+
+    return unsubscribe;
+};
+
+
+// Listen for real-time updates on games vs computer
+export const listenForComputerGames = (
+    callback: (games: Game[]) => void, 
+    onError?: (error: Error) => void
+) => {
+    const q = query(collection(db, GAMES_COLLECTION), where("type", "==", "computer"));
+    
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const games: Game[] = [];
+        querySnapshot.forEach((doc) => {
+            games.push({ id: doc.id, ...doc.data() } as Game);
+        });
+        callback(games);
+    }, (error) => {
+        console.error("Error listening for computer games: ", error);
         if (onError) {
             onError(error);
         }

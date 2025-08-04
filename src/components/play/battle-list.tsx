@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,7 +26,7 @@ export default function BattleList() {
         if (!battle.player1 || !battle.player2) return null;
 
         const amIPlayer1 = user?.uid === battle.player1.uid;
-        const amIPlayer2 = user?.uid === battle.player2?.uid;
+        const amIPlayer2 = user?.uid === battle.player2.uid;
         const isMyBattle = amIPlayer1 || amIPlayer2;
 
         return (
