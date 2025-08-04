@@ -118,12 +118,18 @@ export const listenForGameUpdates = (
 };
 
 
-// Listen for real-time updates on games
+// Listen for real-time updates on games, with optional status filtering
 export const listenForGames = (
     callback: (games: Game[]) => void, 
+    status?: Game['status'],
     onError?: (error: Error) => void
 ) => {
-    const q = query(collection(db, GAMES_COLLECTION));
+    let q;
+    if (status) {
+        q = query(collection(db, GAMES_COLLECTION), where("status", "==", status));
+    } else {
+        q = query(collection(db, GAMES_COLLECTION));
+    }
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const games: Game[] = [];

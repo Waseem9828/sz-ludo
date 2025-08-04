@@ -19,11 +19,7 @@ export default function ChallengeList() {
     const router = useRouter();
 
     useEffect(() => {
-        const unsubscribe = listenForGames((games) => {
-            const openChallenges = games.filter(g => g.status === 'challenge');
-            setChallenges(openChallenges);
-        });
-
+        const unsubscribe = listenForGames(setChallenges, 'challenge');
         return () => unsubscribe();
     }, []);
 

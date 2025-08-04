@@ -25,11 +25,21 @@ export default function WithdrawalsPage() {
     useEffect(() => {
       const unsubscribe = listenForWithdrawals(
         async (allWithdrawals) => {
-            const withdrawalsWithUserData = await Promise.all(allWithdrawals.map(async (w) => {
-                const user = await getUser(w.userId);
-                return { ...w, user };
-            }));
-          setWithdrawals(withdrawalsWithUserData);
+            const userIds = [...new Set(allWithdrawals.map(w => w.userId))];
+            if (userIds.length > 0) {
+                 const userPromises = userIds.map(id => getUser(id));
+                 const users = await Promise.all(userPromises);
+                 const userMap = new Map(users.filter(u => u).map(u => [u!.uid, u]));
+
+                const withdrawalsWithUserData = allWithdrawals.map(w => ({
+                    ...w,
+                    user: userMap.get(w.userId)
+                }));
+                 setWithdrawals(withdrawalsWithUserData);
+            } else {
+                setWithdrawals([]);
+            }
+          
           setLoading(false);
         },
         (error) => {

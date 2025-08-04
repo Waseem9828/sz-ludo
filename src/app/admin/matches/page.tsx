@@ -27,6 +27,7 @@ export default function MatchesPage() {
                 setMatches(reviewableGames);
                 setLoading(false);
             },
+            undefined, // No specific status filter, so we filter client-side for multiple statuses
             (error) => {
                 console.error("Error fetching matches: ", error);
                 toast({ title: "Error", description: "Could not fetch matches.", variant: "destructive" });

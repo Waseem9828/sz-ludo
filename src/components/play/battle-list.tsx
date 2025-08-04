@@ -15,11 +15,7 @@ export default function BattleList() {
   const { user } = useAuth();
 
   useEffect(() => {
-    const unsubscribe = listenForGames((games) => {
-        const ongoingBattles = games.filter(g => g.status === 'ongoing');
-        setBattles(ongoingBattles);
-    });
-
+    const unsubscribe = listenForGames(setBattles, 'ongoing');
     return () => unsubscribe();
   }, []);
 
