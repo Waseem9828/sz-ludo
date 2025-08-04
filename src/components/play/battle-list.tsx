@@ -17,21 +17,16 @@ export default function BattleList() {
 
   useEffect(() => {
     if (!user) return;
-    // We listen for both 'ongoing' and 'under_review' so the user can see their game
-    // until the admin has completed the review.
+    
+    // Listen only for 'ongoing' games where the user is a player.
+    // Games 'under_review' will no longer be shown in this list.
     const unsubscribeOngoing = listenForGames((ongoingGames) => {
         const userBattles = ongoingGames.filter(b => b.player1?.uid === user.uid || b.player2?.uid === user.uid);
-        setBattles(prev => [...userBattles, ...prev.filter(p => p.status !== 'ongoing')]);
+        setBattles(userBattles);
     }, 'ongoing');
-    
-    const unsubscribeReview = listenForGames((reviewGames) => {
-        const userBattles = reviewGames.filter(b => b.player1?.uid === user.uid || b.player2?.uid === user.uid);
-        setBattles(prev => [...userBattles, ...prev.filter(p => p.status !== 'under_review')]);
-    }, 'under_review');
     
     return () => {
         unsubscribeOngoing();
-        unsubscribeReview();
     };
   }, [user]);
   
@@ -76,7 +71,7 @@ export default function BattleList() {
                         {isPlayerInGame && (
                              <Link href={`/play/game?id=${battle.id}`}>
                                 <Button size="sm" variant="destructive" className="mt-1">
-                                    {battle.status === 'under_review' ? 'Reviewing' : 'View'}
+                                    View
                                 </Button>
                             </Link>
                         )}

@@ -3,12 +3,12 @@
 
 import Header from '@/components/header';
 import KycInfo from '@/components/kyc-info';
-import GameListing from '@/components/game-listing';
 import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { SplashScreen } from '@/components/ui/splash-screen';
 import { getSettings, AppSettings } from '@/lib/firebase/settings';
+import GameListing from '@/components/game-listing';
 
 export default function Home() {
   const { user, appUser, loading } = useAuth();
@@ -52,5 +52,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
