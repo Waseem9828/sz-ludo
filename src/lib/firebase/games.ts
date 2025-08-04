@@ -1,4 +1,5 @@
 
+
 import { 
     collection, 
     addDoc, 
@@ -9,9 +10,11 @@ import {
     where, 
     onSnapshot,
     getDoc, 
+    deleteDoc
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from './config';
+import { updateUserWallet } from './users';
 
 export interface PlayerInfo {
     uid: string;
@@ -45,6 +48,25 @@ export const createChallenge = async (data: { amount: number; createdBy: PlayerI
         createdAt: serverTimestamp(),
     });
 };
+
+// Delete a challenge
+export const deleteChallenge = async (gameId: string) => {
+    const gameRef = doc(db, GAMES_COLLECTION, gameId);
+    const gameSnap = await getDoc(gameRef);
+
+    if (!gameSnap.exists() || gameSnap.data().status !== 'challenge') {
+        throw new Error("Challenge not found or can no longer be deleted.");
+    }
+
+    const gameData = gameSnap.data() as Game;
+    
+    // Refund the creator's wallet
+    await updateUserWallet(gameData.createdBy.uid, gameData.amount, 'balance', 'refund', 'Challenge Deleted');
+
+    // Delete the game document
+    await deleteDoc(gameRef);
+};
+
 
 // Accept a challenge
 export const acceptChallenge = async (gameId: string, player2: PlayerInfo) => {

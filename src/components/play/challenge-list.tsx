@@ -7,11 +7,22 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Game, listenForGames, acceptChallenge } from "@/lib/firebase/games";
+import { Game, listenForGames, acceptChallenge, deleteChallenge } from "@/lib/firebase/games";
 import { useAuth } from "@/context/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { updateUserWallet } from "@/lib/firebase/users";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 export default function ChallengeList() {
     const [challenges, setChallenges] = useState<Game[]>([]);
@@ -69,6 +80,19 @@ export default function ChallengeList() {
         }
     };
     
+    const handleDelete = async (challenge: Game) => {
+        if (!user || user.uid !== challenge.createdBy.uid) {
+             toast({ title: 'Not Authorized', description: 'You can only delete your own challenges.', variant: 'destructive' });
+            return;
+        }
+        try {
+            await deleteChallenge(challenge.id);
+             toast({ title: 'Challenge Deleted', description: 'Your challenge has been successfully removed.' });
+        } catch (error: any) {
+             toast({ title: 'Error', description: `Failed to delete challenge: ${error.message}`, variant: 'destructive' });
+        }
+    }
+    
     if (challenges.length === 0) {
         return (
             <div className="text-center text-muted-foreground py-4">
@@ -96,9 +120,25 @@ export default function ChallengeList() {
                 <div className="text-right">
                 <p className="text-green-600 font-bold">₹ {challenge.amount}</p>
                  {user?.uid === challenge.createdBy.uid ? (
-                    <Button size="sm" className="mt-1" disabled>
-                        Waiting
-                    </Button>
+                     <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button size="sm" variant="destructive" className="mt-1">
+                                Delete
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This will permanently delete your challenge and refund the amount to your wallet.
+                            </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(challenge)}>Yes, Delete</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                 ) : (
                     <Button size="sm" className="mt-1" onClick={() => handleAccept(challenge)}>
                         Play

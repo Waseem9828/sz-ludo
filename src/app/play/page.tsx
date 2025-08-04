@@ -1,5 +1,4 @@
 
-
 'use client'
 
 import React, { useState, useEffect } from 'react';
@@ -12,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
 import { SplashScreen } from '@/components/ui/splash-screen';
-import { createChallenge, Game } from '@/lib/firebase/games';
+import { createChallenge, Game, listenForGames } from '@/lib/firebase/games';
 import { updateUserWallet } from '@/lib/firebase/users';
 import { Loader } from 'lucide-react';
 
@@ -23,10 +22,20 @@ export default function PlayPage() {
   const { toast } = useToast();
   const { user, appUser, loading } = useAuth();
   const router = useRouter();
+  const [myChallenges, setMyChallenges] = useState<Game[]>([]);
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
+    }
+    
+    if (user) {
+        // Listen to challenges to enforce the 3-challenge limit
+        const unsubscribe = listenForGames((challenges) => {
+            const userChallenges = challenges.filter(c => c.createdBy.uid === user.uid);
+            setMyChallenges(userChallenges);
+        }, 'challenge');
+        return () => unsubscribe();
     }
   }, [user, loading, router]);
 
@@ -38,6 +47,15 @@ export default function PlayPage() {
       toast({
         title: 'Account Suspended',
         description: 'Your account is suspended. You cannot create challenges.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    if (myChallenges.length >= 3) {
+      toast({
+        title: 'Challenge Limit Reached',
+        description: 'You can only have 3 active challenges at a time.',
         variant: 'destructive',
       });
       return;
