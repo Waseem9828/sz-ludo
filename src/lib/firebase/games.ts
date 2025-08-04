@@ -57,17 +57,22 @@ export const createChallenge = async (data: { amount: number; createdBy: PlayerI
 export const deleteChallenge = async (gameId: string) => {
     const gameRef = doc(db, GAMES_COLLECTION, gameId);
     
+    // Use a transaction to ensure both operations (refund and delete) succeed or fail together.
     await runTransaction(db, async (transaction) => {
         const gameSnap = await transaction.get(gameRef);
+
         if (!gameSnap.exists() || gameSnap.data().status !== 'challenge') {
             throw new Error("Challenge not found or can no longer be deleted.");
         }
+        
         const gameData = gameSnap.data() as Game;
         
-        // Refund the creator's wallet - this is now handled within updateUserWallet transaction logic
-        await updateUserWallet(gameData.createdBy.uid, gameData.amount, 'balance', 'refund', 'Challenge Deleted');
+        // 1. Refund the creator's wallet.
+        // The `updateUserWallet` function is designed to handle this.
+        // We pass a positive amount to add it back.
+        await updateUserWallet(gameData.createdBy.uid, gameData.amount, 'balance', 'refund', `Challenge Deleted: ${gameId}`);
         
-        // Delete the game document
+        // 2. Delete the game document itself.
         transaction.delete(gameRef);
     });
 };
@@ -99,7 +104,7 @@ export const cancelAcceptedChallenge = async (gameId: string, player2Id: string)
         }
 
         // 1. Refund player 2's wallet
-        await updateUserWallet(player2Id, gameData.amount, 'balance', 'refund', 'Accepted Challenge Canceled');
+        await updateUserWallet(player2Id, gameData.amount, 'balance', 'refund', `Accepted Challenge Canceled: ${gameId}`);
         
         // 2. Update the game document to revert it to a challenge
         transaction.update(gameRef, {
