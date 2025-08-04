@@ -21,7 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, Loader } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { updateUserKycDetails } from '@/lib/firebase/users';
 import { useRouter } from 'next/navigation';
 
@@ -36,21 +36,34 @@ const kycFormSchema = z.object({
 
 export default function KycPage() {
     const { toast } = useToast();
-    const { user, appUser } = useAuth();
+    const { user, appUser, loading } = useAuth();
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const form = useForm<z.infer<typeof kycFormSchema>>({
         resolver: zodResolver(kycFormSchema),
         defaultValues: {
-            aadhaar: appUser?.aadhaar || '',
-            pan: appUser?.pan || '',
-            bankAccount: appUser?.bankAccount || '',
-            ifsc: appUser?.ifsc || '',
-            bankName: appUser?.bankName || '',
-            upiId: appUser?.upiId || '',
+            aadhaar: '',
+            pan: '',
+            bankAccount: '',
+            ifsc: '',
+            bankName: '',
+            upiId: '',
         },
     });
+
+    useEffect(() => {
+        if (appUser) {
+            form.reset({
+                aadhaar: appUser.aadhaar || '',
+                pan: appUser.pan || '',
+                bankAccount: appUser.bankAccount || '',
+                ifsc: appUser.ifsc || '',
+                bankName: appUser.bankName || '',
+                upiId: appUser.upiId || '',
+            });
+        }
+    }, [appUser, form]);
 
     async function onSubmit(values: z.infer<typeof kycFormSchema>) {
         if (!user) {
@@ -77,6 +90,10 @@ export default function KycPage() {
         }
     }
 
+    if (loading) {
+        return null;
+    }
+    
     const isKycSubmitted = appUser?.kycStatus === 'Pending' || appUser?.kycStatus === 'Verified';
 
     return (
@@ -191,7 +208,7 @@ export default function KycPage() {
                                                 <FormItem>
                                                     <FormLabel>UPI ID</FormLabel>
                                                     <FormControl>
-                                                        <Input placeholder="Enter your UPI ID" {...field} disabled={isSubmitting}/>
+                                                        <Input placeholder="Enter your UPI ID for withdrawals" {...field} disabled={isSubmitting}/>
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>

@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import Header from "@/components/play/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ChevronLeft, AlertCircle, Plus, Minus } from "lucide-react";
+import { ChevronLeft, AlertCircle, Plus, Minus, Loader } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from 'next/navigation';
@@ -25,6 +25,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { createWithdrawalRequest } from '@/lib/firebase/withdrawals';
 
+const quickWithdrawAmounts = [300, 1000, 5000, 10000];
 
 export default function WalletPage() {
     const { toast } = useToast();
@@ -57,8 +58,13 @@ export default function WalletPage() {
 
         const amount = parseFloat(withdrawAmount);
         
-        if (isNaN(amount) || amount < 100) {
-            toast({ title: "Invalid Amount", description: "Minimum withdrawal amount is ₹100.", variant: "destructive" });
+        if (isNaN(amount) || amount < 300) {
+            toast({ title: "Invalid Amount", description: "Minimum withdrawal amount is ₹300.", variant: "destructive" });
+            return;
+        }
+        
+        if (amount > 10000) {
+            toast({ title: "Invalid Amount", description: "Maximum withdrawal amount is ₹10,000.", variant: "destructive" });
             return;
         }
 
@@ -68,7 +74,7 @@ export default function WalletPage() {
         }
 
         if (!upiId) {
-            toast({ title: "UPI ID Required", description: "Please enter your UPI ID.", variant: "destructive" });
+            toast({ title: "UPI ID Required", description: "Please enter your UPI ID in the KYC section.", variant: "destructive" });
             return;
         }
 
@@ -165,7 +171,7 @@ export default function WalletPage() {
                             <p className="text-3xl font-bold">₹{(appUser.wallet?.winnings || 0).toFixed(2)}</p>
                             <Dialog open={isWithdrawDialogOpen} onOpenChange={setIsWithdrawDialogOpen}>
                                 <DialogTrigger asChild>
-                                     <Button className="w-full bg-green-600 hover:bg-green-700 text-white font-bold text-lg py-6" disabled={isKycPending || (appUser.wallet?.winnings || 0) <= 0}>
+                                     <Button className="w-full bg-green-600 hover:bg-green-700 text-white font-bold text-lg py-6" disabled={isKycPending || (appUser.wallet?.winnings || 0) < 300}>
                                         <Minus className="mr-2" />
                                         Withdraw
                                     </Button>
@@ -174,12 +180,12 @@ export default function WalletPage() {
                                     <DialogHeader>
                                         <DialogTitle>Request Withdrawal</DialogTitle>
                                         <DialogDescription>
-                                            Enter the amount you wish to withdraw from your winnings of ₹{(appUser.wallet?.winnings || 0).toFixed(2)}. Minimum withdrawal is ₹100.
+                                            Enter the amount you wish to withdraw from your winnings of ₹{(appUser.wallet?.winnings || 0).toFixed(2)}.
                                         </DialogDescription>
                                     </DialogHeader>
                                     <div className="space-y-4">
                                          <div>
-                                            <Label htmlFor="withdraw-amount">Amount</Label>
+                                            <Label htmlFor="withdraw-amount">Amount (Min: ₹300, Max: ₹10,000)</Label>
                                             <Input
                                                 id="withdraw-amount"
                                                 type="number"
@@ -188,13 +194,24 @@ export default function WalletPage() {
                                                 placeholder="Enter amount"
                                             />
                                         </div>
+                                        <div className="grid grid-cols-4 gap-2">
+                                            {quickWithdrawAmounts.map(qAmount => (
+                                                <Button 
+                                                    key={qAmount}
+                                                    variant="outline"
+                                                    onClick={() => setWithdrawAmount(qAmount.toString())}
+                                                >
+                                                    ₹{qAmount}
+                                                </Button>
+                                            ))}
+                                        </div>
                                         <div>
-                                            <Label htmlFor="upi-id">UPI ID</Label>
+                                            <Label htmlFor="upi-id">UPI ID (from KYC)</Label>
                                             <Input
                                                 id="upi-id"
                                                 value={upiId}
-                                                onChange={(e) => setUpiId(e.target.value)}
-                                                placeholder="Enter your UPI ID"
+                                                readOnly
+                                                className="bg-muted"
                                             />
                                         </div>
                                     </div>
@@ -203,12 +220,13 @@ export default function WalletPage() {
                                             <Button variant="outline">Cancel</Button>
                                         </DialogClose>
                                         <Button onClick={handleWithdrawChips} disabled={isSubmitting}>
-                                            {isSubmitting ? 'Submitting...' : 'Submit Request'}
+                                            {isSubmitting ? <Loader className="animate-spin" /> : 'Submit Request'}
                                         </Button>
                                     </DialogFooter>
                                 </DialogContent>
                             </Dialog>
-                             {isKycPending && <p className="text-xs text-destructive">KYC verification required to withdraw.</p>}
+                             {isKycPending && <p className="text-xs text-destructive mt-2">KYC verification required to withdraw.</p>}
+                             {!isKycPending && (appUser.wallet?.winnings || 0) < 300 && <p className="text-xs text-muted-foreground mt-2">Minimum withdrawal is ₹300.</p>}
                         </CardContent>
                     </Card>
                 </div>

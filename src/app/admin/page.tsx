@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { BarChart, LineChart, XAxis, YAxis, Tooltip, Legend, Bar, Line, CartesianGrid, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts';
 import { DollarSign, Users, Wallet, TrendingUp, Loader } from 'lucide-react';
 import ChallengeList from '@/components/play/challenge-list';
 import BattleList from '@/components/play/battle-list';
@@ -13,15 +13,28 @@ import { listenForAllTransactions, Transaction, TransactionStatus, TransactionTy
 import { useToast } from '@/hooks/use-toast';
 import { AppUser, listenForAllUsers } from '@/lib/firebase/users';
 import Link from 'next/link';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import type { ChartConfig } from '@/components/ui/chart';
 
 const chartData = [
-  { name: 'Jan', deposits: 4000, withdrawals: 2400 },
-  { name: 'Feb', deposits: 3000, withdrawals: 1398 },
-  { name: 'Mar', deposits: 2000, withdrawals: 9800 },
-  { name: 'Apr', deposits: 2780, withdrawals: 3908 },
-  { name: 'May', deposits: 1890, withdrawals: 4800 },
-  { name: 'Jun', deposits: 2390, withdrawals: 3800 },
+  { month: 'Jan', deposits: 4000, withdrawals: 2400 },
+  { month: 'Feb', deposits: 3000, withdrawals: 1398 },
+  { month: 'Mar', deposits: 2000, withdrawals: 9800 },
+  { month: 'Apr', deposits: 2780, withdrawals: 3908 },
+  { month: 'May', deposits: 1890, withdrawals: 4800 },
+  { month: 'Jun', deposits: 2390, withdrawals: 3800 },
 ];
+
+const chartConfig = {
+  deposits: {
+    label: 'Deposits',
+    color: 'hsl(var(--chart-2))',
+  },
+  withdrawals: {
+    label: 'Withdrawals',
+    color: 'hsl(var(--destructive))',
+  },
+} satisfies ChartConfig;
 
 const getStatusBadgeVariant = (status: TransactionStatus) => {
     switch (status) {
@@ -116,17 +129,31 @@ export default function AdminDashboardPage() {
                     <CardTitle className="text-red-600">Overview</CardTitle>
                 </CardHeader>
                 <CardContent className="pl-2">
-                   <ResponsiveContainer width="100%" height={350}>
-                     <BarChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                        <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `₹${value}`} />
-                        <Tooltip />
+                   <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+                     <BarChart data={chartData} accessibilityLayer>
+                        <CartesianGrid vertical={false} />
+                        <XAxis 
+                          dataKey="month" 
+                          tickLine={false} 
+                          tickMargin={10} 
+                          axisLine={false}
+                          tickFormatter={(value) => value.slice(0,3)}
+                        />
+                        <YAxis 
+                          tickLine={false}
+                          axisLine={false}
+                          tickMargin={10}
+                          tickFormatter={(value) => `₹${value / 1000}k`}
+                        />
+                        <ChartTooltip 
+                           cursor={false}
+                           content={<ChartTooltipContent indicator="dot" />} 
+                        />
                         <Legend />
-                        <Bar dataKey="deposits" fill="hsl(var(--primary))" name="Deposits" radius={[4, 4, 0, 0]} />
-                        <Bar dataKey="withdrawals" fill="hsl(var(--destructive))" name="Withdrawals" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="deposits" fill="var(--color-deposits)" radius={4} />
+                        <Bar dataKey="withdrawals" fill="var(--color-withdrawals)" radius={4} />
                      </BarChart>
-                   </ResponsiveContainer>
+                   </ChartContainer>
                 </CardContent>
             </Card>
 
