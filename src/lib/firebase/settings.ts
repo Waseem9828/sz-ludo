@@ -12,6 +12,14 @@ export interface UpiId {
     currentAmount: number;
 }
 
+export type FestivalType = 'None' | 'Generic' | 'Holi' | 'Diwali' | 'Eid' | 'Christmas';
+
+export interface FestiveGreeting {
+    enabled: boolean;
+    type: FestivalType;
+    message: string;
+}
+
 export interface AppSettings {
   upiIds?: UpiId[];
   // Content Management
@@ -21,29 +29,37 @@ export interface AppSettings {
   gstContent?: string;
   // App Settings
   promotionBannerText?: string;
+  festiveGreeting?: FestiveGreeting;
 }
 
 export const getSettings = async (): Promise<AppSettings> => {
   const docRef = doc(db, SETTINGS_COLLECTION, APP_CONFIG_DOC);
   const docSnap = await getDoc(docRef);
 
-  if (docSnap.exists()) {
-    const data = docSnap.data() as AppSettings;
-    // Ensure upiIds is always an array
-    const upiIds = (data.upiIds || []).map(upi => ({ name: '', currentAmount: 0, limit: 50000, ...upi }));
-    return { ...data, upiIds: upiIds };
-  } else {
-    // If the document doesn't exist, create it with default values
-    const initialSettings: AppSettings = { 
+  const defaults: AppSettings = { 
         upiIds: [],
         termsContent: '',
         privacyContent: '',
         refundContent: '',
         gstContent: '',
         promotionBannerText: 'Commission 5%: referral 2% for all games',
+        festiveGreeting: {
+            enabled: false,
+            type: 'None',
+            message: ''
+        }
     };
-    await setDoc(docRef, initialSettings);
-    return initialSettings;
+
+  if (docSnap.exists()) {
+    const data = docSnap.data() as AppSettings;
+    // Ensure upiIds is always an array
+    const upiIds = (data.upiIds || []).map(upi => ({ name: '', currentAmount: 0, limit: 50000, ...upi }));
+    const festiveGreeting = data.festiveGreeting || defaults.festiveGreeting;
+    return { ...defaults, ...data, upiIds, festiveGreeting };
+  } else {
+    // If the document doesn't exist, create it with default values
+    await setDoc(docRef, defaults);
+    return defaults;
   }
 };
 
@@ -82,5 +98,3 @@ export const incrementUpiAmount = async (upiId: string, amount: number) => {
 
     await updateSettings({ upiIds: newUpiIds });
 };
-
-    

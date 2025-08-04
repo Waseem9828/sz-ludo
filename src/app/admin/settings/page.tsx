@@ -12,9 +12,11 @@ import { Loader, Trash2, PlusCircle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function SettingsPage() {
-  const [settings, setSettings] = useState<AppSettings>({ upiIds: [], promotionBannerText: '' });
+  const [settings, setSettings] = useState<AppSettings>({ upiIds: [], promotionBannerText: '', festiveGreeting: { enabled: false, type: 'None', message: '' } });
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
@@ -52,6 +54,16 @@ export default function SettingsPage() {
   const handleContentChange = (field: keyof AppSettings, value: string) => {
       setSettings(prev => ({ ...prev, [field]: value }));
   }
+
+  const handleFestiveGreetingChange = (field: keyof NonNullable<AppSettings['festiveGreeting']>, value: string | boolean) => {
+      setSettings(prev => ({
+          ...prev,
+          festiveGreeting: {
+              ...prev.festiveGreeting!,
+              [field]: value
+          }
+      }));
+  };
 
   const addUpiId = () => {
     const newUpiIds = [...(settings.upiIds || []), { id: '', name: '', limit: 50000, currentAmount: 0 }];
@@ -233,29 +245,80 @@ export default function SettingsPage() {
                 </TabsContent>
 
                  <TabsContent value="app">
-                     <Card>
-                        <CardHeader>
-                            <CardTitle>App Settings</CardTitle>
-                            <CardDescription>Manage general application settings.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="space-y-2">
-                                <Label htmlFor="promotion-banner">Promotion Banner Text</Label>
-                                <Input id="promotion-banner" value={settings.promotionBannerText || ''} onChange={(e) => handleContentChange('promotionBannerText', e.target.value)} placeholder="e.g., Get 10% off on all games today!" />
-                                <p className="text-sm text-muted-foreground">This text will appear on the user's home page. Leave empty to hide.</p>
-                            </div>
-                             <div className="flex flex-col sm:flex-row gap-2">
-                                <Button onClick={handleSave} disabled={isSaving}>
-                                {isSaving ? 'Saving...' : 'Save All Settings'}
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
+                     <div className="space-y-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>App Banners</CardTitle>
+                                <CardDescription>Manage general application banners and popups.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <div className="space-y-2">
+                                    <Label htmlFor="promotion-banner">Promotion Banner Text</Label>
+                                    <Input id="promotion-banner" value={settings.promotionBannerText || ''} onChange={(e) => handleContentChange('promotionBannerText', e.target.value)} placeholder="e.g., Get 10% off on all games today!" />
+                                    <p className="text-sm text-muted-foreground">This text will appear on the user's home page. Leave empty to hide.</p>
+                                </div>
+
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="text-base">Festive Greeting Popup</CardTitle>
+                                        <CardDescription className="text-sm">Show a special popup to users when they open the app.</CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                         <div className="flex items-center space-x-2">
+                                            <Switch 
+                                                id="festive-enabled" 
+                                                checked={settings.festiveGreeting?.enabled}
+                                                onCheckedChange={(checked) => handleFestiveGreetingChange('enabled', checked)}
+                                            />
+                                            <Label htmlFor="festive-enabled">Enable Festive Greeting</Label>
+                                        </div>
+                                        {settings.festiveGreeting?.enabled && (
+                                            <div className="space-y-4 pl-8 border-l-2 ml-3">
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="festive-type">Festival Type</Label>
+                                                    <Select
+                                                        value={settings.festiveGreeting?.type}
+                                                        onValueChange={(value) => handleFestiveGreetingChange('type', value)}
+                                                    >
+                                                        <SelectTrigger id="festive-type">
+                                                            <SelectValue placeholder="Select a festival" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="None">None</SelectItem>
+                                                            <SelectItem value="Generic">Generic Greeting</SelectItem>
+                                                            <SelectItem value="Holi">Holi</SelectItem>
+                                                            <SelectItem value="Diwali">Diwali</SelectItem>
+                                                            <SelectItem value="Eid">Eid</SelectItem>
+                                                            <SelectItem value="Christmas">Christmas</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                     <p className="text-xs text-muted-foreground">This determines the background animation.</p>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="festive-message">Greeting Message</Label>
+                                                    <Textarea 
+                                                        id="festive-message" 
+                                                        value={settings.festiveGreeting?.message || ''} 
+                                                        onChange={(e) => handleFestiveGreetingChange('message', e.target.value)}
+                                                        placeholder="e.g., Happy Diwali to you and your family!"
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </CardContent>
+                                </Card>
+
+                            </CardContent>
+                        </Card>
+                        <div className="flex flex-col sm:flex-row gap-2">
+                            <Button onClick={handleSave} disabled={isSaving}>
+                            {isSaving ? 'Saving...' : 'Save All Settings'}
+                            </Button>
+                        </div>
+                    </div>
                 </TabsContent>
             </Tabs>
         </CardContent>
     </Card>
   );
 }
-
-    
