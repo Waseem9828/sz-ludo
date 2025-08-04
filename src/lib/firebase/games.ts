@@ -26,7 +26,6 @@ export interface Game {
     createdBy: PlayerInfo;
     player1: PlayerInfo;
     player2?: PlayerInfo;
-    palyer2?: PlayerInfo; // Typo from previous version, keeping for compatibility if needed, but will use player2
     roomCode?: string;
     createdAt: any;
     winner?: string; // winner uid
