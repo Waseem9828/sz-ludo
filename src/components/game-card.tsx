@@ -8,7 +8,7 @@ import { GameCardType } from '@/types';
 export default function GameCard({ title, description, image, link, aiHint }: GameCardType) {
   return (
     <Card className="overflow-hidden shadow-lg hover:shadow-primary/20 hover:shadow-xl transition-shadow duration-300 group">
-      <div className="relative w-full aspect-video">
+      <div className="relative w-full aspect-[16/9]">
         <Image
           src={image}
           alt={`${title} banner`}
@@ -18,10 +18,10 @@ export default function GameCard({ title, description, image, link, aiHint }: Ga
         />
       </div>
       <CardContent className="p-4 bg-card">
-        <h3 className="text-2xl font-bold font-headline text-center text-red-600">{title}</h3>
-        <p className="text-sm text-muted-foreground text-center mb-4">{description}</p>
+        <h3 className="text-xl font-bold font-headline text-center text-red-600">{title}</h3>
+        <p className="text-xs text-muted-foreground text-center mb-3 h-8">{description}</p>
         <Link href={link} className="w-full">
-          <Button className="w-full font-bold text-lg py-6">Play Now</Button>
+          <Button className="w-full font-bold">Play Now</Button>
         </Link>
       </CardContent>
     </Card>
