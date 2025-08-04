@@ -34,7 +34,7 @@ import { useRouter } from "next/navigation";
 
 
 export default function Header() {
-  const { user, logout } = useAuth();
+  const { user, appUser, logout } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
 
@@ -77,6 +77,7 @@ export default function Header() {
 
   // A simple check for admin. In a real app, you'd use custom claims from Firebase Auth.
   const isAdmin = user && user.email === 'admin@example.com';
+  const totalBalance = appUser?.wallet ? appUser.wallet.balance + appUser.wallet.winnings : 0;
 
   return (
     <header className="bg-card shadow-md sticky top-0 z-40">
@@ -165,7 +166,13 @@ export default function Header() {
           </div>
         </div>
         {user && (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Link href="/wallet">
+              <Button variant="outline" className="h-9">
+                  <Wallet className="h-4 w-4 mr-2"/>
+                  <span>₹{totalBalance.toFixed(2)}</span>
+              </Button>
+            </Link>
             <Button variant="ghost" size="icon" className="rounded-full">
               <Bell className="h-5 w-5" />
             </Button>

@@ -18,7 +18,7 @@ import { useAuth } from "@/context/auth-context";
 
 export default function Header() {
   const { setTheme } = useTheme();
-  const { user } = useAuth();
+  const { user, appUser } = useAuth();
 
   const getInitials = (name: string) => {
     if (!name) return 'U';
@@ -40,6 +40,7 @@ export default function Header() {
   ];
   
   const isAdmin = user && user.email === 'admin@example.com';
+  const totalBalance = appUser?.wallet ? appUser.wallet.balance + appUser.wallet.winnings : 0;
 
   return (
     <header className="bg-card shadow-md sticky top-0 z-40">
@@ -121,6 +122,12 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-2">
+           <Link href="/wallet">
+              <Button variant="outline" className="h-9 hidden sm:flex">
+                  <Wallet className="h-4 w-4 mr-2"/>
+                  <span>₹{totalBalance.toFixed(2)}</span>
+              </Button>
+            </Link>
           <Button variant="outline" size="icon" className="border-green-500 text-green-500">
             <Download className="h-5 w-5" />
           </Button>
