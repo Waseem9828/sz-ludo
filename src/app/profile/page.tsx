@@ -19,7 +19,7 @@ import { SplashScreen } from '@/components/ui/splash-screen';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
-const MetricCard = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) => (
+const MetricCard = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: string | number }) => (
     <Card className="bg-secondary/50">
         <CardContent className="p-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -202,8 +202,8 @@ export default function ProfilePage() {
                     </CardHeader>
                     <CardContent>
                         <div className="grid grid-cols-2 gap-4">
-                            <MetricCard icon={<BarChart2 className="h-4 w-4" />} label="Games Played" value="0" />
-                            <MetricCard icon={<Trophy className="h-4 w-4" />} label="Chips Won" value="₹0" />
+                            <MetricCard icon={<BarChart2 className="h-4 w-4" />} label="Games Played" value={appUser.gameStats?.played || 0} />
+                            <MetricCard icon={<Trophy className="h-4 w-4" />} label="Chips Won" value={`₹${(appUser.lifetimeStats?.totalWinnings || 0).toFixed(2)}`} />
                             <MetricCard icon={<Gift className="h-4 w-4" />} label="Referal Earning" value="₹0" />
                             <MetricCard icon={<ArrowUp className="h-4 w-4" />} label="Penalty" value="₹0" />
                         </div>

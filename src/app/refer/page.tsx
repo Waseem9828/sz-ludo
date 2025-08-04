@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from '@/context/auth-context';
+import { SplashScreen } from '@/components/ui/splash-screen';
 
 const WhatsAppIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-white">
@@ -26,10 +28,12 @@ const TelegramIcon = () => (
 
 export default function ReferPage() {
     const { toast } = useToast();
-    const referralCode = "6020032542";
+    const { user, appUser, loading } = useAuth();
+    
     // In a real app, you would get this from the environment variables or a configuration file.
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-    const referralLink = `${baseUrl}/signup?ref=${referralCode}`;
+    const referralCode = user ? `SZLUDO${user.uid.substring(0, 8).toUpperCase()}` : '';
+    const referralLink = `${baseUrl}/login?ref=${referralCode}`;
     const shareText = `Hey! I'm playing on SZ LUDO and earning real cash. You should join too! Use my code ${referralCode} to sign up and get a bonus. Let's play! Link: ${referralLink}`;
 
     const handleCopyToClipboard = () => {
@@ -50,6 +54,10 @@ export default function ReferPage() {
         window.open(url, '_blank');
     };
 
+    if (loading || !user || !appUser) {
+        return <SplashScreen />;
+    }
+
     return (
         <div className="flex flex-col min-h-screen bg-background font-body">
             <Header />
@@ -61,12 +69,12 @@ export default function ReferPage() {
                     <CardContent className="flex justify-around text-center">
                         <div>
                             <p className="text-sm text-muted-foreground">Referred Players</p>
-                            <p className="text-lg font-bold">0</p>
+                            <p className="text-lg font-bold">{appUser.referralStats?.referredCount || 0}</p>
                         </div>
                         <div className="border-l mx-4"></div>
                         <div>
                             <p className="text-sm text-muted-foreground">Referral Earning</p>
-                            <p className="text-lg font-bold">₹0</p>
+                            <p className="text-lg font-bold">₹{(appUser.referralStats?.totalEarnings || 0).toFixed(2)}</p>
                         </div>
                     </CardContent>
                 </Card>

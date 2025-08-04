@@ -139,6 +139,16 @@
       animation-timing-function: linear;
       animation-iteration-count: infinite;
   }
+  
+  @keyframes bounce-float {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+  .animate-bounce-float {
+      animation: bounce-float 3s ease-in-out infinite;
+  }
 }
-
-    

@@ -31,6 +31,12 @@ export interface AppUser {
     lifetimeStats?: {
         totalDeposits: number;
         totalWithdrawals: number;
+        totalWinnings: number;
+    },
+    referralStats?: {
+        referredBy?: string; // UID of the user who referred them
+        referredCount: number;
+        totalEarnings: number;
     }
 }
 
@@ -117,7 +123,10 @@ export const updateUserWallet = async (uid: string, amount: number, walletType: 
             transaction.update(userRef, { 'lifetimeStats.totalDeposits': increment(amount) });
         } else if (transactionType === 'withdrawal' && notes === 'Withdrawal Approved') {
             transaction.update(userRef, { 'lifetimeStats.totalWithdrawals': increment(amount) });
+        } else if (transactionType === 'winnings') {
+            transaction.update(userRef, { 'lifetimeStats.totalWinnings': increment(amount) });
         }
+
 
         // Create a transaction log
         const transactionRef = doc(collection(db, 'transactions'));

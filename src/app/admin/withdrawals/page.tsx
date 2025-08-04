@@ -30,8 +30,8 @@ export default function WithdrawalsPage() {
             const userIds = [...new Set(allWithdrawals.map(w => w.userId))];
             if (userIds.length > 0) {
                  const userPromises = userIds.map(id => getUser(id));
-                 const users = await Promise.all(userPromises);
-                 const userMap = new Map(users.filter(u => u).map(u => [u!.uid, u]));
+                 const users = (await Promise.all(userPromises)).filter(u => u) as AppUser[];
+                 const userMap = new Map(users.map(u => [u.uid, u]));
 
                 const withdrawalsWithUserData = allWithdrawals.map(w => ({
                     ...w,
@@ -189,7 +189,9 @@ export default function WithdrawalsPage() {
                   {withdrawal.status === 'pending' && (
                      <Dialog>
                         <DialogTrigger asChild>
-                            <Button variant="outline" size="sm">Review & Pay</Button>
+                            <Button variant="outline" size="sm" disabled={withdrawal.user?.kycStatus !== 'Verified'}>
+                                {withdrawal.user?.kycStatus !== 'Verified' ? 'KYC Pending' : 'Review & Pay'}
+                            </Button>
                         </DialogTrigger>
                         <DialogContent className="max-w-md">
                            <DialogHeader>
