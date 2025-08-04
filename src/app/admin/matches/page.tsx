@@ -49,17 +49,13 @@ export default function MatchesPage() {
             return;
         }
 
-        const commission = match.amount * 0.05;
-        const finalAmount = match.amount - commission;
-        const loserId = match.winner === match.player1.uid ? match.player2.uid : match.player1.uid;
+        const prizePool = match.amount * 2;
+        const commission = prizePool * 0.05;
+        const finalAmount = prizePool - commission;
 
         try {
             // First, credit the winner
-            await updateUserWallet(match.winner, finalAmount, 'winnings', 'winnings');
-
-            // Then, deduct from the loser. This assumes the bet amount was held in an escrow or deducted from balance at match start.
-            // For simplicity, we'll just log the logic here. A real system would have more complex transaction handling.
-            // await updateUserWallet(loserId, -match.amount, 'balance');
+            await updateUserWallet(match.winner, finalAmount, 'winnings', 'winnings', `Win Match: ${match.id}`);
 
             // Finally, update the game status
             await updateGameStatus(match.id, 'completed');
@@ -130,7 +126,7 @@ export default function MatchesPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Players</TableHead>
-              <TableHead>Amount</TableHead>
+              <TableHead>Bet Amount</TableHead>
               <TableHead>Winner</TableHead>
               <TableHead>Room Code</TableHead>
               <TableHead>Status</TableHead>
@@ -139,8 +135,9 @@ export default function MatchesPage() {
           </TableHeader>
           <TableBody>
             {matches.map((match) => {
-                const commission = match.amount * 0.05;
-                const finalAmount = match.amount - commission;
+                const prizePool = match.amount * 2;
+                const commission = prizePool * 0.05;
+                const finalAmount = prizePool - commission;
 
                 return (
               <TableRow key={match.id}>
@@ -196,8 +193,8 @@ export default function MatchesPage() {
                                      </CardHeader>
                                      <CardContent className="p-4 text-sm space-y-2">
                                          <div className="flex justify-between">
-                                             <span className="text-muted-foreground">Prize Pool:</span>
-                                             <span className="font-medium">₹{match.amount.toFixed(2)}</span>
+                                             <span className="text-muted-foreground">Prize Pool (₹{match.amount} x 2):</span>
+                                             <span className="font-medium">₹{prizePool.toFixed(2)}</span>
                                          </div>
                                          <div className="flex justify-between text-red-600">
                                              <span className="text-muted-foreground">Platform Commission (5%):</span>

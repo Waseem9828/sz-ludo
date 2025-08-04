@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -48,9 +47,11 @@ export default function ComputerProPage() {
             });
             return;
         }
-
-        const commission = match.amount * 0.05;
-        const finalAmount = match.amount - commission;
+        
+        // In Computer Pro, the prize pool is just the bet amount, as there's no second player.
+        const prizePool = match.amount;
+        const commission = prizePool * 0.05;
+        const finalAmount = prizePool - commission;
         
         try {
             // First, credit the winner
@@ -131,8 +132,9 @@ export default function ComputerProPage() {
           </TableHeader>
           <TableBody>
             {matches.map((match) => {
-                const commission = match.amount * 0.05;
-                const finalAmount = match.amount - commission;
+                const prizePool = match.amount;
+                const commission = prizePool * 0.05;
+                const finalAmount = prizePool - commission;
 
                 return (
               <TableRow key={match.id}>
@@ -180,7 +182,7 @@ export default function ComputerProPage() {
                                      <CardContent className="p-4 text-sm space-y-2">
                                          <div className="flex justify-between">
                                              <span className="text-muted-foreground">Prize Pool:</span>
-                                             <span className="font-medium">₹{match.amount.toFixed(2)}</span>
+                                             <span className="font-medium">₹{prizePool.toFixed(2)}</span>
                                          </div>
                                          <div className="flex justify-between text-red-600">
                                              <span className="text-muted-foreground">Platform Commission (5%):</span>
