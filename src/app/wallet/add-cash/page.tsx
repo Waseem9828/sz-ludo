@@ -8,11 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { ChevronLeft, Loader } from 'lucide-react';
+import { ChevronLeft, Loader, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
-import Script from 'next/script';
 import { SplashScreen } from '@/components/ui/splash-screen';
 import { useSearchParams } from 'next/navigation';
+import { getActiveUpiId, UpiId } from '@/lib/firebase/settings';
+import Image from 'next/image';
 
 const quickAmounts = [100, 200, 500, 1000, 2000, 5000, 7500, 10000];
 
@@ -23,8 +24,9 @@ function AddCashPageComponent() {
   const { user, appUser, loading } = useAuth();
   const searchParams = useSearchParams();
 
-  const paytmMid = process.env.NEXT_PUBLIC_PAYTM_MID;
-
+  const [activeUpi, setActiveUpi] = useState<UpiId | null>(null);
+  const [showQr, setShowQr] = useState(false);
+  
   useEffect(() => {
     const paymentStatus = searchParams.get('payment');
     if (paymentStatus === 'success') {
@@ -42,11 +44,6 @@ function AddCashPageComponent() {
       return;
     }
     
-    if (!paytmMid) {
-      toast({ title: "Gateway Not Configured", description: "The payment gateway is not configured by the admin.", variant: "destructive" });
-      return;
-    }
-
     const numericAmount = parseFloat(amount);
     if (isNaN(numericAmount) || numericAmount < 10) {
       toast({ title: 'Invalid Amount', description: 'Please enter an amount of at least ₹10.', variant: 'destructive' });
@@ -55,60 +52,36 @@ function AddCashPageComponent() {
     
     setIsSubmitting(true);
     try {
-      const orderId = `ORDER_${user.uid}_${Date.now()}`;
-      const response = await fetch('/api/paytm/initiate-transaction', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          orderId: orderId,
-          amount: numericAmount.toFixed(2),
-          userId: user.uid,
-        }),
-      });
-
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to initiate transaction.');
-      }
-      
-      // We have the token, now invoke Paytm Checkout
-      const config = {
-        "root": "",
-        "flow": "DEFAULT",
-        "data": {
-          "orderId": data.orderId,
-          "token": data.txnToken,
-          "tokenType": "TXN_TOKEN",
-          "amount": data.amount
-        },
-        "handler": {
-          "notifyMerchant": function(eventName: string, data: any) {
-            console.log("notifyMerchant handler function called");
-            console.log("eventName => ", eventName);
-            console.log("data => ", data);
-          }
+        const upiId = await getActiveUpiId();
+        if (!upiId) {
+            throw new Error("No active UPI ID available for payment. Please contact support.");
         }
-      };
-
-      if ((window as any).Paytm && (window as any).Paytm.CheckoutJS) {
-        (window as any).Paytm.CheckoutJS.init(config).then(function onSuccess() {
-            (window as any).Paytm.CheckoutJS.invoke();
-        }).catch(function onError(error: any) {
-            console.error("Paytm CheckoutJS Error: ", error);
-            toast({ title: 'Paytm Error', description: `Could not start payment flow: ${error.message}`, variant: 'destructive' });
-            setIsSubmitting(false);
-        });
-      } else {
-        throw new Error("Paytm CheckoutJS is not loaded.");
-      }
+        setActiveUpi(upiId);
+        setShowQr(true);
 
     } catch (error: any) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
-      setIsSubmitting(false);
+    } finally {
+        setIsSubmitting(false);
     }
   };
 
+  const upiLink = useMemo(() => {
+    if (!activeUpi || !amount) return '#';
+    const params = new URLSearchParams({
+        pa: activeUpi.id,
+        pn: activeUpi.name,
+        am: amount,
+        cu: 'INR',
+        tn: `Cash deposit for ${user?.displayName || user?.email}`,
+    });
+    return `upi://pay?${params.toString()}`;
+  }, [activeUpi, amount, user]);
+
+  const qrCodeUrl = useMemo(() => {
+    if (!upiLink || upiLink === '#') return '';
+    return `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiLink)}`;
+  }, [upiLink]);
 
   const summary = useMemo(() => {
     const numericAmount = parseFloat(amount) || 0;
@@ -128,17 +101,13 @@ function AddCashPageComponent() {
     return <SplashScreen />;
   }
 
+  const resetFlow = () => {
+    setShowQr(false);
+    setActiveUpi(null);
+  }
+
   return (
     <>
-      {paytmMid && (
-        <Script
-          id="paytm-checkout-js"
-          type="application/javascript"
-          src={`https://securegw-stage.paytm.in/merchantpgpui/checkoutjs/merchants/${paytmMid}.js`}
-          onLoad={() => console.log('Paytm CheckoutJS script loaded.')}
-          onError={(e) => console.error('Error loading Paytm script:', e)}
-        />
-      )}
       <div className="flex flex-col min-h-screen bg-background font-body">
         <Header />
         <main className="flex-grow container mx-auto px-4 py-6 space-y-6">
@@ -152,72 +121,102 @@ function AddCashPageComponent() {
           </div>
           
           <Card className="max-w-md mx-auto">
-            <CardHeader>
-              <CardTitle className="text-center text-xl font-semibold text-red-600">Add Cash to Wallet</CardTitle>
-              <CardDescription className="text-center">100% Safe and Secure Payments</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
-                  <Input
-                    id="amount"
-                    type="number"
-                    placeholder="100"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    className="bg-card pl-8 text-lg"
-                    disabled={isSubmitting}
-                  />
-                </div>
-                <div className="grid grid-cols-4 gap-2">
-                  {quickAmounts.map((qAmount) => (
-                    <Button 
-                      key={qAmount}
-                      variant="outline"
-                      onClick={() => setAmount(qAmount.toString())}
-                      disabled={isSubmitting}
-                      className={`flex-col h-auto ${amount === qAmount.toString() ? 'border-primary' : ''}`}
-                    >
-                      <span>₹{qAmount}</span>
+             {showQr && activeUpi ? (
+                <>
+                <CardHeader>
+                    <CardTitle className="text-center text-xl font-semibold text-red-600">Scan to Pay</CardTitle>
+                    <CardDescription className="text-center">Use any UPI app to scan the QR code below.</CardDescription>
+                </CardHeader>
+                 <CardContent className="space-y-4 text-center">
+                    {qrCodeUrl && (
+                        <div className="p-4 border rounded-lg bg-white inline-block">
+                             <Image src={qrCodeUrl} alt="UPI QR Code" width={250} height={250} data-ai-hint="qr code"/>
+                        </div>
+                    )}
+                    <div className="text-2xl font-bold">Pay: ₹{amount}</div>
+                    <div className="text-sm text-muted-foreground">
+                        <p>To: {activeUpi.name}</p>
+                        <p>UPI ID: {activeUpi.id}</p>
+                    </div>
+                     <a href={upiLink}>
+                       <Button className="w-full font-bold text-lg py-6 md:hidden">Pay with UPI</Button>
+                     </a>
+                    <Button variant="outline" onClick={resetFlow} className="w-full">
+                        <RefreshCw className="mr-2"/>
+                        Change Amount
                     </Button>
-                  ))}
-                </div>
-                <Button onClick={handleProceed} className="w-full font-bold text-lg py-6" disabled={isSubmitting}>
-                    {isSubmitting ? <Loader className="animate-spin"/> : 'Proceed to Add'}
-                </Button>
-              </div>
-              
-              <Card>
-                  <CardHeader>
-                      <CardTitle className="text-center text-lg text-red-600">Summary</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3 text-sm">
-                  <div className="flex justify-between">
-                          <span>Deposit Amount (Excl. Govt. Tax) A</span>
-                          <span>₹{summary.depositAmount}</span>
+                 </CardContent>
+                </>
+             ) : (
+                <>
+                <CardHeader>
+                  <CardTitle className="text-center text-xl font-semibold text-red-600">Add Cash to Wallet</CardTitle>
+                  <CardDescription className="text-center">100% Safe and Secure Payments</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₹</span>
+                      <Input
+                        id="amount"
+                        type="number"
+                        placeholder="100"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        className="bg-card pl-8 text-lg"
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                    <div className="grid grid-cols-4 gap-2">
+                      {quickAmounts.map((qAmount) => (
+                        <Button 
+                          key={qAmount}
+                          variant="outline"
+                          onClick={() => setAmount(qAmount.toString())}
+                          disabled={isSubmitting}
+                          className={`flex-col h-auto ${amount === qAmount.toString() ? 'border-primary' : ''}`}
+                        >
+                          <span>₹{qAmount}</span>
+                        </Button>
+                      ))}
+                    </div>
+                    <Button onClick={handleProceed} className="w-full font-bold text-lg py-6" disabled={isSubmitting}>
+                        {isSubmitting ? <Loader className="animate-spin"/> : 'Proceed to Add'}
+                    </Button>
                   </div>
-                  <div className="flex justify-between">
-                          <span>Govt. Tax (28% GST)</span>
-                          <span>₹{summary.taxAmount}</span>
-                  </div>
-                  <hr/>
-                  <div className="flex justify-between font-bold">
-                          <span>Total</span>
-                          <span>₹{summary.total}</span>
-                  </div>
-                  <div className="flex justify-between text-green-600">
-                          <span>Cashback Bonus B</span>
-                          <span>₹{summary.cashback}</span>
-                  </div>
-                  <hr/>
-                  <div className="flex justify-between font-bold">
-                          <span>Add To Wallet Balance (A + B)</span>
-                          <span>₹{summary.walletBalance}</span>
-                  </div>
-                  </CardContent>
-              </Card>
-            </CardContent>
+                  
+                  <Card>
+                      <CardHeader>
+                          <CardTitle className="text-center text-lg text-red-600">Summary</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3 text-sm">
+                      <div className="flex justify-between">
+                              <span>Deposit Amount (Excl. Govt. Tax) A</span>
+                              <span>₹{summary.depositAmount}</span>
+                      </div>
+                      <div className="flex justify-between">
+                              <span>Govt. Tax (28% GST)</span>
+                              <span>₹{summary.taxAmount}</span>
+                      </div>
+                      <hr/>
+                      <div className="flex justify-between font-bold">
+                              <span>Total</span>
+                              <span>₹{summary.total}</span>
+                      </div>
+                      <div className="flex justify-between text-green-600">
+                              <span>Cashback Bonus B</span>
+                              <span>₹{summary.cashback}</span>
+                      </div>
+                      <hr/>
+                      <div className="flex justify-between font-bold">
+                              <span>Add To Wallet Balance (A + B)</span>
+                              <span>₹{summary.walletBalance}</span>
+                      </div>
+                      </CardContent>
+                  </Card>
+                </CardContent>
+                </>
+            )}
           </Card>
         </main>
       </div>
@@ -233,4 +232,3 @@ export default function AddCashPage() {
         </React.Suspense>
     );
 }
-
