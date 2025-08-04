@@ -19,6 +19,8 @@ export interface AppSettings {
   privacyContent?: string;
   refundContent?: string;
   gstContent?: string;
+  // App Settings
+  promotionBannerText?: string;
 }
 
 export const getSettings = async (): Promise<AppSettings> => {
@@ -38,6 +40,7 @@ export const getSettings = async (): Promise<AppSettings> => {
         privacyContent: '',
         refundContent: '',
         gstContent: '',
+        promotionBannerText: 'Commission 5%: referral 2% for all games',
     };
     await setDoc(docRef, initialSettings);
     return initialSettings;
@@ -79,3 +82,5 @@ export const incrementUpiAmount = async (upiId: string, amount: number) => {
 
     await updateSettings({ upiIds: newUpiIds });
 };
+
+    

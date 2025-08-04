@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 
 export default function SettingsPage() {
-  const [settings, setSettings] = useState<AppSettings>({ upiIds: [] });
+  const [settings, setSettings] = useState<AppSettings>({ upiIds: [], promotionBannerText: '' });
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
@@ -120,9 +120,10 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent>
             <Tabs defaultValue="payments">
-                <TabsList className="mb-4">
+                <TabsList className="grid grid-cols-2 md:grid-cols-3">
                     <TabsTrigger value="payments">Payment Settings</TabsTrigger>
                     <TabsTrigger value="content">Content Management</TabsTrigger>
+                    <TabsTrigger value="app">App Settings</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="payments">
@@ -230,8 +231,31 @@ export default function SettingsPage() {
                         </CardContent>
                     </Card>
                 </TabsContent>
+
+                 <TabsContent value="app">
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>App Settings</CardTitle>
+                            <CardDescription>Manage general application settings.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="promotion-banner">Promotion Banner Text</Label>
+                                <Input id="promotion-banner" value={settings.promotionBannerText || ''} onChange={(e) => handleContentChange('promotionBannerText', e.target.value)} placeholder="e.g., Get 10% off on all games today!" />
+                                <p className="text-sm text-muted-foreground">This text will appear on the user's home page. Leave empty to hide.</p>
+                            </div>
+                             <div className="flex flex-col sm:flex-row gap-2">
+                                <Button onClick={handleSave} disabled={isSaving}>
+                                {isSaving ? 'Saving...' : 'Save All Settings'}
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
             </Tabs>
         </CardContent>
     </Card>
   );
 }
+
+    
