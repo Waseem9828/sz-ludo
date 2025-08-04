@@ -13,11 +13,12 @@ import {
     deleteDoc,
     runTransaction,
     FieldValue,
-    deleteField
+    deleteField,
+    increment
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from './config';
-import { updateUserWallet } from './users';
+import { AppUser, updateUserWallet } from './users';
 
 export interface PlayerInfo {
     uid: string;
@@ -139,12 +140,42 @@ export const submitGameResult = async (gameId: string, winnerId: string, screens
     const uploadResult = await uploadBytes(screenshotRef, screenshotFile);
     const screenshotUrl = await getDownloadURL(uploadResult.ref);
 
-    // 2. Update the game document in Firestore
+    // 2. Update game and user stats in a transaction
     const gameRef = doc(db, GAMES_COLLECTION, gameId);
-    await updateDoc(gameRef, {
-        status: 'under_review',
-        winner: winnerId,
-        screenshotUrl: screenshotUrl,
+
+    await runTransaction(db, async (transaction) => {
+        const gameSnap = await transaction.get(gameRef);
+        if (!gameSnap.exists()) {
+            throw new Error("Game not found!");
+        }
+
+        const gameData = gameSnap.data() as Game;
+        const loserId = gameData.player1.uid === winnerId ? gameData.player2?.uid : gameData.player1.uid;
+        
+        if (!loserId) {
+            throw new Error("Opponent not found in the game.");
+        }
+
+        // Update game document
+        transaction.update(gameRef, {
+            status: 'under_review',
+            winner: winnerId,
+            screenshotUrl: screenshotUrl,
+        });
+
+        // Update winner's stats
+        const winnerRef = doc(db, 'users', winnerId);
+        transaction.update(winnerRef, {
+            'gameStats.played': increment(1),
+            'gameStats.won': increment(1),
+        });
+
+        // Update loser's stats
+        const loserRef = doc(db, 'users', loserId);
+        transaction.update(loserRef, {
+            'gameStats.played': increment(1),
+            'gameStats.lost': increment(1),
+        });
     });
 };
 
