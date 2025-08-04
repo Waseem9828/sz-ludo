@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Header from '@/components/play/header';
@@ -16,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ResultDialog } from '@/components/play/result-dialog';
 import { useAuth } from '@/context/auth-context';
-import { Game, listenForGameUpdates, updateGameStatus, submitGameResult, updateGameRoomCode } from '@/lib/firebase/games';
+import { Game, listenForGameUpdates, updateGameStatus, submitGameResult, updateGameRoomCode, cancelAcceptedChallenge } from '@/lib/firebase/games';
 import { SplashScreen } from '@/components/ui/splash-screen';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -96,6 +97,14 @@ function GamePageComponent() {
         if (result === 'LOST' || result === 'CANCEL') {
             setIsSubmitting(true);
             try {
+                // Special case: Player 2 cancels before room code is set
+                if (result === 'CANCEL' && user.uid === game.player2?.uid && !game.roomCode) {
+                    await cancelAcceptedChallenge(game.id, user.uid);
+                    toast({ title: 'Challenge Canceled', description: 'Your acceptance has been canceled and the challenge is open again.' });
+                    router.push('/play');
+                    return;
+                }
+
                 const status = result === 'LOST' ? 'completed' : 'cancelled';
                 // If I lost, the other player won
                 const winnerId = result === 'LOST' ? (game.player1.uid === user.uid ? game.player2?.uid : game.player1.uid) : null;
@@ -293,7 +302,7 @@ function GamePageComponent() {
                 {game.status === 'ongoing' && renderRoomCodeSection()}
 
 
-                {game.roomCode && game.status === 'ongoing' && (
+                {game.status === 'ongoing' && (
                      <Card>
                          <CardHeader className="py-3 bg-muted rounded-t-lg">
                             <CardTitle className="text-center text-md font-semibold text-red-600">Game Result</CardTitle>
