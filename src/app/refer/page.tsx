@@ -1,9 +1,13 @@
 
+'use client';
+
+import React from 'react';
 import Header from "@/components/play/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
+import { useToast } from "@/hooks/use-toast";
 
 const WhatsAppIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-white">
@@ -21,7 +25,30 @@ const TelegramIcon = () => (
 
 
 export default function ReferPage() {
+    const { toast } = useToast();
     const referralCode = "6020032542";
+    // In a real app, you would get this from the environment variables or a configuration file.
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+    const referralLink = `${baseUrl}/signup?ref=${referralCode}`;
+    const shareText = `Join me on SZ LUDO and get a bonus! Use my referral code: ${referralCode}. Link: ${referralLink}`;
+
+    const handleCopyToClipboard = () => {
+        navigator.clipboard.writeText(referralLink);
+        toast({
+            title: "Copied to clipboard!",
+            description: "Your referral link has been copied.",
+        });
+    };
+
+    const handleShare = (platform: 'whatsapp' | 'telegram') => {
+        let url = '';
+        if (platform === 'whatsapp') {
+            url = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+        } else if (platform === 'telegram') {
+            url = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent(shareText)}`;
+        }
+        window.open(url, '_blank');
+    };
 
     return (
         <div className="flex flex-col min-h-screen bg-background font-body">
@@ -54,7 +81,7 @@ export default function ReferPage() {
                         </div>
                         <div className="flex">
                             <Input type="text" value={referralCode} readOnly className="text-center bg-muted border-r-0 rounded-r-none" />
-                            <Button className="rounded-l-none">COPY</Button>
+                            <Button className="rounded-l-none" onClick={handleCopyToClipboard}>COPY</Button>
                         </div>
                         <div className="flex items-center my-4">
                             <hr className="w-full border-gray-300" />
@@ -62,15 +89,15 @@ export default function ReferPage() {
                             <hr className="w-full border-gray-300" />
                         </div>
                         <div className="space-y-3">
-                            <Button className="w-full bg-green-500 hover:bg-green-600 text-white">
+                            <Button className="w-full bg-green-500 hover:bg-green-600 text-white" onClick={() => handleShare('whatsapp')}>
                                 <WhatsAppIcon />
                                 Share To WhatsApp
                             </Button>
-                            <Button className="w-full bg-black hover:bg-gray-800 text-white">
+                            <Button className="w-full bg-black hover:bg-gray-800 text-white" onClick={() => handleShare('telegram')}>
                                 <TelegramIcon />
                                 Share To Telegram
                             </Button>
-                            <Button variant="secondary" className="w-full">
+                            <Button variant="secondary" className="w-full" onClick={handleCopyToClipboard}>
                                 Copy To Clipboard
                             </Button>
                         </div>
