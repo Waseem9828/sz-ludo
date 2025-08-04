@@ -23,6 +23,8 @@ function AddCashPageComponent() {
   const { user, appUser, loading } = useAuth();
   const searchParams = useSearchParams();
 
+  const paytmMid = process.env.NEXT_PUBLIC_PAYTM_MID;
+
   useEffect(() => {
     const paymentStatus = searchParams.get('payment');
     if (paymentStatus === 'success') {
@@ -37,6 +39,11 @@ function AddCashPageComponent() {
   const handleProceed = async () => {
     if (!user) {
       toast({ title: "Login Required", description: "Please log in to add cash.", variant: "destructive" });
+      return;
+    }
+    
+    if (!paytmMid) {
+      toast({ title: "Gateway Not Configured", description: "The payment gateway is not configured by the admin.", variant: "destructive" });
       return;
     }
 
@@ -123,13 +130,15 @@ function AddCashPageComponent() {
 
   return (
     <>
-      <Script
-        id="paytm-checkout-js"
-        type="application/javascript"
-        src={`https://securegw-stage.paytm.in/merchantpgpui/checkoutjs/merchants/${process.env.NEXT_PUBLIC_PAYTM_MID}.js`}
-        onLoad={() => console.log('Paytm CheckoutJS script loaded.')}
-        onError={(e) => console.error('Error loading Paytm script:', e)}
-      />
+      {paytmMid && (
+        <Script
+          id="paytm-checkout-js"
+          type="application/javascript"
+          src={`https://securegw-stage.paytm.in/merchantpgpui/checkoutjs/merchants/${paytmMid}.js`}
+          onLoad={() => console.log('Paytm CheckoutJS script loaded.')}
+          onError={(e) => console.error('Error loading Paytm script:', e)}
+        />
+      )}
       <div className="flex flex-col min-h-screen bg-background font-body">
         <Header />
         <main className="flex-grow container mx-auto px-4 py-6 space-y-6">
