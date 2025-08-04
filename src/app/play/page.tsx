@@ -1,4 +1,5 @@
 
+
 'use client'
 
 import React, { useState, useEffect } from 'react';
@@ -73,8 +74,8 @@ export default function PlayPage() {
             amount: numericAmount,
             createdBy: {
                 uid: user.uid,
-                displayName: appUser.displayName,
-                photoURL: appUser.photoURL,
+                displayName: appUser.displayName || '',
+                photoURL: appUser.photoURL || '',
             },
         });
 

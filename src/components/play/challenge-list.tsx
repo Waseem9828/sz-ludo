@@ -56,8 +56,8 @@ export default function ChallengeList() {
             
             await acceptChallenge(challenge.id, {
                 uid: user.uid,
-                displayName: appUser.displayName,
-                photoURL: appUser.photoURL,
+                displayName: appUser.displayName || '',
+                photoURL: appUser.photoURL || '',
             });
 
             toast({ title: 'Challenge Accepted!', description: `You are now in a battle for ₹${challenge.amount}.` });
@@ -105,5 +105,3 @@ export default function ChallengeList() {
         </div>
     );
 }
-
-    
