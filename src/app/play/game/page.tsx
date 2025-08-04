@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ChevronLeft, Info, Upload, Loader, Send } from 'lucide-react';
+import { ChevronLeft, Info, Upload, Loader, Send, Copy } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -151,6 +151,12 @@ function GamePageComponent() {
             setIsSubmitting(false);
         }
     }
+
+    const handleCopyRoomCode = () => {
+        if (!game?.roomCode) return;
+        navigator.clipboard.writeText(game.roomCode);
+        toast({ title: 'Copied!', description: 'Room code copied to clipboard.' });
+    };
     
     if (loading || !game || !appUser) {
         return <SplashScreen />;
@@ -167,12 +173,19 @@ function GamePageComponent() {
                     <CardHeader className="py-3 bg-muted rounded-t-lg">
                         <CardTitle className="text-center text-md font-semibold text-red-600">Room Code</CardTitle>
                     </CardHeader>
-                    <CardContent className="p-6 text-center">
-                        <p className="text-4xl font-bold tracking-widest my-4">{game.roomCode}</p>
-                        <Button className="w-full bg-gray-700 hover:bg-gray-800 text-white">
-                             <Image src="/ludo_king.png" alt="Ludo King" width={20} height={20} className="mr-2" data-ai-hint="ludo icon" />
-                            Play
-                        </Button>
+                    <CardContent className="p-6 text-center space-y-4">
+                        <div className="flex items-center justify-center gap-2">
+                            <p className="text-4xl font-bold tracking-widest">{game.roomCode}</p>
+                            <Button size="icon" variant="ghost" onClick={handleCopyRoomCode}>
+                                <Copy className="h-6 w-6"/>
+                            </Button>
+                        </div>
+                        <a href="https://play.google.com/store/apps/details?id=com.ludo.king" target="_blank" rel="noopener noreferrer">
+                            <Button className="w-full bg-gray-700 hover:bg-gray-800 text-white">
+                                <Image src="/ludo_king.png" alt="Ludo King" width={20} height={20} className="mr-2" data-ai-hint="ludo icon" />
+                                Open Ludo King
+                            </Button>
+                        </a>
                     </CardContent>
                 </Card>
             );
@@ -280,7 +293,7 @@ function GamePageComponent() {
                 {game.status === 'ongoing' && renderRoomCodeSection()}
 
 
-                {game.roomCode && (
+                {game.roomCode && game.status === 'ongoing' && (
                      <Card>
                          <CardHeader className="py-3 bg-muted rounded-t-lg">
                             <CardTitle className="text-center text-md font-semibold text-red-600">Game Result</CardTitle>
@@ -313,6 +326,21 @@ function GamePageComponent() {
                                     </Button>
                                 </div>
                             )}
+                        </CardContent>
+                    </Card>
+                )}
+                
+                 {game.status !== 'ongoing' && game.status !== 'challenge' && (
+                    <Card>
+                        <CardHeader>
+                             <CardTitle className="text-center text-lg font-semibold text-red-600">Game Over</CardTitle>
+                        </CardHeader>
+                        <CardContent className="text-center">
+                            <p className="text-muted-foreground">This game is <span className="font-bold">{game.status.replace('_', ' ')}</span>.</p>
+                             <p className="text-sm mt-2">The result is under review by the admin.</p>
+                             <Link href="/play">
+                                <Button variant="outline" className="mt-4">Back to Lobby</Button>
+                             </Link>
                         </CardContent>
                     </Card>
                 )}
@@ -355,3 +383,5 @@ export default function GamePage() {
         </Suspense>
     )
 }
+
+    

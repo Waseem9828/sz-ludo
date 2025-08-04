@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -67,6 +68,15 @@ export default function ChallengeList() {
             toast({ title: 'Failed to Accept', description: error.message, variant: 'destructive' });
         }
     };
+    
+    if (challenges.length === 0) {
+        return (
+            <div className="text-center text-muted-foreground py-4">
+                <p>No open challenges right now.</p>
+                <p className="text-xs">Why not create one?</p>
+            </div>
+        )
+    }
 
     return (
         <div className="space-y-4">
@@ -95,3 +105,5 @@ export default function ChallengeList() {
         </div>
     );
 }
+
+    
