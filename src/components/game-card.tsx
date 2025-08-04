@@ -17,9 +17,9 @@ export default function GameCard({ title, description, image, link, aiHint }: Ga
           data-ai-hint={aiHint || "game"}
         />
       </div>
-      <CardContent className="p-4 bg-card">
-        <h3 className="text-xl font-bold font-headline text-center text-red-600">{title}</h3>
-        <p className="text-xs text-muted-foreground text-center mb-3 h-8">{description}</p>
+      <CardContent className="p-4 bg-card text-center">
+        <h3 className="text-xl font-bold font-headline text-red-600">{title}</h3>
+        <p className="text-sm text-muted-foreground mb-3">{description}</p>
         <Link href={link} className="w-full">
           <Button className="w-full font-bold">Play Now</Button>
         </Link>
