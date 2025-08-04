@@ -101,7 +101,7 @@ function GamePageComponent() {
                 if (result === 'CANCEL' && user.uid === game.player2?.uid && !game.roomCode) {
                     await cancelAcceptedChallenge(game.id, user.uid);
                     toast({ title: 'Challenge Canceled', description: 'Your acceptance has been canceled and the challenge is open again.' });
-                    router.push('/play');
+                    router.push('/');
                     return;
                 }
 
@@ -120,7 +120,7 @@ function GamePageComponent() {
                     setIsResultDialogOpen(true);
                 } else {
                      toast({ title: 'Game Cancelled', description: 'Your cancellation request has been submitted.' });
-                     router.push('/play');
+                     router.push('/');
                 }
 
             } catch (err: any) {
@@ -258,13 +258,13 @@ function GamePageComponent() {
             variant={resultDialogProps.variant}
             title={resultDialogProps.title}
             description={resultDialogProps.description}
-            onClose={() => router.push('/play')}
+            onClose={() => router.push('/')}
         />
         <div className="flex flex-col min-h-screen bg-background font-body">
             <Header />
             <main className="flex-grow container mx-auto px-4 py-6 space-y-6">
                 <div className="flex justify-between items-center">
-                    <Link href="/play">
+                    <Link href="/">
                         <Button variant="outline" className="bg-primary text-primary-foreground hover:bg-primary/90">
                             <ChevronLeft className="mr-2 h-4 w-4" />
                             Back
@@ -286,8 +286,8 @@ function GamePageComponent() {
                             <span className="font-semibold">{appUser.displayName}</span>
                         </div>
                         <div className="text-center">
-                            <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEilS2_YhPAJBDjdcIRsoMJLTWafsJuIyola3KN50zXQAZYWSSIbhLhWhOJGMG6UYkUB5ZOiVKgsy2bVstr2af0LVf2g-eWjXHnGO4Z0IbaePP4E7TSDB9x_eK8OqTidX968zc5Wn9p6uGlkLoD9iglU3KZ28_2IbXgl29zHTZgwxzMWPvbN6zhA5AhyH7s/s1600/74920.png" alt="vs" width={64} height={32} className="mx-auto" data-ai-hint="versus icon" />
                             <p className="font-bold text-green-600 mt-1">₹ {game.amount}</p>
+                             <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEilS2_YhPAJBDjdcIRsoMJLTWafsJuIyola3KN50zXQAZYWSSIbhLhWhOJGMG6UYkUB5ZOiVKgsy2bVstr2af0LVf2g-eWjXHnGO4Z0IbaePP4E7TSDB9x_eK8OqTidX968zc5Wn9p6uGlkLoD9iglU3KZ28_2IbXgl29zHTZgwxzMWPvbN6zhA5AhyH7s/s1600/74920.png" alt="vs" width={64} height={32} className="mx-auto" data-ai-hint="versus icon" />
                         </div>
                         <div className="flex items-center gap-2">
                              <span className="font-semibold">{opponent?.displayName}</span>
@@ -347,7 +347,7 @@ function GamePageComponent() {
                         <CardContent className="text-center">
                             <p className="text-muted-foreground">This game is <span className="font-bold">{game.status.replace('_', ' ')}</span>.</p>
                              <p className="text-sm mt-2">The result is under review by the admin.</p>
-                             <Link href="/play">
+                             <Link href="/">
                                 <Button variant="outline" className="mt-4">Back to Lobby</Button>
                              </Link>
                         </CardContent>
