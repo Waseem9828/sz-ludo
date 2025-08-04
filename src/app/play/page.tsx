@@ -32,11 +32,12 @@ export default function PlayPage() {
 
 
   const handleSetChallenge = () => {
-    if (!appUser) return;
+    if (!appUser || !appUser.wallet) return;
     const numericAmount = Number(amount);
+    const totalBalance = appUser.wallet.balance + appUser.wallet.winnings;
     
     if (amount && !isNaN(numericAmount) && numericAmount > 0) {
-      if (appUser.wallet && appUser.wallet.balance >= numericAmount) {
+      if (totalBalance >= numericAmount) {
          setChallengeAmount(numericAmount);
          setIsDialogOpen(true);
       } else {
@@ -59,7 +60,7 @@ export default function PlayPage() {
     if (!user || !appUser || !challengeAmount) return;
     try {
         // First, deduct the amount from user's wallet
-        await updateUserWallet(user.uid, -challengeAmount, 'balance', 'game_fee', 'Challenge Created');
+        await updateUserWallet(user.uid, -challengeAmount, 'balance', 'Challenge Created');
 
         // Then, create the challenge
         await createChallenge({
