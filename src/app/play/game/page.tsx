@@ -24,7 +24,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 const penalties = [
     { amount: '₹100', reason: 'Fraud / Fake Screenshot' },
     { amount: '₹50', reason: 'Wrong Update' },
-    { amount: '₹50', reason: 'No Update' },
+    { amount: '₹50', reason: 'No update after 30 minut' },
     { amount: '₹25', reason: 'Abusing' },
 ];
 
