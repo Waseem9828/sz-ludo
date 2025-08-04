@@ -170,7 +170,7 @@ function GamePageComponent() {
                     <CardContent className="p-6 text-center">
                         <p className="text-4xl font-bold tracking-widest my-4">{game.roomCode}</p>
                         <Button className="w-full bg-gray-700 hover:bg-gray-800 text-white">
-                             <Image src="/ludo_king.png" alt="Ludo King" width={20} height={20} className="mr-2" />
+                             <Image src="/ludo_king.png" alt="Ludo King" width={20} height={20} className="mr-2" data-ai-hint="ludo icon" />
                             Play
                         </Button>
                     </CardContent>
@@ -277,7 +277,8 @@ function GamePageComponent() {
                     </CardContent>
                 </Card>
 
-                {renderRoomCodeSection()}
+                {game.status === 'ongoing' && renderRoomCodeSection()}
+
 
                 {game.roomCode && (
                      <Card>

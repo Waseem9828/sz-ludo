@@ -38,14 +38,15 @@ export default function ChallengeList() {
             return;
         }
 
-        if (appUser.wallet && appUser.wallet.balance < challenge.amount) {
+        const totalBalance = (appUser.wallet?.balance || 0) + (appUser.wallet?.winnings || 0);
+        if (totalBalance < challenge.amount) {
             toast({ title: 'Insufficient Balance', description: 'You do not have enough balance to accept this challenge.', variant: 'destructive' });
             return;
         }
         
         try {
             // Deduct amount from acceptor's wallet
-            await updateUserWallet(user.uid, -challenge.amount, 'balance');
+            await updateUserWallet(user.uid, -challenge.amount, 'balance', 'Challenge Accepted');
             
             await acceptChallenge(challenge.id, {
                 uid: user.uid,
@@ -57,7 +58,7 @@ export default function ChallengeList() {
             router.push(`/play/game?id=${challenge.id}`);
         } catch (error: any) {
              // Re-credit user if accept fails
-            await updateUserWallet(user.uid, challenge.amount, 'balance');
+            await updateUserWallet(user.uid, challenge.amount, 'balance', 'refund', 'Accept Challenge Failed');
             toast({ title: 'Failed to Accept', description: error.message, variant: 'destructive' });
         }
     };

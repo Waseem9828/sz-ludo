@@ -1,5 +1,4 @@
 
-
 import { doc, getDoc, updateDoc, increment, collection, onSnapshot, writeBatch, serverTimestamp, runTransaction } from 'firebase/firestore';
 import { db } from './config';
 import { TransactionType } from './transactions';
@@ -40,7 +39,7 @@ export const getUser = async (uid: string): Promise<AppUser | null> => {
 }
 
 
-export const updateUserWallet = async (uid: string, amount: number, type: 'balance' | 'winnings', transactionType: TransactionType, notes?: string, relatedId?: string) => {
+export const updateUserWallet = async (uid: string, amount: number, walletType: 'balance' | 'winnings', transactionType: TransactionType, notes?: string, relatedId?: string) => {
     const userRef = doc(db, 'users', uid);
     
     return await runTransaction(db, async (transaction) => {
@@ -50,20 +49,43 @@ export const updateUserWallet = async (uid: string, amount: number, type: 'balan
         }
         const userData = userSnap.data() as AppUser;
 
-        // Determine the wallet field to update
-        const fieldToUpdate = type === 'balance' ? 'wallet.balance' : 'wallet.winnings';
-        const currentBalance = userData.wallet ? userData.wallet[type] : 0;
+        const currentBalance = userData.wallet?.balance || 0;
+        const currentWinnings = userData.wallet?.winnings || 0;
 
-        // Check for sufficient funds if amount is negative
-        if (amount < 0 && currentBalance < Math.abs(amount)) {
-            throw new Error(`Insufficient ${type} balance.`);
+        // If deducting, check from which wallet to pull
+        if (amount < 0) {
+            if (walletType === 'balance') {
+                 if (currentBalance < Math.abs(amount)) {
+                    throw new Error(`Insufficient deposit balance.`);
+                 }
+                 transaction.update(userRef, { 'wallet.balance': increment(amount) });
+            } else if (walletType === 'winnings') {
+                if (currentWinnings < Math.abs(amount)) {
+                    throw new Error(`Insufficient winnings balance.`);
+                 }
+                transaction.update(userRef, { 'wallet.winnings': increment(amount) });
+            } else { // Special case for challenge creation/acceptance, pull from total
+                 const totalBalance = currentBalance + currentWinnings;
+                 if (totalBalance < Math.abs(amount)) {
+                     throw new Error('Insufficient total balance.');
+                 }
+                 
+                 let remainingAmount = Math.abs(amount);
+                 const winningsDeduction = Math.min(remainingAmount, currentWinnings);
+                 if (winningsDeduction > 0) {
+                    transaction.update(userRef, { 'wallet.winnings': increment(-winningsDeduction) });
+                    remainingAmount -= winningsDeduction;
+                 }
+                 if (remainingAmount > 0) {
+                    transaction.update(userRef, { 'wallet.balance': increment(-remainingAmount) });
+                 }
+            }
+        } else {
+            // If adding, add to the specified wallet type
+            const fieldToUpdate = walletType === 'balance' ? 'wallet.balance' : 'wallet.winnings';
+            transaction.update(userRef, { [fieldToUpdate]: increment(amount) });
         }
         
-        // --- Start Batch Operations ---
-        transaction.update(userRef, {
-            [fieldToUpdate]: increment(amount)
-        });
-
         // Update lifetime stats for deposits or approved withdrawals
         if (transactionType === 'deposit') {
             transaction.update(userRef, { 'lifetimeStats.totalDeposits': increment(amount) });
