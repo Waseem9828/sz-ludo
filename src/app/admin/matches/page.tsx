@@ -48,13 +48,13 @@ export default function MatchesPage() {
             return;
         }
 
-        const commission = match.amount * 0.045;
+        const commission = match.amount * 0.05;
         const finalAmount = match.amount - commission;
         const loserId = match.winner === match.player1.uid ? match.player2.uid : match.player1.uid;
 
         try {
             // First, credit the winner
-            await updateUserWallet(match.winner, finalAmount, 'winnings');
+            await updateUserWallet(match.winner, finalAmount, 'winnings', 'winnings');
 
             // Then, deduct from the loser. This assumes the bet amount was held in an escrow or deducted from balance at match start.
             // For simplicity, we'll just log the logic here. A real system would have more complex transaction handling.
@@ -138,7 +138,7 @@ export default function MatchesPage() {
           </TableHeader>
           <TableBody>
             {matches.map((match) => {
-                const commission = match.amount * 0.045;
+                const commission = match.amount * 0.05;
                 const finalAmount = match.amount - commission;
 
                 return (
@@ -199,7 +199,7 @@ export default function MatchesPage() {
                                              <span className="font-medium">₹{match.amount.toFixed(2)}</span>
                                          </div>
                                          <div className="flex justify-between text-red-600">
-                                             <span className="text-muted-foreground">Platform Commission (4.5%):</span>
+                                             <span className="text-muted-foreground">Platform Commission (5%):</span>
                                              <span className="font-medium">- ₹{commission.toFixed(2)}</span>
                                          </div>
                                          <hr/>
