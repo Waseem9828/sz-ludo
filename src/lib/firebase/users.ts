@@ -1,4 +1,5 @@
 
+
 import { doc, getDoc, updateDoc, increment, collection, onSnapshot, writeBatch, serverTimestamp, runTransaction } from 'firebase/firestore';
 import { db } from './config';
 import { TransactionType } from './transactions';
@@ -42,7 +43,7 @@ export const getUser = async (uid: string): Promise<AppUser | null> => {
 export const updateUserWallet = async (uid: string, amount: number, type: 'balance' | 'winnings', transactionType: TransactionType, notes?: string, relatedId?: string) => {
     const userRef = doc(db, 'users', uid);
     
-    return runTransaction(db, async (transaction) => {
+    return await runTransaction(db, async (transaction) => {
         const userSnap = await transaction.get(userRef);
         if (!userSnap.exists()) {
             throw new Error("User not found");
@@ -78,7 +79,7 @@ export const updateUserWallet = async (uid: string, amount: number, type: 'balan
             amount: Math.abs(amount),
             type: transactionType,
             status: 'completed', // Default to completed for direct updates
-            notes: notes,
+            notes: notes || null,
             relatedId: relatedId || null,
             createdAt: serverTimestamp(),
         });
