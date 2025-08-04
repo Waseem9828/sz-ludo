@@ -7,16 +7,80 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { getSettings, updateSettings, UpiId, AppSettings } from '@/lib/firebase/settings';
-import { Loader, Trash2, PlusCircle } from 'lucide-react';
+import { getSettings, updateSettings, UpiId, AppSettings, uploadBannerImage, deleteBannerImage } from '@/lib/firebase/settings';
+import { Loader, Trash2, PlusCircle, Upload } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import Image from 'next/image';
+
+const BannerManager = ({ title, bannerUrls, gameType, onUpdate }: { title: string, bannerUrls: string[], gameType: 'classic' | 'popular', onUpdate: (urls: string[]) => void }) => {
+    const [isUploading, setIsUploading] = useState(false);
+    const { toast } = useToast();
+
+    const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        try {
+            const newUrl = await uploadBannerImage(file, gameType);
+            onUpdate([...bannerUrls, newUrl]);
+            toast({ title: 'Success', description: 'Banner uploaded!' });
+        } catch (error: any) {
+            toast({ title: 'Upload Failed', description: error.message, variant: 'destructive' });
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const handleImageDelete = async (urlToDelete: string) => {
+        try {
+            await deleteBannerImage(urlToDelete);
+            onUpdate(bannerUrls.filter(url => url !== urlToDelete));
+            toast({ title: 'Success', description: 'Banner deleted!' });
+        } catch (error: any) {
+            toast({ title: 'Delete Failed', description: error.message, variant: 'destructive' });
+        }
+    };
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="text-base">{title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                    {bannerUrls.map((url, index) => (
+                        <div key={index} className="relative group">
+                            <Image src={url} alt={`${title} Banner ${index + 1}`} width={200} height={112} className="rounded-md object-cover aspect-video" data-ai-hint="game banner"/>
+                            <Button
+                                variant="destructive"
+                                size="icon"
+                                className="absolute top-1 right-1 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={() => handleImageDelete(url)}
+                            >
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    ))}
+                </div>
+                <Label htmlFor={`banner-upload-${gameType}`} className="w-full">
+                    <div className="flex items-center justify-center w-full px-4 py-2 border-2 border-dashed rounded-md cursor-pointer hover:bg-muted">
+                        {isUploading ? <Loader className="animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                        <span>Upload Image</span>
+                    </div>
+                    <Input id={`banner-upload-${gameType}`} type="file" accept="image/*" className="sr-only" onChange={handleImageUpload} disabled={isUploading} />
+                </Label>
+            </CardContent>
+        </Card>
+    )
+}
 
 export default function SettingsPage() {
-  const [settings, setSettings] = useState<AppSettings>({ upiIds: [], promotionBannerText: '', festiveGreeting: { enabled: false, type: 'None', message: '' } });
+  const [settings, setSettings] = useState<AppSettings>({ upiIds: [], promotionBannerText: '', festiveGreeting: { enabled: false, type: 'None', message: '' }, gameBanners: {classic: [], popular: []} });
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
@@ -64,6 +128,16 @@ export default function SettingsPage() {
           }
       }));
   };
+
+  const handleBannerUpdate = (gameType: 'classic' | 'popular', urls: string[]) => {
+      setSettings(prev => ({
+          ...prev,
+          gameBanners: {
+              ...prev.gameBanners!,
+              [gameType]: urls,
+          }
+      }));
+  }
 
   const addUpiId = () => {
     const newUpiIds = [...(settings.upiIds || []), { id: '', name: '', limit: 50000, currentAmount: 0 }];
@@ -248,8 +322,8 @@ export default function SettingsPage() {
                      <div className="space-y-6">
                         <Card>
                             <CardHeader>
-                                <CardTitle>App Banners</CardTitle>
-                                <CardDescription>Manage general application banners and popups.</CardDescription>
+                                <CardTitle>App Content</CardTitle>
+                                <CardDescription>Manage banners and popups that appear in the app.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6">
                                 <div className="space-y-2">
@@ -257,7 +331,20 @@ export default function SettingsPage() {
                                     <Input id="promotion-banner" value={settings.promotionBannerText || ''} onChange={(e) => handleContentChange('promotionBannerText', e.target.value)} placeholder="e.g., Get 10% off on all games today!" />
                                     <p className="text-sm text-muted-foreground">This text will appear on the user's home page. Leave empty to hide.</p>
                                 </div>
-
+                                <div className="space-y-4">
+                                    <BannerManager
+                                        title="Classic Ludo Banners"
+                                        bannerUrls={settings.gameBanners?.classic || []}
+                                        gameType="classic"
+                                        onUpdate={(urls) => handleBannerUpdate('classic', urls)}
+                                    />
+                                    <BannerManager
+                                        title="Popular Ludo Banners"
+                                        bannerUrls={settings.gameBanners?.popular || []}
+                                        gameType="popular"
+                                        onUpdate={(urls) => handleBannerUpdate('popular', urls)}
+                                    />
+                                </div>
                                 <Card>
                                     <CardHeader>
                                         <CardTitle className="text-base">Festive Greeting Popup</CardTitle>
@@ -322,3 +409,5 @@ export default function SettingsPage() {
     </Card>
   );
 }
+
+    

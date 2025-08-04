@@ -1,6 +1,7 @@
 
 import { doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
-import { db } from './config';
+import { db, storage } from './config';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 
 const SETTINGS_COLLECTION = 'settings';
 const APP_CONFIG_DOC = 'app-config';
@@ -20,6 +21,11 @@ export interface FestiveGreeting {
     message: string;
 }
 
+export interface GameBanners {
+    classic: string[];
+    popular: string[];
+}
+
 export interface AppSettings {
   upiIds?: UpiId[];
   // Content Management
@@ -30,6 +36,7 @@ export interface AppSettings {
   // App Settings
   promotionBannerText?: string;
   festiveGreeting?: FestiveGreeting;
+  gameBanners?: GameBanners;
 }
 
 export const getSettings = async (): Promise<AppSettings> => {
@@ -47,15 +54,21 @@ export const getSettings = async (): Promise<AppSettings> => {
             enabled: false,
             type: 'None',
             message: ''
+        },
+        gameBanners: {
+            classic: [],
+            popular: []
         }
     };
 
   if (docSnap.exists()) {
     const data = docSnap.data() as AppSettings;
-    // Ensure upiIds is always an array
+    // Ensure nested objects have defaults
     const upiIds = (data.upiIds || []).map(upi => ({ name: '', currentAmount: 0, limit: 50000, ...upi }));
     const festiveGreeting = data.festiveGreeting || defaults.festiveGreeting;
-    return { ...defaults, ...data, upiIds, festiveGreeting };
+    const gameBanners = data.gameBanners || defaults.gameBanners;
+
+    return { ...defaults, ...data, upiIds, festiveGreeting, gameBanners };
   } else {
     // If the document doesn't exist, create it with default values
     await setDoc(docRef, defaults);
@@ -98,3 +111,19 @@ export const incrementUpiAmount = async (upiId: string, amount: number) => {
 
     await updateSettings({ upiIds: newUpiIds });
 };
+
+// Upload a banner image to storage
+export const uploadBannerImage = async (file: File, gameType: 'classic' | 'popular'): Promise<string> => {
+    const filePath = `banners/${gameType}/${Date.now()}_${file.name}`;
+    const storageRef = ref(storage, filePath);
+    await uploadBytes(storageRef, file);
+    return await getDownloadURL(storageRef);
+};
+
+// Delete a banner image from storage
+export const deleteBannerImage = async (url: string): Promise<void> => {
+    const storageRef = ref(storage, url);
+    await deleteObject(storageRef);
+};
+
+    

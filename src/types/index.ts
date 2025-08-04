@@ -1,8 +1,15 @@
 
+
 export interface GameCardType {
   title: string;
   description: string;
-  image: string;
-  link: string;
+  images: string[];
   aiHint?: string;
 }
+
+export interface GameBanners {
+    classic: string[];
+    popular: string[];
+}
+
+    
