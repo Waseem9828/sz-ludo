@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import Header from "@/components/play/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ChevronLeft, AlertCircle } from "lucide-react";
+import { ChevronLeft, AlertCircle, Plus, Minus } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from 'next/navigation';
@@ -24,7 +24,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { createWithdrawalRequest } from '@/lib/firebase/withdrawals';
-import { updateUserWallet } from '@/lib/firebase/users';
 
 
 export default function WalletPage() {
@@ -51,13 +50,15 @@ export default function WalletPage() {
         
         if (appUser.kycStatus !== 'Verified') {
             toast({ title: "KYC Not Verified", description: "Please complete and verify your KYC to enable withdrawals.", variant: "destructive" });
+            setIsWithdrawDialogOpen(false);
+            router.push('/kyc');
             return;
         }
 
         const amount = parseFloat(withdrawAmount);
         
-        if (isNaN(amount) || amount <= 0) {
-            toast({ title: "Invalid Amount", description: "Please enter a valid amount to withdraw.", variant: "destructive" });
+        if (isNaN(amount) || amount < 100) {
+            toast({ title: "Invalid Amount", description: "Minimum withdrawal amount is ₹100.", variant: "destructive" });
             return;
         }
 
@@ -138,82 +139,80 @@ export default function WalletPage() {
                     </Card>
                 )}
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-center text-lg font-semibold text-red-600">Deposit Chips</CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-center space-y-4">
-                        <div>
-                            <p className="text-sm text-muted-foreground">Available for Gameplay</p>
-                            <p className="text-2xl font-bold">₹{(appUser.wallet?.balance || 0).toFixed(2)}</p>
-                        </div>
-                        <Link href="/wallet/add-cash">
-                            <Button className="w-full bg-primary hover:bg-primary/90 font-bold text-lg py-6">
-                                Add Cash
-                            </Button>
-                        </Link>
-                    </CardContent>
-                </Card>
-                
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-center text-lg font-semibold text-red-600">Winning Chips</CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-center space-y-4">
-                        <div>
-                            <p className="text-sm text-muted-foreground">Withdrawable Balance</p>
-                            <p className="text-2xl font-bold">₹{(appUser.wallet?.winnings || 0).toFixed(2)}</p>
-                        </div>
-                        <Dialog open={isWithdrawDialogOpen} onOpenChange={setIsWithdrawDialogOpen}>
-                            <DialogTrigger asChild>
-                                 <Button className="w-full bg-green-600 hover:bg-green-700 text-white font-bold text-lg py-6" disabled={isKycPending || (appUser.wallet?.winnings || 0) <= 0}>
-                                    Withdraw
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-center text-lg font-semibold text-red-600">Deposit Chips</CardTitle>
+                            <CardDescription className="text-center">Available for Gameplay</CardDescription>
+                        </CardHeader>
+                        <CardContent className="text-center space-y-4">
+                            <p className="text-3xl font-bold">₹{(appUser.wallet?.balance || 0).toFixed(2)}</p>
+                            <Link href="/wallet/add-cash">
+                                <Button className="w-full bg-primary hover:bg-primary/90 font-bold text-lg py-6">
+                                    <Plus className="mr-2"/>
+                                    Add Cash
                                 </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                                <DialogHeader>
-                                    <DialogTitle>Request Withdrawal</DialogTitle>
-                                    <DialogDescription>
-                                        Enter the amount you wish to withdraw from your winnings of ₹{(appUser.wallet?.winnings || 0).toFixed(2)}. Minimum withdrawal is ₹100.
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <div className="space-y-4">
-                                     <div>
-                                        <Label htmlFor="withdraw-amount">Amount</Label>
-                                        <Input
-                                            id="withdraw-amount"
-                                            type="number"
-                                            value={withdrawAmount}
-                                            onChange={(e) => setWithdrawAmount(e.target.value)}
-                                            placeholder="Enter amount"
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="upi-id">UPI ID</Label>
-                                        <Input
-                                            id="upi-id"
-                                            value={upiId}
-                                            onChange={(e) => setUpiId(e.target.value)}
-                                            placeholder="Enter your UPI ID"
-                                        />
-                                    </div>
-                                </div>
-                                <DialogFooter>
-                                    <DialogClose asChild>
-                                        <Button variant="outline">Cancel</Button>
-                                    </DialogClose>
-                                    <Button onClick={handleWithdrawChips} disabled={isSubmitting}>
-                                        {isSubmitting ? 'Submitting...' : 'Submit Request'}
+                            </Link>
+                        </CardContent>
+                    </Card>
+                    
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-center text-lg font-semibold text-red-600">Winning Chips</CardTitle>
+                            <CardDescription className="text-center">Withdrawable Balance</CardDescription>
+                        </CardHeader>
+                        <CardContent className="text-center space-y-4">
+                            <p className="text-3xl font-bold">₹{(appUser.wallet?.winnings || 0).toFixed(2)}</p>
+                            <Dialog open={isWithdrawDialogOpen} onOpenChange={setIsWithdrawDialogOpen}>
+                                <DialogTrigger asChild>
+                                     <Button className="w-full bg-green-600 hover:bg-green-700 text-white font-bold text-lg py-6" disabled={isKycPending || (appUser.wallet?.winnings || 0) <= 0}>
+                                        <Minus className="mr-2" />
+                                        Withdraw
                                     </Button>
-                                </DialogFooter>
-                            </DialogContent>
-                        </Dialog>
-                    </CardContent>
-                </Card>
-
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Request Withdrawal</DialogTitle>
+                                        <DialogDescription>
+                                            Enter the amount you wish to withdraw from your winnings of ₹{(appUser.wallet?.winnings || 0).toFixed(2)}. Minimum withdrawal is ₹100.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="space-y-4">
+                                         <div>
+                                            <Label htmlFor="withdraw-amount">Amount</Label>
+                                            <Input
+                                                id="withdraw-amount"
+                                                type="number"
+                                                value={withdrawAmount}
+                                                onChange={(e) => setWithdrawAmount(e.target.value)}
+                                                placeholder="Enter amount"
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="upi-id">UPI ID</Label>
+                                            <Input
+                                                id="upi-id"
+                                                value={upiId}
+                                                onChange={(e) => setUpiId(e.target.value)}
+                                                placeholder="Enter your UPI ID"
+                                            />
+                                        </div>
+                                    </div>
+                                    <DialogFooter>
+                                        <DialogClose asChild>
+                                            <Button variant="outline">Cancel</Button>
+                                        </DialogClose>
+                                        <Button onClick={handleWithdrawChips} disabled={isSubmitting}>
+                                            {isSubmitting ? 'Submitting...' : 'Submit Request'}
+                                        </Button>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
+                             {isKycPending && <p className="text-xs text-destructive">KYC verification required to withdraw.</p>}
+                        </CardContent>
+                    </Card>
+                </div>
             </main>
         </div>
     );
 }
-
-    
