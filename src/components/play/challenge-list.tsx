@@ -95,9 +95,15 @@ export default function ChallengeList() {
                 </div>
                 <div className="text-right">
                 <p className="text-green-600 font-bold">₹ {challenge.amount}</p>
-                <Button size="sm" className="mt-1" onClick={() => handleAccept(challenge)} disabled={user?.uid === challenge.createdBy.uid}>
-                    Play
-                </Button>
+                 {user?.uid === challenge.createdBy.uid ? (
+                    <Button size="sm" className="mt-1" disabled>
+                        Waiting
+                    </Button>
+                ) : (
+                    <Button size="sm" className="mt-1" onClick={() => handleAccept(challenge)}>
+                        Play
+                    </Button>
+                )}
                 </div>
             </CardContent>
             </Card>
