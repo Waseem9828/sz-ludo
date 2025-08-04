@@ -22,7 +22,7 @@ const games: GameCardType[] = [
 export default function GameListing() {
   return (
     <section>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-2 gap-4">
         {games.map((game, index) => (
           <GameCard key={index} {...game} />
         ))}
