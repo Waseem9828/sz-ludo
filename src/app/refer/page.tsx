@@ -30,7 +30,7 @@ export default function ReferPage() {
     // In a real app, you would get this from the environment variables or a configuration file.
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
     const referralLink = `${baseUrl}/signup?ref=${referralCode}`;
-    const shareText = `Join me on SZ LUDO and get a bonus! Use my referral code: ${referralCode}. Link: ${referralLink}`;
+    const shareText = `Hey! I'm playing on SZ LUDO and earning real cash. You should join too! Use my code ${referralCode} to sign up and get a bonus. Let's play! Link: ${referralLink}`;
 
     const handleCopyToClipboard = () => {
         navigator.clipboard.writeText(referralLink);
