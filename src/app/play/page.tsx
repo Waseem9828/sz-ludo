@@ -10,16 +10,15 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
-import { CreateChallengeDialog } from '@/components/play/create-challenge-dialog';
 import { SplashScreen } from '@/components/ui/splash-screen';
 import { createChallenge, Game } from '@/lib/firebase/games';
 import { updateUserWallet } from '@/lib/firebase/users';
+import { Loader } from 'lucide-react';
 
 
 export default function PlayPage() {
   const [amount, setAmount] = useState('');
-  const [challengeAmount, setChallengeAmount] = useState(0);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const { user, appUser, loading } = useAuth();
   const router = useRouter();
@@ -31,68 +30,62 @@ export default function PlayPage() {
   }, [user, loading, router]);
 
 
-  const handleSetChallenge = () => {
-    if (!appUser || !appUser.wallet) return;
+  const handleSetChallenge = async () => {
+    if (!appUser || !appUser.wallet || !user) return;
+
     const numericAmount = Number(amount);
-    const totalBalance = appUser.wallet.balance + appUser.wallet.winnings;
+    const totalBalance = (appUser.wallet.balance || 0) + (appUser.wallet.winnings || 0);
     
-    if (amount && !isNaN(numericAmount) && numericAmount > 0) {
-      if (totalBalance >= numericAmount) {
-         setChallengeAmount(numericAmount);
-         setIsDialogOpen(true);
-      } else {
-          toast({
-            title: 'Insufficient Balance',
-            description: 'You do not have enough balance to create this challenge.',
-            variant: 'destructive',
-          });
-      }
-    } else {
-       toast({
+    if (!amount || isNaN(numericAmount) || numericAmount <= 0) {
+      toast({
         title: 'Invalid Amount',
         description: 'Please enter a valid amount to set a challenge.',
         variant: 'destructive',
       });
+      return;
     }
-  };
+      
+    if (totalBalance < numericAmount) {
+      toast({
+        title: 'Insufficient Balance',
+        description: `You need ₹${numericAmount} to create this challenge, but you only have ₹${totalBalance.toFixed(2)}.`,
+        variant: 'destructive',
+      });
+      return;
+    }
 
-  const handleChallengeCreated = async (roomCode: string) => {
-    if (!user || !appUser || !challengeAmount) return;
+    setIsSubmitting(true);
     try {
         // First, deduct the amount from user's wallet
-        await updateUserWallet(user.uid, -challengeAmount, 'balance', 'Challenge Created');
+        await updateUserWallet(user.uid, -numericAmount, 'balance', 'Challenge Created');
 
         // Then, create the challenge
         await createChallenge({
-            amount: challengeAmount,
+            amount: numericAmount,
             createdBy: {
                 uid: user.uid,
                 displayName: appUser.displayName,
                 photoURL: appUser.photoURL,
             },
-            roomCode: roomCode,
         });
 
         toast({
             title: 'Challenge Created!',
-            description: `Your challenge for ₹${challengeAmount} has been set.`,
+            description: `Your challenge for ₹${numericAmount} has been set.`,
         });
         setAmount('');
-        setChallengeAmount(0);
     } catch(error: any) {
         // If challenge creation fails for any reason, refund the user.
-        // The wallet update should be robust enough to handle this.
-        // We will try to refund the user.
         try {
-            await updateUserWallet(user.uid, challengeAmount, 'balance', 'refund', 'Challenge Creation Failed');
+            await updateUserWallet(user.uid, numericAmount, 'balance', 'refund', 'Challenge Creation Failed');
         } catch (refundError: any) {
-            // If refund fails, log it and notify user to contact support
              toast({
                 title: 'Critical Error!',
                 description: `Failed to create challenge AND failed to refund your balance. Please contact support immediately. Error: ${refundError.message}`,
                 variant: 'destructive',
                 duration: 10000,
             });
+             setIsSubmitting(false);
             return;
         }
 
@@ -101,8 +94,10 @@ export default function PlayPage() {
             description: `Something went wrong: ${error.message}. Your balance has been refunded.`,
             variant: 'destructive',
         });
+    } finally {
+        setIsSubmitting(false);
     }
-  }
+  };
 
    if (loading || !user) {
     return <SplashScreen />;
@@ -111,12 +106,6 @@ export default function PlayPage() {
 
   return (
     <>
-    <CreateChallengeDialog
-        isOpen={isDialogOpen}
-        setIsOpen={setIsDialogOpen}
-        amount={challengeAmount}
-        onChallengeCreated={handleChallengeCreated}
-    />
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
       <Header />
       <main className="flex-grow container mx-auto px-4 py-6 space-y-8">
@@ -127,8 +116,11 @@ export default function PlayPage() {
             className="bg-card dark:bg-gray-800" 
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
+            disabled={isSubmitting}
           />
-          <Button className="bg-primary text-primary-foreground" onClick={handleSetChallenge}>Set</Button>
+          <Button className="bg-primary text-primary-foreground" onClick={handleSetChallenge} disabled={isSubmitting}>
+            {isSubmitting ? <Loader className="animate-spin" /> : 'Set'}
+          </Button>
         </div>
         
         <section>

@@ -27,7 +27,7 @@ export interface Game {
     player1: PlayerInfo;
     player2?: PlayerInfo;
     palyer2?: PlayerInfo; // Typo from previous version, keeping for compatibility if needed, but will use player2
-    roomCode: string;
+    roomCode?: string;
     createdAt: any;
     winner?: string; // winner uid
     screenshotUrl?: string;
@@ -36,7 +36,7 @@ export interface Game {
 const GAMES_COLLECTION = 'games';
 
 // Create a new challenge
-export const createChallenge = async (data: { amount: number; createdBy: PlayerInfo; roomCode: string; }) => {
+export const createChallenge = async (data: { amount: number; createdBy: PlayerInfo }) => {
     return await addDoc(collection(db, GAMES_COLLECTION), {
         ...data,
         player1: data.createdBy,
@@ -51,6 +51,14 @@ export const acceptChallenge = async (gameId: string, player2: PlayerInfo) => {
     return await updateDoc(gameRef, {
         player2: player2,
         status: 'ongoing',
+    });
+};
+
+// Update game room code
+export const updateGameRoomCode = async (gameId: string, roomCode: string) => {
+    const gameRef = doc(db, GAMES_COLLECTION, gameId);
+    return await updateDoc(gameRef, {
+        roomCode: roomCode,
     });
 };
 
@@ -91,6 +99,24 @@ export const getGameById = async (gameId: string): Promise<Game | null> => {
         return null;
     }
 }
+
+// Listen for real-time updates on a single game
+export const listenForGameUpdates = (
+    gameId: string,
+    callback: (game: Game | null) => void
+) => {
+    const gameRef = doc(db, GAMES_COLLECTION, gameId);
+    
+    const unsubscribe = onSnapshot(gameRef, (docSnap) => {
+        if (docSnap.exists()) {
+            callback({ id: docSnap.id, ...docSnap.data() } as Game);
+        } else {
+            callback(null);
+        }
+    });
+
+    return unsubscribe;
+};
 
 
 // Listen for real-time updates on games

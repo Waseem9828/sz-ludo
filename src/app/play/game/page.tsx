@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ChevronLeft, Info, Upload, Loader } from 'lucide-react';
+import { ChevronLeft, Info, Upload, Loader, Send } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -16,8 +16,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ResultDialog } from '@/components/play/result-dialog';
 import { useAuth } from '@/context/auth-context';
-import { Game, getGameById, updateGameStatus, submitGameResult } from '@/lib/firebase/games';
+import { Game, listenForGameUpdates, updateGameStatus, submitGameResult, updateGameRoomCode } from '@/lib/firebase/games';
 import { SplashScreen } from '@/components/ui/splash-screen';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const penalties = [
     { amount: '₹100', reason: 'Fraud / Fake Screenshot' },
@@ -35,6 +36,7 @@ function GamePageComponent() {
 
     const [game, setGame] = useState<Game | null>(null);
     const [loading, setLoading] = useState(true);
+    const [roomCode, setRoomCode] = useState('');
     const [selectedResult, setSelectedResult] = useState<string | null>(null);
     const [screenshot, setScreenshot] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -48,29 +50,44 @@ function GamePageComponent() {
     });
 
     useEffect(() => {
-        if (!gameId) {
-            toast({ title: 'Error', description: 'No game ID provided.', variant: 'destructive' });
-            router.push('/play');
+        if (!gameId || !user) {
+            if (!loading) router.push('/play');
             return;
         }
 
-        getGameById(gameId)
-            .then(gameData => {
-                if (gameData) {
-                    setGame(gameData);
-                } else {
-                    toast({ title: 'Error', description: 'Game not found.', variant: 'destructive' });
+        const unsubscribe = listenForGameUpdates(gameId, (gameData) => {
+            if (gameData) {
+                // Check if user is part of the game
+                const isPlayer = gameData.player1.uid === user.uid || gameData.player2?.uid === user.uid;
+                if (!isPlayer) {
+                    toast({ title: 'Error', description: 'You are not part of this game.', variant: 'destructive' });
                     router.push('/play');
+                } else {
+                    setGame(gameData);
                 }
-            })
-            .catch(err => {
-                 toast({ title: 'Error', description: 'Failed to load game.', variant: 'destructive' });
-                 console.error(err);
-                 router.push('/play');
-            })
-            .finally(() => setLoading(false));
+            } else {
+                toast({ title: 'Error', description: 'Game not found.', variant: 'destructive' });
+                router.push('/play');
+            }
+            setLoading(false);
+        });
 
-    }, [gameId, router, toast]);
+        return () => unsubscribe();
+
+    }, [gameId, router, toast, user, loading]);
+
+    const handleRoomCodeSubmit = async () => {
+        if (!game || !roomCode) return;
+        setIsSubmitting(true);
+        try {
+            await updateGameRoomCode(game.id, roomCode);
+            toast({ title: 'Room Code Submitted', description: 'The room code has been shared with the opponent.' });
+        } catch (err: any) {
+            toast({ title: 'Error', description: err.message, variant: 'destructive' });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     const handleResultClick = async (result: 'WON' | 'LOST' | 'CANCEL') => {
         if (!game || !user) return;
@@ -140,6 +157,76 @@ function GamePageComponent() {
     }
 
     const opponent = game.player1.uid === appUser.uid ? game.player2 : game.player1;
+    const isHost = game.createdBy.uid === appUser.uid;
+
+    const renderRoomCodeSection = () => {
+        // Case 1: Room code exists, show it to both players
+        if (game.roomCode) {
+            return (
+                 <Card>
+                    <CardHeader className="py-3 bg-muted rounded-t-lg">
+                        <CardTitle className="text-center text-md font-semibold text-red-600">Room Code</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6 text-center">
+                        <p className="text-4xl font-bold tracking-widest my-4">{game.roomCode}</p>
+                        <Button className="w-full bg-gray-700 hover:bg-gray-800 text-white">
+                             <Image src="/ludo_king.png" alt="Ludo King" width={20} height={20} className="mr-2" />
+                            Play
+                        </Button>
+                    </CardContent>
+                </Card>
+            );
+        }
+
+        // Case 2: No room code, current user is the host -> show input
+        if (!game.roomCode && isHost) {
+            return (
+                 <Card>
+                    <CardHeader className="py-3 bg-muted rounded-t-lg">
+                        <CardTitle className="text-center text-md font-semibold text-red-600">Enter Room Code</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 space-y-2">
+                        <Label htmlFor="room-code-input">Share Ludo King Room Code</Label>
+                        <div className="flex items-center gap-2">
+                            <Input 
+                                id="room-code-input"
+                                value={roomCode}
+                                onChange={(e) => setRoomCode(e.target.value)}
+                                placeholder="Enter your room code"
+                                disabled={isSubmitting}
+                            />
+                            <Button onClick={handleRoomCodeSubmit} disabled={isSubmitting || !roomCode} size="icon">
+                                {isSubmitting ? <Loader className="animate-spin" /> : <Send />}
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+            );
+        }
+
+        // Case 3: No room code, current user is the opponent -> show waiting message
+        if (!game.roomCode && !isHost) {
+             return (
+                 <Card>
+                    <CardHeader className="py-3 bg-muted rounded-t-lg">
+                        <CardTitle className="text-center text-md font-semibold text-red-600">Room Code</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6 text-center">
+                       <Alert>
+                           <Loader className="h-4 w-4 animate-spin" />
+                           <AlertTitle>Waiting for Host</AlertTitle>
+                           <AlertDescription>
+                               Waiting for {game.createdBy.displayName} to share the Room Code. The page will update automatically.
+                           </AlertDescription>
+                       </Alert>
+                    </CardContent>
+                </Card>
+             )
+        }
+        
+        return null;
+    }
+
 
     return (
         <>
@@ -190,53 +277,45 @@ function GamePageComponent() {
                     </CardContent>
                 </Card>
 
-                <Card>
-                    <CardHeader className="py-3 bg-muted rounded-t-lg">
-                        <CardTitle className="text-center text-md font-semibold text-red-600">Room Code</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-6 text-center">
-                        <p className="text-4xl font-bold tracking-widest my-4">{game.roomCode}</p>
-                        <Button className="w-full bg-gray-700 hover:bg-gray-800 text-white">
-                             <Image src="/ludo_king.png" alt="Ludo King" width={20} height={20} className="mr-2" />
-                            Play
-                        </Button>
-                    </CardContent>
-                </Card>
+                {renderRoomCodeSection()}
 
-                <Card>
-                     <CardHeader className="py-3 bg-muted rounded-t-lg">
-                        <CardTitle className="text-center text-md font-semibold text-red-600">Game Result</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-4 space-y-3">
-                        <p className="text-center text-sm text-muted-foreground">After completion of your game, select the status of the game and post your screenshot below</p>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                             <Button onClick={() => handleResultClick('WON')} disabled={isSubmitting} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3">I WON</Button>
-                             <Button onClick={() => handleResultClick('LOST')} disabled={isSubmitting} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3">I LOST</Button>
-                             <Button onClick={() => handleResultClick('CANCEL')} disabled={isSubmitting} variant="outline" className="w-full font-bold py-3 md:col-span-1">CANCEL</Button>
-                        </div>
-
-                       {selectedResult === 'WON' && (
-                            <div className="p-4 border-2 border-dashed rounded-lg space-y-4">
-                               <Label htmlFor="screenshot" className="text-center block font-semibold text-primary">Upload Winning Screenshot</Label>
-                                <Input
-                                    id="screenshot"
-                                    type="file"
-                                    accept="image/*"
-                                    ref={fileInputRef}
-                                    onChange={(e) => setScreenshot(e.target.files ? e.target.files[0] : null)}
-                                    className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
-                                    disabled={isSubmitting}
-                                />
-                                {screenshot && <p className="text-sm text-center text-muted-foreground">Selected: {screenshot.name}</p>}
-                                <Button onClick={handleSubmitWin} className="w-full" disabled={!screenshot || isSubmitting}>
-                                    {isSubmitting ? <Loader className="animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                                    Submit Result
-                                </Button>
+                {game.roomCode && (
+                     <Card>
+                         <CardHeader className="py-3 bg-muted rounded-t-lg">
+                            <CardTitle className="text-center text-md font-semibold text-red-600">Game Result</CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-4 space-y-3">
+                            <p className="text-center text-sm text-muted-foreground">After completion of your game, select the status of the game and post your screenshot below</p>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                                 <Button onClick={() => handleResultClick('WON')} disabled={isSubmitting} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3">I WON</Button>
+                                 <Button onClick={() => handleResultClick('LOST')} disabled={isSubmitting} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3">I LOST</Button>
+                                 <Button onClick={() => handleResultClick('CANCEL')} disabled={isSubmitting} variant="outline" className="w-full font-bold py-3 md:col-span-1">CANCEL</Button>
                             </div>
-                        )}
-                    </CardContent>
-                </Card>
+
+                           {selectedResult === 'WON' && (
+                                <div className="p-4 border-2 border-dashed rounded-lg space-y-4">
+                                   <Label htmlFor="screenshot" className="text-center block font-semibold text-primary">Upload Winning Screenshot</Label>
+                                    <Input
+                                        id="screenshot"
+                                        type="file"
+                                        accept="image/*"
+                                        ref={fileInputRef}
+                                        onChange={(e) => setScreenshot(e.target.files ? e.target.files[0] : null)}
+                                        className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                                        disabled={isSubmitting}
+                                    />
+                                    {screenshot && <p className="text-sm text-center text-muted-foreground">Selected: {screenshot.name}</p>}
+                                    <Button onClick={handleSubmitWin} className="w-full" disabled={!screenshot || isSubmitting}>
+                                        {isSubmitting ? <Loader className="animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                                        Submit Result
+                                    </Button>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                )}
+
 
                 <Card>
                     <CardHeader className="py-3 bg-muted rounded-t-lg">
