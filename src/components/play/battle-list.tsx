@@ -66,7 +66,7 @@ export default function BattleList() {
                     </div>
 
                     <div className="text-center">
-                        <p className="font-bold text-red-600 text-lg">₹{battle.amount}</p>
+                        <p className="font-bold text-red-600 text-lg animate-shine">₹{battle.amount}</p>
                         <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEilS2_YhPAJBDjdcIRsoMJLTWafsJuIyola3KN50zXQAZYWSSIbhLhWhOJGMG6UYkUB5ZOiVKgsy2bVstr2af0LVf2g-eWjXHnGO4Z0IbaePP4E7TSDB9x_eK8OqTidX968zc5Wn9p6uGlkLoD9iglU3KZ28_2IbXgl29zHTZgwxzMWPvbN6zhA5AhyH7s/s1600/74920.png" alt="vs" width={64} height={32} className="mx-auto" data-ai-hint="versus icon" />
                         {isPlayerInGame && (
                              <Link href={`/play/game?id=${battle.id}`}>

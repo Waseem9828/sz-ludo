@@ -118,7 +118,7 @@ export default function MatchesPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-red-600">Manage Matches</CardTitle>
+        <CardTitle className="text-red-600 animate-shine">Manage Matches</CardTitle>
         <CardDescription>Review match results and screenshots to approve or decline outcomes.</CardDescription>
       </CardHeader>
       <CardContent>
@@ -196,7 +196,7 @@ export default function MatchesPage() {
                                              <span className="text-muted-foreground">Prize Pool (₹{match.amount} x 2):</span>
                                              <span className="font-medium">₹{prizePool.toFixed(2)}</span>
                                          </div>
-                                         <div className="flex justify-between text-red-600">
+                                         <div className="flex justify-between text-red-600 animate-shine">
                                              <span className="text-muted-foreground">Platform Commission (5%):</span>
                                              <span className="font-medium">- ₹{commission.toFixed(2)}</span>
                                          </div>

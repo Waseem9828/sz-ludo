@@ -180,7 +180,7 @@ function GamePageComponent() {
             return (
                  <Card>
                     <CardHeader className="py-3 bg-muted rounded-t-lg">
-                        <CardTitle className="text-center text-md font-semibold text-red-600">Room Code</CardTitle>
+                        <CardTitle className="text-center text-md font-semibold text-red-600 animate-shine">Room Code</CardTitle>
                     </CardHeader>
                     <CardContent className="p-6 text-center space-y-4">
                         <div className="flex items-center justify-center gap-2">
@@ -205,7 +205,7 @@ function GamePageComponent() {
             return (
                  <Card>
                     <CardHeader className="py-3 bg-muted rounded-t-lg">
-                        <CardTitle className="text-center text-md font-semibold text-red-600">Enter Room Code</CardTitle>
+                        <CardTitle className="text-center text-md font-semibold text-red-600 animate-shine">Enter Room Code</CardTitle>
                     </CardHeader>
                     <CardContent className="p-4 space-y-2">
                         <Label htmlFor="room-code-input">Share Ludo King Room Code</Label>
@@ -231,7 +231,7 @@ function GamePageComponent() {
              return (
                  <Card>
                     <CardHeader className="py-3 bg-muted rounded-t-lg">
-                        <CardTitle className="text-center text-md font-semibold text-red-600">Room Code</CardTitle>
+                        <CardTitle className="text-center text-md font-semibold text-red-600 animate-shine">Room Code</CardTitle>
                     </CardHeader>
                     <CardContent className="p-6 text-center">
                        <Alert>
@@ -305,7 +305,7 @@ function GamePageComponent() {
                 {game.status === 'ongoing' && (
                      <Card>
                          <CardHeader className="py-3 bg-muted rounded-t-lg">
-                            <CardTitle className="text-center text-md font-semibold text-red-600">Game Result</CardTitle>
+                            <CardTitle className="text-center text-md font-semibold text-red-600 animate-shine">Game Result</CardTitle>
                         </CardHeader>
                         <CardContent className="p-4 space-y-3">
                             <p className="text-center text-sm text-muted-foreground">After completion of your game, select the status of the game and post your screenshot below</p>
@@ -342,7 +342,7 @@ function GamePageComponent() {
                  {game.status !== 'ongoing' && game.status !== 'challenge' && (
                     <Card>
                         <CardHeader>
-                             <CardTitle className="text-center text-lg font-semibold text-red-600">Game Over</CardTitle>
+                             <CardTitle className="text-center text-lg font-semibold text-red-600 animate-shine">Game Over</CardTitle>
                         </CardHeader>
                         <CardContent className="text-center">
                             <p className="text-muted-foreground">This game is <span className="font-bold">{game.status.replace('_', ' ')}</span>.</p>
@@ -357,7 +357,7 @@ function GamePageComponent() {
 
                 <Card>
                     <CardHeader className="py-3 bg-muted rounded-t-lg">
-                        <CardTitle className="text-center text-md font-semibold text-red-600">Penalty</CardTitle>
+                        <CardTitle className="text-center text-md font-semibold text-red-600 animate-shine">Penalty</CardTitle>
                     </CardHeader>
                     <CardContent className="p-0">
                         <Table>

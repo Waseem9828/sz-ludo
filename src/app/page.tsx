@@ -61,7 +61,7 @@ export default function Home() {
       <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
         <Header />
         {settings?.promotionBannerText && (
-          <div className="bg-red-600 text-white text-center py-2 text-sm font-semibold">
+          <div className="bg-red-600 text-white text-center py-2 text-sm font-semibold animate-shine-bg">
             {settings.promotionBannerText}
           </div>
         )}
@@ -77,7 +77,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <section>
                   <div className="flex items-center justify-between my-4">
-                      <span className="text-red-600 font-semibold whitespace-nowrap text-lg">
+                      <span className="text-red-600 font-semibold whitespace-nowrap text-lg animate-shine">
                       🏆 Open Challenges
                       </span>
                       <Link href="/play">
@@ -89,7 +89,7 @@ export default function Home() {
 
               <section>
                   <div className="flex items-center justify-center my-4">
-                      <span className="text-red-600 font-semibold whitespace-nowrap text-lg">
+                      <span className="text-red-600 font-semibold whitespace-nowrap text-lg animate-shine">
                       ⚔️ Ongoing Battles
                       </span>
                   </div>

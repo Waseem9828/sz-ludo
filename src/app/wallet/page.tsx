@@ -148,7 +148,7 @@ export default function WalletPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-center text-lg font-semibold text-red-600">Deposit Chips</CardTitle>
+                            <CardTitle className="text-center text-lg font-semibold text-red-600 animate-shine">Deposit Chips</CardTitle>
                             <CardDescription className="text-center">Available for Gameplay</CardDescription>
                         </CardHeader>
                         <CardContent className="text-center space-y-4">
@@ -164,7 +164,7 @@ export default function WalletPage() {
                     
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-center text-lg font-semibold text-red-600">Winning Chips</CardTitle>
+                            <CardTitle className="text-center text-lg font-semibold text-red-600 animate-shine">Winning Chips</CardTitle>
                             <CardDescription className="text-center">Withdrawable Balance</CardDescription>
                         </CardHeader>
                         <CardContent className="text-center space-y-4">

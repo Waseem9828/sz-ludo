@@ -17,7 +17,7 @@ export default function KycInfo({ title, description }: KycInfoProps) {
             <ShieldCheck className="w-6 h-6 text-accent" />
           </div>
           <div>
-            <h2 className="font-bold font-headline text-lg text-red-600">{title}</h2>
+            <h2 className="font-bold font-headline text-lg text-red-600 animate-shine">{title}</h2>
             <p className="text-sm text-muted-foreground">{description}</p>
           </div>
         </div>

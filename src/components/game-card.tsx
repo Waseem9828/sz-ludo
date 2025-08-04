@@ -4,6 +4,7 @@ import Image from "next/image";
 import type { GameCardType } from '@/types';
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
+import Link from 'next/link';
 
 export default function GameCard({ title, description, images, aiHint }: GameCardType) {
 
@@ -45,12 +46,12 @@ export default function GameCard({ title, description, images, aiHint }: GameCar
         )}
       </div>
       <CardContent className="p-4 bg-card text-center">
-        <h3 className="text-xl font-bold font-headline text-red-600">{title}</h3>
+        <h3 className="text-xl font-bold font-headline text-red-600 animate-shine">{title}</h3>
         <p className="text-sm text-muted-foreground mb-3">{description}</p>
-        <Button className="w-full font-bold">Play Now</Button>
+        <Link href="/play">
+          <Button className="w-full font-bold">Play Now</Button>
+        </Link>
       </CardContent>
     </Card>
   );
 }
-
-    

@@ -64,7 +64,7 @@ export default function ReferPage() {
             <main className="flex-grow container mx-auto px-4 py-6 space-y-6">
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-center text-lg font-semibold text-red-600">Your Referral Earnings</CardTitle>
+                        <CardTitle className="text-center text-lg font-semibold text-red-600 animate-shine">Your Referral Earnings</CardTitle>
                     </CardHeader>
                     <CardContent className="flex justify-around text-center">
                         <div>
@@ -81,7 +81,7 @@ export default function ReferPage() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-center text-lg font-semibold text-red-600">Referral Code</CardTitle>
+                        <CardTitle className="text-center text-lg font-semibold text-red-600 animate-shine">Referral Code</CardTitle>
                     </CardHeader>
                     <CardContent className="text-center">
                         <div className="flex justify-center my-4">
@@ -114,7 +114,7 @@ export default function ReferPage() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-center text-lg font-semibold text-red-600">How It Works</CardTitle>
+                        <CardTitle className="text-center text-lg font-semibold text-red-600 animate-shine">How It Works</CardTitle>
                     </CardHeader>
                     <CardContent className="text-center text-muted-foreground">
                         <p>You can refer and <span className="font-bold text-green-600">Earn 2%</span> of your referral winning, every time</p>

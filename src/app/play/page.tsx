@@ -146,7 +146,7 @@ export default function PlayPage() {
         </Link>
         <Card className="max-w-md mx-auto">
             <CardHeader>
-                <CardTitle className="text-center text-xl font-semibold text-red-600">Create a New Challenge</CardTitle>
+                <CardTitle className="text-center text-xl font-semibold text-red-600 animate-shine">Create a New Challenge</CardTitle>
                 <CardDescription className="text-center">Set an amount and challenge the community!</CardDescription>
             </CardHeader>
             <CardContent>

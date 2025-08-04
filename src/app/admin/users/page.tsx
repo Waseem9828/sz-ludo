@@ -80,7 +80,7 @@ export default function UsersPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-red-600">User Analytics</CardTitle>
+        <CardTitle className="text-red-600 animate-shine">User Analytics</CardTitle>
         <CardDescription>A detailed overview of all users and their activities.</CardDescription>
       </CardHeader>
       <CardContent>
@@ -123,7 +123,7 @@ export default function UsersPage() {
                            <TrendingUp size={16}/>
                            <span>₹{user.lifetimeStats?.totalDeposits || 0}</span>
                         </div>
-                        <div className="flex items-center gap-1 text-red-600">
+                        <div className="flex items-center gap-1 text-red-600 animate-shine">
                            <TrendingDown size={16}/>
                            <span>₹{user.lifetimeStats?.totalWithdrawals || 0}</span>
                         </div>

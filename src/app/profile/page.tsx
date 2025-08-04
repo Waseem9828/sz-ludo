@@ -125,7 +125,7 @@ export default function ProfilePage() {
             <main className="flex-grow container mx-auto px-4 py-6 space-y-6">
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-center text-xl font-semibold text-red-600">Profile</CardTitle>
+                        <CardTitle className="text-center text-xl font-semibold text-red-600 animate-shine">Profile</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <div className="flex justify-center relative w-24 h-24 mx-auto">
@@ -198,7 +198,7 @@ export default function ProfilePage() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-center text-xl font-semibold text-red-600">Metrics</CardTitle>
+                        <CardTitle className="text-center text-xl font-semibold text-red-600 animate-shine">Metrics</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="grid grid-cols-2 gap-4">

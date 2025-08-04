@@ -34,7 +34,7 @@ export default function RefundPolicyPage() {
             <Header />
             <main className="flex-grow container mx-auto px-4 py-6 space-y-6">
                 <div className="bg-card p-6 md:p-8 rounded-lg shadow-md">
-                    <h1 className="text-3xl font-bold mb-6 font-headline text-center text-red-600">Refund Policy</h1>
+                    <h1 className="text-3xl font-bold mb-6 font-headline text-center text-red-600 animate-shine">Refund Policy</h1>
                     
                     <Typewriter speed={10}>
                         <div className="prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: content }} />
