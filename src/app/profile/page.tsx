@@ -17,6 +17,7 @@ import { db } from '@/lib/firebase/config';
 import { updateProfile } from 'firebase/auth';
 import { SplashScreen } from '@/components/ui/splash-screen';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 const MetricCard = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) => (
     <Card className="bg-secondary/50">
