@@ -54,32 +54,35 @@ export const updateUserWallet = async (uid: string, amount: number, walletType: 
 
         // If deducting, check from which wallet to pull
         if (amount < 0) {
-            if (walletType === 'balance') {
-                 if (currentBalance < Math.abs(amount)) {
-                    throw new Error(`Insufficient deposit balance.`);
-                 }
-                 transaction.update(userRef, { 'wallet.balance': increment(amount) });
-            } else if (walletType === 'winnings') {
-                if (currentWinnings < Math.abs(amount)) {
-                    throw new Error(`Insufficient winnings balance.`);
-                 }
-                transaction.update(userRef, { 'wallet.winnings': increment(amount) });
-            } else { // Special case for challenge creation/acceptance, pull from total
-                 const totalBalance = currentBalance + currentWinnings;
-                 if (totalBalance < Math.abs(amount)) {
-                     throw new Error('Insufficient total balance.');
-                 }
-                 
-                 let remainingAmount = Math.abs(amount);
-                 const winningsDeduction = Math.min(remainingAmount, currentWinnings);
+             const totalBalance = currentBalance + currentWinnings;
+             const deductionAmount = Math.abs(amount);
+
+             if (totalBalance < deductionAmount) {
+                 throw new Error('Insufficient total balance.');
+             }
+
+             // Prioritize deducting from deposit balance first, then winnings
+             let remainingDeduction = deductionAmount;
+             
+             const balanceDeduction = Math.min(remainingDeduction, currentBalance);
+             if (balanceDeduction > 0) {
+                transaction.update(userRef, { 'wallet.balance': increment(-balanceDeduction) });
+                remainingDeduction -= balanceDeduction;
+             }
+
+             if (remainingDeduction > 0) {
+                 const winningsDeduction = Math.min(remainingDeduction, currentWinnings);
                  if (winningsDeduction > 0) {
                     transaction.update(userRef, { 'wallet.winnings': increment(-winningsDeduction) });
-                    remainingAmount -= winningsDeduction;
+                    remainingDeduction -= winningsDeduction;
                  }
-                 if (remainingAmount > 0) {
-                    transaction.update(userRef, { 'wallet.balance': increment(-remainingAmount) });
-                 }
-            }
+             }
+             
+             if (remainingDeduction > 0) {
+                 // This should not happen if total balance check is correct, but as a safeguard:
+                 throw new Error("Balance deduction calculation error.");
+             }
+
         } else {
             // If adding, add to the specified wallet type
             const fieldToUpdate = walletType === 'balance' ? 'wallet.balance' : 'wallet.winnings';
