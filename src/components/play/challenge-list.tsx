@@ -109,26 +109,30 @@ export default function ChallengeList() {
             <Card key={challenge.id} className="bg-card shadow-sm">
             <CardContent className="p-3">
                 <div className="flex items-center justify-between">
-                    <div className="flex flex-col">
-                        <span className="text-xs text-muted-foreground">Challenge set by</span>
-                        <div className="flex items-center gap-2 mt-1">
-                            <Avatar className="h-8 w-8">
-                                <AvatarImage src={challenge.createdBy.photoURL || undefined} alt={challenge.createdBy.displayName || 'User'} />
-                                <AvatarFallback>{challenge.createdBy.displayName?.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <span className="font-semibold">{challenge.createdBy.displayName}</span>
+                    <div className="flex items-center gap-2">
+                        <Avatar className="h-10 w-10">
+                            <AvatarImage src={challenge.createdBy.photoURL || undefined} alt={challenge.createdBy.displayName || 'User'} />
+                            <AvatarFallback>{challenge.createdBy.displayName?.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                             <span className="font-semibold">{challenge.createdBy.displayName}</span>
+                             <p className="text-xs text-muted-foreground">has set a challenge</p>
                         </div>
                     </div>
                     <div className="text-right">
-                        <p className="text-green-600 font-bold">₹ {challenge.amount}</p>
+                        <p className="text-xl text-green-600 font-bold">₹ {challenge.amount}</p>
                     </div>
                 </div>
                  {challenge.message && (
-                    <div className="mt-2 text-sm text-center text-muted-foreground bg-muted p-2 rounded-md">
-                        <p>"{challenge.message}"</p>
-                    </div>
+                     <div className="relative mt-3 ml-4">
+                         <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-0 h-0 border-y-8 border-y-transparent border-r-8 border-r-muted"></div>
+                         <div className="bg-muted p-2 rounded-md flex items-center gap-2">
+                             <MessageSquare className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                            <p className="text-sm text-muted-foreground italic">"{challenge.message}"</p>
+                         </div>
+                     </div>
                  )}
-                <div className="mt-2">
+                <div className="mt-3">
                     {user?.uid === challenge.createdBy.uid ? (
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
