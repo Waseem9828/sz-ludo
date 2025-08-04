@@ -23,6 +23,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { MessageSquare } from "lucide-react";
 
 export default function ChallengeList() {
     const [challenges, setChallenges] = useState<Game[]>([]);
@@ -106,44 +107,53 @@ export default function ChallengeList() {
         <div className="space-y-4">
         {challenges.map((challenge) => (
             <Card key={challenge.id} className="bg-card shadow-sm">
-            <CardContent className="p-3 flex items-center justify-between">
-                <div className="flex flex-col">
-                    <span className="text-xs text-muted-foreground">Challenge set by</span>
-                    <div className="flex items-center gap-2 mt-1">
-                        <Avatar className="h-8 w-8">
-                            <AvatarImage src={challenge.createdBy.photoURL || undefined} alt={challenge.createdBy.displayName || 'User'} />
-                            <AvatarFallback>{challenge.createdBy.displayName?.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <span className="font-semibold">{challenge.createdBy.displayName}</span>
+            <CardContent className="p-3">
+                <div className="flex items-center justify-between">
+                    <div className="flex flex-col">
+                        <span className="text-xs text-muted-foreground">Challenge set by</span>
+                        <div className="flex items-center gap-2 mt-1">
+                            <Avatar className="h-8 w-8">
+                                <AvatarImage src={challenge.createdBy.photoURL || undefined} alt={challenge.createdBy.displayName || 'User'} />
+                                <AvatarFallback>{challenge.createdBy.displayName?.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <span className="font-semibold">{challenge.createdBy.displayName}</span>
+                        </div>
+                    </div>
+                    <div className="text-right">
+                        <p className="text-green-600 font-bold">₹ {challenge.amount}</p>
                     </div>
                 </div>
-                <div className="text-right">
-                <p className="text-green-600 font-bold">₹ {challenge.amount}</p>
-                 {user?.uid === challenge.createdBy.uid ? (
-                     <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                            <Button size="sm" variant="destructive" className="mt-1">
-                                Delete
-                            </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                This will permanently delete your challenge and refund the amount to your wallet.
-                            </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(challenge)}>Yes, Delete</AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
-                ) : (
-                    <Button size="sm" className="mt-1" onClick={() => handleAccept(challenge)}>
-                        Play
-                    </Button>
-                )}
+                 {challenge.message && (
+                    <div className="mt-2 text-sm text-center text-muted-foreground bg-muted p-2 rounded-md">
+                        <p>"{challenge.message}"</p>
+                    </div>
+                 )}
+                <div className="mt-2">
+                    {user?.uid === challenge.createdBy.uid ? (
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button size="sm" variant="destructive" className="w-full">
+                                    Delete Challenge
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This will permanently delete your challenge and refund the amount to your wallet.
+                                </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(challenge)}>Yes, Delete</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    ) : (
+                        <Button size="sm" className="w-full" onClick={() => handleAccept(challenge)}>
+                            Accept Challenge
+                        </Button>
+                    )}
                 </div>
             </CardContent>
             </Card>

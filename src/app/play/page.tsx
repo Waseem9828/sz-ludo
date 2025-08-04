@@ -14,10 +14,12 @@ import { SplashScreen } from '@/components/ui/splash-screen';
 import { createChallenge, Game, listenForGames } from '@/lib/firebase/games';
 import { updateUserWallet } from '@/lib/firebase/users';
 import { Loader } from 'lucide-react';
+import { Label } from '@/components/ui/label';
 
 
 export default function PlayPage() {
   const [amount, setAmount] = useState('');
+  const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const { user, appUser, loading } = useAuth();
@@ -95,6 +97,7 @@ export default function PlayPage() {
                 displayName: appUser.displayName || '',
                 photoURL: appUser.photoURL || '',
             },
+            message: message || `Play a game for ₹${numericAmount}!`,
         });
 
         toast({
@@ -102,6 +105,7 @@ export default function PlayPage() {
             description: `Your challenge for ₹${numericAmount} has been set.`,
         });
         setAmount('');
+        setMessage('');
     } catch(error: any) {
         // If challenge creation fails for any reason, refund the user.
         try {
@@ -137,17 +141,34 @@ export default function PlayPage() {
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
       <Header />
       <main className="flex-grow container mx-auto px-4 py-6 space-y-8">
-        <div className="flex items-center gap-2">
-          <Input 
-            type="number" 
-            placeholder="Amount" 
-            className="bg-card dark:bg-gray-800" 
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            disabled={isSubmitting}
-          />
-          <Button className="bg-primary text-primary-foreground" onClick={handleSetChallenge} disabled={isSubmitting}>
-            {isSubmitting ? <Loader className="animate-spin" /> : 'Set'}
+        <div className="space-y-4">
+            <div>
+              <Label htmlFor="amount">Amount</Label>
+              <Input 
+                id="amount"
+                type="number" 
+                placeholder="Enter amount" 
+                className="bg-card dark:bg-gray-800" 
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                disabled={isSubmitting}
+              />
+            </div>
+            <div>
+                <Label htmlFor="message">Challenge Message (Optional)</Label>
+                <Input 
+                    id="message"
+                    type="text" 
+                    placeholder="e.g., Koi hai takkar ka?" 
+                    className="bg-card dark:bg-gray-800" 
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    disabled={isSubmitting}
+                    maxLength={50}
+                />
+            </div>
+          <Button className="w-full bg-primary text-primary-foreground" onClick={handleSetChallenge} disabled={isSubmitting}>
+            {isSubmitting ? <Loader className="animate-spin" /> : 'Set Challenge'}
           </Button>
         </div>
         

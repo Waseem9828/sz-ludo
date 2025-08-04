@@ -37,12 +37,13 @@ export interface Game {
     createdAt: any;
     winner?: string; // winner uid
     screenshotUrl?: string;
+    message?: string;
 }
 
 const GAMES_COLLECTION = 'games';
 
 // Create a new challenge
-export const createChallenge = async (data: { amount: number; createdBy: PlayerInfo }) => {
+export const createChallenge = async (data: { amount: number; createdBy: PlayerInfo, message?: string }) => {
     return await addDoc(collection(db, GAMES_COLLECTION), {
         ...data,
         player1: data.createdBy,
