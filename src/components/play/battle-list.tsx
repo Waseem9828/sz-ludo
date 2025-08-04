@@ -16,26 +16,34 @@ export default function BattleList() {
   const { user } = useAuth();
 
   useEffect(() => {
+    if (!user) return;
     // We listen for both 'ongoing' and 'under_review' so the user can see their game
     // until the admin has completed the review.
     const unsubscribeOngoing = listenForGames((ongoingGames) => {
-        setBattles(prev => [...ongoingGames, ...prev.filter(p => p.status !== 'ongoing')]);
+        const userBattles = ongoingGames.filter(b => b.player1?.uid === user.uid || b.player2?.uid === user.uid);
+        setBattles(prev => [...userBattles, ...prev.filter(p => p.status !== 'ongoing')]);
     }, 'ongoing');
     
     const unsubscribeReview = listenForGames((reviewGames) => {
-        setBattles(prev => [...reviewGames, ...prev.filter(p => p.status !== 'under_review')]);
+        const userBattles = reviewGames.filter(b => b.player1?.uid === user.uid || b.player2?.uid === user.uid);
+        setBattles(prev => [...userBattles, ...prev.filter(p => p.status !== 'under_review')]);
     }, 'under_review');
     
     return () => {
         unsubscribeOngoing();
         unsubscribeReview();
     };
-  }, []);
+  }, [user]);
   
-  const myBattles = battles.filter(battle => battle.player1?.uid === user?.uid || battle.player2?.uid === user?.uid);
+  if (!user) {
+       return (
+          <div className="text-center text-muted-foreground py-4">
+              <p>Login to see your battles.</p>
+          </div>
+      )
+  }
 
-
-  if (myBattles.length === 0) {
+  if (battles.length === 0) {
       return (
           <div className="text-center text-muted-foreground py-4">
               <p>No ongoing battles.</p>
@@ -46,8 +54,10 @@ export default function BattleList() {
 
   return (
     <div className="space-y-4">
-      {myBattles.map((battle) => {
+      {battles.map((battle) => {
         if (!battle.player1 || !battle.player2) return null;
+        
+        const isPlayerInGame = battle.player1.uid === user.uid || battle.player2.uid === user.uid;
 
         return (
             <Card key={battle.id} className="bg-card shadow-sm">
@@ -61,13 +71,15 @@ export default function BattleList() {
                     </div>
 
                     <div className="text-center">
-                    <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEilS2_YhPAJBDjdcIRsoMJLTWafsJuIyola3KN50zXQAZYWSSIbhLhWhOJGMG6UYkUB5ZOiVKgsy2bVstr2af0LVf2g-eWjXHnGO4Z0IbaePP4E7TSDB9x_eK8OqTidX968zc5Wn9p6uGlkLoD9iglU3KZ28_2IbXgl29zHTZgwxzMWPvbN6zhA5AhyH7s/s1600/74920.png" alt="vs" width={64} height={32} className="mx-auto" data-ai-hint="versus icon" />
-                    <p className="font-bold text-red-600 mt-1">₹{battle.amount}</p>
-                    <Link href={`/play/game?id=${battle.id}`}>
-                        <Button size="sm" variant="destructive" className="mt-1">
-                            {battle.status === 'under_review' ? 'Reviewing' : 'View'}
-                        </Button>
-                    </Link>
+                        <p className="font-bold text-red-600 text-lg">₹{battle.amount}</p>
+                        <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEilS2_YhPAJBDjdcIRsoMJLTWafsJuIyola3KN50zXQAZYWSSIbhLhWhOJGMG6UYkUB5ZOiVKgsy2bVstr2af0LVf2g-eWjXHnGO4Z0IbaePP4E7TSDB9x_eK8OqTidX968zc5Wn9p6uGlkLoD9iglU3KZ28_2IbXgl29zHTZgwxzMWPvbN6zhA5AhyH7s/s1600/74920.png" alt="vs" width={64} height={32} className="mx-auto" data-ai-hint="versus icon" />
+                        {isPlayerInGame && (
+                             <Link href={`/play/game?id=${battle.id}`}>
+                                <Button size="sm" variant="destructive" className="mt-1">
+                                    {battle.status === 'under_review' ? 'Reviewing' : 'View'}
+                                </Button>
+                            </Link>
+                        )}
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -84,5 +96,3 @@ export default function BattleList() {
     </div>
   );
 }
-
-    
