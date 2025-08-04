@@ -29,6 +29,15 @@ export default function ChallengeList() {
             return;
         }
 
+        if (appUser.status === 'suspended') {
+            toast({
+                title: 'Account Suspended',
+                description: 'Your account is suspended. You cannot accept challenges.',
+                variant: 'destructive',
+            });
+            return;
+        }
+
         if (user.uid === challenge.createdBy.uid) {
             toast({ title: 'Cannot Accept Own Challenge', description: 'You cannot accept your own challenge.', variant: 'destructive' });
             return;

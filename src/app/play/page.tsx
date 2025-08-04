@@ -33,6 +33,15 @@ export default function PlayPage() {
   const handleSetChallenge = async () => {
     if (!appUser || !appUser.wallet || !user) return;
 
+    if (appUser.status === 'suspended') {
+      toast({
+        title: 'Account Suspended',
+        description: 'Your account is suspended. You cannot create challenges.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const numericAmount = Number(amount);
     const totalBalance = (appUser.wallet.balance || 0) + (appUser.wallet.winnings || 0);
     
