@@ -3,7 +3,7 @@
 'use client';
 
 import { Sidebar, SidebarProvider, SidebarTrigger, SidebarInset, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar } from "@/components/ui/sidebar";
-import { Home, BarChart, Users, Settings, CircleDollarSign, Banknote, Bot } from "lucide-react";
+import { Home, BarChart, Users, Settings, CircleDollarSign, Banknote, Bot, Bell } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
 import { useRouter, usePathname } from "next/navigation";
@@ -26,6 +26,7 @@ export default function AdminLayout({
     { href: "/admin/computer-pro", icon: Bot, label: "Computer Pro" },
     { href: "/admin/deposits", icon: Banknote, label: "Deposits" },
     { href: "/admin/withdrawals", icon: CircleDollarSign, label: "Withdrawals" },
+    { href: "/admin/notifications", icon: Bell, label: "Notifications" },
     { href: "/admin/settings", icon: Settings, label: "Settings" },
   ];
 
