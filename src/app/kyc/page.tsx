@@ -19,7 +19,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import Header from '@/components/play/header';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Loader } from 'lucide-react';
+import { useAuth } from '@/context/auth-context';
+import { useState } from 'react';
+import { updateUserKycDetails } from '@/lib/firebase/users';
+import { useRouter } from 'next/navigation';
 
 const kycFormSchema = z.object({
   aadhaar: z.string().regex(/^[0-9]{12}$/, 'Aadhaar number must be 12 digits.'),
@@ -32,26 +36,48 @@ const kycFormSchema = z.object({
 
 export default function KycPage() {
     const { toast } = useToast();
+    const { user, appUser } = useAuth();
+    const router = useRouter();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
     const form = useForm<z.infer<typeof kycFormSchema>>({
         resolver: zodResolver(kycFormSchema),
         defaultValues: {
-            aadhaar: '',
-            pan: '',
-            bankAccount: '',
-            ifsc: '',
-            bankName: '',
-            upiId: '',
+            aadhaar: appUser?.aadhaar || '',
+            pan: appUser?.pan || '',
+            bankAccount: appUser?.bankAccount || '',
+            ifsc: appUser?.ifsc || '',
+            bankName: appUser?.bankName || '',
+            upiId: appUser?.upiId || '',
         },
     });
 
-    function onSubmit(values: z.infer<typeof kycFormSchema>) {
-        console.log(values);
-        toast({
-            title: 'KYC Details Submitted',
-            description: 'Your KYC information has been submitted for verification.',
-        });
-        form.reset();
+    async function onSubmit(values: z.infer<typeof kycFormSchema>) {
+        if (!user) {
+            toast({ title: 'Error', description: 'You must be logged in to submit KYC.', variant: 'destructive' });
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            await updateUserKycDetails(user.uid, values);
+            toast({
+                title: 'KYC Details Submitted',
+                description: 'Your KYC information has been submitted for verification.',
+            });
+            router.push('/profile');
+        } catch (error: any) {
+            toast({
+                title: 'Submission Failed',
+                description: error.message,
+                variant: 'destructive',
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
     }
+
+    const isKycSubmitted = appUser?.kycStatus === 'Pending' || appUser?.kycStatus === 'Verified';
 
     return (
         <div className="flex flex-col min-h-screen bg-background font-body">
@@ -62,6 +88,11 @@ export default function KycPage() {
                         <CardTitle className="text-center text-2xl font-bold font-headline text-red-600">
                             KYC Verification
                         </CardTitle>
+                        <CardDescription className="text-center">
+                            {appUser?.kycStatus === 'Verified' && 'Your KYC is verified. You can update your details below.'}
+                            {appUser?.kycStatus === 'Pending' && 'Your KYC is under review. You can still update your details.'}
+                            {appUser?.kycStatus === 'Rejected' && 'Your previous KYC was rejected. Please re-submit.'}
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <Form {...form}>
@@ -78,7 +109,7 @@ export default function KycPage() {
                                                 <FormItem>
                                                     <FormLabel>Aadhaar Number</FormLabel>
                                                     <FormControl>
-                                                        <Input placeholder="Enter your 12-digit Aadhaar number" {...field} />
+                                                        <Input placeholder="Enter your 12-digit Aadhaar number" {...field} disabled={isSubmitting || isKycSubmitted} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -99,7 +130,7 @@ export default function KycPage() {
                                                 <FormItem>
                                                     <FormLabel>PAN Number</FormLabel>
                                                     <FormControl>
-                                                        <Input placeholder="Enter your PAN number" {...field} />
+                                                        <Input placeholder="Enter your PAN number" {...field} disabled={isSubmitting || isKycSubmitted}/>
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -111,7 +142,7 @@ export default function KycPage() {
                                 <Card>
                                     <CardHeader>
                                         <CardTitle className="text-lg text-red-600">Bank Account Details</CardTitle>
-                                        <CardDescription>For receiving deposit and withdrawal confirmations.</CardDescription>
+                                        <CardDescription>For receiving winnings.</CardDescription>
                                     </CardHeader>
                                     <CardContent className="space-y-4">
                                         <FormField
@@ -121,7 +152,7 @@ export default function KycPage() {
                                                 <FormItem>
                                                     <FormLabel>Bank Account Number</FormLabel>
                                                     <FormControl>
-                                                        <Input placeholder="Enter your bank account number" {...field} />
+                                                        <Input placeholder="Enter your bank account number" {...field} disabled={isSubmitting} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -134,7 +165,7 @@ export default function KycPage() {
                                                 <FormItem>
                                                     <FormLabel>IFSC Code</FormLabel>
                                                     <FormControl>
-                                                        <Input placeholder="Enter your bank's IFSC code" {...field} />
+                                                        <Input placeholder="Enter your bank's IFSC code" {...field} disabled={isSubmitting} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -147,7 +178,7 @@ export default function KycPage() {
                                                 <FormItem>
                                                     <FormLabel>Bank Name</FormLabel>
                                                     <FormControl>
-                                                        <Input placeholder="Enter your bank's name" {...field} />
+                                                        <Input placeholder="Enter your bank's name" {...field} disabled={isSubmitting} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -160,7 +191,7 @@ export default function KycPage() {
                                                 <FormItem>
                                                     <FormLabel>UPI ID</FormLabel>
                                                     <FormControl>
-                                                        <Input placeholder="Enter your UPI ID" {...field} />
+                                                        <Input placeholder="Enter your UPI ID" {...field} disabled={isSubmitting}/>
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -177,8 +208,9 @@ export default function KycPage() {
                                     </AlertDescription>
                                 </Alert>
 
-                                <Button type="submit" className="w-full font-bold text-lg py-6">
-                                    Submit for Verification
+                                <Button type="submit" className="w-full font-bold text-lg py-6" disabled={isSubmitting}>
+                                    {isSubmitting && <Loader className="mr-2 h-4 w-4 animate-spin" />}
+                                    {isKycSubmitted ? 'Update Details' : 'Submit for Verification'}
                                 </Button>
                             </form>
                         </Form>

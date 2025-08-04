@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { ChevronLeft, Edit, Wallet, ShieldCheck, User, Gamepad2, TrendingUp, TrendingDown, Check, X, Ban } from 'lucide-react';
+import { ChevronLeft, Edit, Wallet, ShieldCheck, User, Gamepad2, TrendingUp, TrendingDown, Check, X, Ban, VenetianMask } from 'lucide-react';
 import Link from 'next/link';
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
@@ -172,92 +172,142 @@ export default function UserProfilePage() {
                 <ChevronLeft className="mr-2 h-4 w-4" /> Back to Users
             </Button>
 
-            <Card>
-                <CardHeader className="flex flex-row items-center space-x-6">
-                    <Avatar className="h-24 w-24 border">
-                        <AvatarImage src={user.photoURL || undefined} alt={user.displayName || ''} />
-                        <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
-                    </Avatar>
-                    <div className="space-y-1">
-                        <CardTitle className="text-3xl">{user.displayName}</CardTitle>
-                        <CardDescription>{user.email}</CardDescription>
-                        <p className="text-sm text-muted-foreground">{user.phone}</p>
-                        <div className="flex items-center gap-2 pt-2">
-                             <Badge variant={getKycBadgeVariant(user.kycStatus)}>{user.kycStatus || 'Pending'}</Badge>
-                             <Badge variant={getStatusBadgeVariant(user.status)}>{user.status || 'active'}</Badge>
-                             <span className="text-xs text-muted-foreground">User ID: {user.uid}</span>
-                        </div>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <Separator className="my-4" />
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <StatCard title="Total Balance" value={`₹${totalBalance.toFixed(2)}`} icon={Wallet} />
-                        <StatCard title="Games Played" value={user.gameStats?.played || 0} icon={Gamepad2} />
-                        <StatCard title="Total Deposits" value={`₹${user.lifetimeStats?.totalDeposits || 0}`} icon={TrendingUp} />
-                        <StatCard title="Total Withdrawals" value={`₹${user.lifetimeStats?.totalWithdrawals || 0}`} icon={TrendingDown} />
-                    </div>
-                </CardContent>
-            </Card>
-
-             <Card>
-                <CardHeader>
-                    <CardTitle>Admin Actions</CardTitle>
-                </CardHeader>
-                <CardContent className="flex flex-wrap gap-2">
-                     <Dialog open={isWalletDialogOpen} onOpenChange={setIsWalletDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button><Wallet className="mr-2 h-4 w-4" /> Adjust Wallet</Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Adjust User Wallet</DialogTitle>
-                                <DialogDescription>
-                                    Manually add or remove funds. Use a negative number to subtract.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-4">
-                                <div>
-                                    <Label htmlFor="wallet-amount">Amount</Label>
-                                    <Input id="wallet-amount" type="number" value={walletAmount} onChange={e => setWalletAmount(e.target.value)} placeholder="e.g., 100 or -50" />
-                                </div>
-                                <div>
-                                    <Label htmlFor="wallet-type">Wallet Type</Label>
-                                     <Select onValueChange={(value: 'balance' | 'winnings') => setWalletType(value)} defaultValue={walletType}>
-                                        <SelectTrigger id="wallet-type">
-                                            <SelectValue placeholder="Select wallet type" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="balance">Deposit Balance</SelectItem>
-                                            <SelectItem value="winnings">Winnings Balance</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div>
-                                    <Label htmlFor="wallet-notes">Notes (Reason)</Label>
-                                    <Input id="wallet-notes" value={walletNotes} onChange={e => setWalletNotes(e.target.value)} placeholder="e.g., Bonus credit" />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 space-y-6">
+                     <Card>
+                        <CardHeader className="flex flex-row items-center space-x-6">
+                            <Avatar className="h-24 w-24 border">
+                                <AvatarImage src={user.photoURL || undefined} alt={user.displayName || ''} />
+                                <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+                            </Avatar>
+                            <div className="space-y-1">
+                                <CardTitle className="text-3xl">{user.displayName}</CardTitle>
+                                <CardDescription>{user.email}</CardDescription>
+                                <p className="text-sm text-muted-foreground">{user.phone}</p>
+                                <div className="flex items-center gap-2 pt-2">
+                                    <Badge variant={getKycBadgeVariant(user.kycStatus)}>{user.kycStatus || 'Pending'}</Badge>
+                                    <Badge variant={getStatusBadgeVariant(user.status)}>{user.status || 'active'}</Badge>
+                                    <span className="text-xs text-muted-foreground">User ID: {user.uid}</span>
                                 </div>
                             </div>
-                            <DialogFooter>
-                                <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
-                                <Button onClick={handleWalletUpdate} disabled={isSubmitting}>{isSubmitting ? 'Updating...' : 'Update Wallet'}</Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
-                    
-                    <Button variant="default" onClick={() => handleKycUpdate('Verified')} disabled={user.kycStatus === 'Verified' || isSubmitting}><Check className="mr-2 h-4 w-4" /> Approve KYC</Button>
-                    <Button variant="destructive" onClick={() => handleKycUpdate('Rejected')} disabled={user.kycStatus === 'Rejected' || isSubmitting}><X className="mr-2 h-4 w-4" /> Reject KYC</Button>
-                    {user.status !== 'suspended' ? (
-                        <Button variant="destructive" onClick={() => handleUserStatusUpdate('suspended')} disabled={isSubmitting}>
-                            <Ban className="mr-2 h-4 w-4" /> Suspend User
-                        </Button>
-                    ) : (
-                         <Button variant="default" onClick={() => handleUserStatusUpdate('active')} disabled={isSubmitting}>
-                            <Check className="mr-2 h-4 w-4" /> Un-suspend User
-                        </Button>
-                    )}
-                </CardContent>
-            </Card>
+                        </CardHeader>
+                        <CardContent>
+                            <Separator className="my-4" />
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <StatCard title="Total Balance" value={`₹${totalBalance.toFixed(2)}`} icon={Wallet} />
+                                <StatCard title="Games Played" value={user.gameStats?.played || 0} icon={Gamepad2} />
+                                <StatCard title="Total Deposits" value={`₹${user.lifetimeStats?.totalDeposits || 0}`} icon={TrendingUp} />
+                                <StatCard title="Total Withdrawals" value={`₹${user.lifetimeStats?.totalWithdrawals || 0}`} icon={TrendingDown} />
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Admin Actions</CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex flex-wrap gap-2">
+                            <Dialog open={isWalletDialogOpen} onOpenChange={setIsWalletDialogOpen}>
+                                <DialogTrigger asChild>
+                                    <Button><Wallet className="mr-2 h-4 w-4" /> Adjust Wallet</Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Adjust User Wallet</DialogTitle>
+                                        <DialogDescription>
+                                            Manually add or remove funds. Use a negative number to subtract.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <Label htmlFor="wallet-amount">Amount</Label>
+                                            <Input id="wallet-amount" type="number" value={walletAmount} onChange={e => setWalletAmount(e.target.value)} placeholder="e.g., 100 or -50" />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="wallet-type">Wallet Type</Label>
+                                            <Select onValueChange={(value: 'balance' | 'winnings') => setWalletType(value)} defaultValue={walletType}>
+                                                <SelectTrigger id="wallet-type">
+                                                    <SelectValue placeholder="Select wallet type" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="balance">Deposit Balance</SelectItem>
+                                                    <SelectItem value="winnings">Winnings Balance</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="wallet-notes">Notes (Reason)</Label>
+                                            <Input id="wallet-notes" value={walletNotes} onChange={e => setWalletNotes(e.target.value)} placeholder="e.g., Bonus credit" />
+                                        </div>
+                                    </div>
+                                    <DialogFooter>
+                                        <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+                                        <Button onClick={handleWalletUpdate} disabled={isSubmitting}>{isSubmitting ? 'Updating...' : 'Update Wallet'}</Button>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
+                            
+                            <Button variant="default" onClick={() => handleKycUpdate('Verified')} disabled={user.kycStatus === 'Verified' || isSubmitting}><Check className="mr-2 h-4 w-4" /> Approve KYC</Button>
+                            <Button variant="destructive" onClick={() => handleKycUpdate('Rejected')} disabled={user.kycStatus === 'Rejected' || isSubmitting}><X className="mr-2 h-4 w-4" /> Reject KYC</Button>
+                            {user.status !== 'suspended' ? (
+                                <Button variant="destructive" onClick={() => handleUserStatusUpdate('suspended')} disabled={isSubmitting}>
+                                    <Ban className="mr-2 h-4 w-4" /> Suspend User
+                                </Button>
+                            ) : (
+                                <Button variant="default" onClick={() => handleUserStatusUpdate('active')} disabled={isSubmitting}>
+                                    <Check className="mr-2 h-4 w-4" /> Un-suspend User
+                                </Button>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
+                
+                <div className="lg:col-span-1">
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>KYC Details</CardTitle>
+                            <CardDescription>Submitted by user for verification.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4 text-sm">
+                            {user.kycStatus === 'Pending' || user.kycStatus === 'Verified' || user.kycStatus === 'Rejected' ? (
+                                <>
+                                    <div>
+                                        <Label className="text-muted-foreground">Aadhaar Number</Label>
+                                        <p className="font-semibold">{user.aadhaar || 'Not Provided'}</p>
+                                    </div>
+                                    <Separator />
+                                    <div>
+                                        <Label className="text-muted-foreground">PAN Number</Label>
+                                        <p className="font-semibold">{user.pan || 'Not Provided'}</p>
+                                    </div>
+                                    <Separator />
+                                    <div>
+                                        <Label className="text-muted-foreground">Bank Account Number</Label>
+                                        <p className="font-semibold">{user.bankAccount || 'Not Provided'}</p>
+                                    </div>
+                                    <Separator />
+                                    <div>
+                                        <Label className="text-muted-foreground">IFSC Code</Label>
+                                        <p className="font-semibold">{user.ifsc || 'Not Provided'}</p>
+                                    </div>
+                                    <Separator />
+                                    <div>
+                                        <Label className="text-muted-foreground">Bank Name</Label>
+                                        <p className="font-semibold">{user.bankName || 'Not Provided'}</p>
+                                    </div>
+                                     <Separator />
+                                    <div>
+                                        <Label className="text-muted-foreground">UPI ID</Label>
+                                        <p className="font-semibold">{user.upiId || 'Not Provided'}</p>
+                                    </div>
+                                </>
+                            ) : (
+                                <p className="text-muted-foreground text-center">User has not submitted KYC details yet.</p>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
 
             <Card>
                 <CardHeader>
@@ -296,5 +346,3 @@ export default function UserProfilePage() {
         </div>
     );
 }
-
-    

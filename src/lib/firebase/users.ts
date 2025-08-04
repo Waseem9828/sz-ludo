@@ -14,8 +14,15 @@ export interface AppUser {
         balance: number;
         winnings: number;
     },
+    // KYC Details
     kycStatus?: 'Pending' | 'Verified' | 'Rejected';
+    aadhaar?: string;
+    pan?: string;
+    bankAccount?: string;
+    ifsc?: string;
+    bankName?: string;
     upiId?: string; // For withdrawals
+    
     gameStats?: {
         played: number;
         won: number;
@@ -27,6 +34,14 @@ export interface AppUser {
     }
 }
 
+export interface KycDetails {
+    aadhaar: string;
+    pan: string;
+    bankAccount: string;
+    ifsc: string;
+    bankName: string;
+    upiId: string;
+}
 
 export const getUser = async (uid: string): Promise<AppUser | null> => {
     if (!uid) return null;
@@ -37,6 +52,14 @@ export const getUser = async (uid: string): Promise<AppUser | null> => {
     }
     return null;
 }
+
+export const updateUserKycDetails = async (uid: string, details: KycDetails) => {
+    const userRef = doc(db, 'users', uid);
+    return await updateDoc(userRef, {
+        ...details,
+        kycStatus: 'Pending',
+    });
+};
 
 
 export const updateUserWallet = async (uid: string, amount: number, walletType: 'balance' | 'winnings', transactionType: TransactionType, notes?: string, relatedId?: string) => {
