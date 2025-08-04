@@ -119,7 +119,7 @@ export const updateUserWallet = async (uid: string, amount: number, walletType: 
         }
         
         // Update lifetime stats for deposits or approved withdrawals
-        if (transactionType === 'deposit') {
+        if (transactionType === 'deposit' && (notes?.includes('Approved') || notes?.includes('Paytm'))) {
             transaction.update(userRef, { 'lifetimeStats.totalDeposits': increment(amount) });
         } else if (transactionType === 'withdrawal' && notes === 'Withdrawal Approved') {
             transaction.update(userRef, { 'lifetimeStats.totalWithdrawals': increment(amount) });

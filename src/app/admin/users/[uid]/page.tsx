@@ -86,7 +86,7 @@ export default function UserProfilePage() {
 
         setIsSubmitting(true);
         try {
-            await updateUserWallet(user.uid, amount, walletType, walletNotes || (amount > 0 ? 'Admin Credit' : 'Admin Debit'));
+            await updateUserWallet(user.uid, amount, walletType, amount > 0 ? 'Admin Credit' : 'Admin Debit', walletNotes);
             toast({ title: "Success", description: "Wallet updated successfully." });
             // Manually update user state to reflect change immediately
             setUser(prevUser => {
@@ -331,7 +331,7 @@ export default function UserProfilePage() {
                                     <TableCell><Badge variant="secondary">{tx.type.replace(/_/g, ' ')}</Badge></TableCell>
                                     <TableCell>₹{tx.amount.toFixed(2)}</TableCell>
                                     <TableCell><Badge>{tx.status}</Badge></TableCell>
-                                    <TableCell>{tx.notes || tx.relatedGameId || 'N/A'}</TableCell>
+                                    <TableCell>{tx.notes || tx.relatedId || 'N/A'}</TableCell>
                                 </TableRow>
                             ))}
                              {transactions.length === 0 && (

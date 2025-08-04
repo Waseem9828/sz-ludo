@@ -27,22 +27,22 @@ export default function WithdrawalsPage() {
     useEffect(() => {
       const unsubscribe = listenForWithdrawals(
         async (allWithdrawals) => {
-            const userIds = [...new Set(allWithdrawals.map(w => w.userId))];
-            if (userIds.length > 0) {
-                 const userPromises = userIds.map(id => getUser(id));
-                 const users = (await Promise.all(userPromises)).filter(u => u) as AppUser[];
-                 const userMap = new Map(users.map(u => [u.uid, u]));
-
-                const withdrawalsWithUserData = allWithdrawals.map(w => ({
-                    ...w,
-                    user: userMap.get(w.userId)
-                }));
-                 setWithdrawals(withdrawalsWithUserData);
-            } else {
+            if (allWithdrawals.length === 0) {
                 setWithdrawals([]);
+                setLoading(false);
+                return;
             }
-          
-          setLoading(false);
+            const userIds = [...new Set(allWithdrawals.map(w => w.userId))];
+            const userPromises = userIds.map(id => getUser(id));
+            const users = (await Promise.all(userPromises)).filter(u => u) as AppUser[];
+            const userMap = new Map(users.map(u => [u.uid, u]));
+
+            const withdrawalsWithUserData = allWithdrawals.map(w => ({
+                ...w,
+                user: userMap.get(w.userId)
+            }));
+            setWithdrawals(withdrawalsWithUserData);
+            setLoading(false);
         },
         (error) => {
           console.error("Error fetching withdrawals:", error);
@@ -56,6 +56,7 @@ export default function WithdrawalsPage() {
 
     const handleApprove = async (withdrawal: Withdrawal) => {
         try {
+            // This transaction is now handled inside updateWithdrawalStatus
             await updateWithdrawalStatus(withdrawal.id, 'approved');
             toast({
                 title: 'Withdrawal Approved',
@@ -71,8 +72,7 @@ export default function WithdrawalsPage() {
     };
 
     const handleReject = async (withdrawal: Withdrawal) => {
-        try {
-            await updateUserWallet(withdrawal.userId, withdrawal.amount, 'winnings', 'Withdrawal Rejected');
+         try {
             await updateWithdrawalStatus(withdrawal.id, 'rejected');
              toast({
                 title: 'Withdrawal Rejected',
@@ -224,6 +224,11 @@ export default function WithdrawalsPage() {
                 </TableCell>
               </TableRow>
             )})}
+            {withdrawals.length === 0 && (
+                <TableRow>
+                    <TableCell colSpan={8} className="text-center text-muted-foreground">No withdrawal requests found.</TableCell>
+                </TableRow>
+            )}
           </TableBody>
         </Table>
       </CardContent>

@@ -1,11 +1,11 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts';
+import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { DollarSign, Users, Wallet, TrendingUp, Loader } from 'lucide-react';
 import ChallengeList from '@/components/play/challenge-list';
 import BattleList from '@/components/play/battle-list';
@@ -15,15 +15,8 @@ import { AppUser, listenForAllUsers } from '@/lib/firebase/users';
 import Link from 'next/link';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { ChartConfig } from '@/components/ui/chart';
-
-const chartData = [
-  { month: 'Jan', deposits: 4000, withdrawals: 2400 },
-  { month: 'Feb', deposits: 3000, withdrawals: 1398 },
-  { month: 'Mar', deposits: 2000, withdrawals: 9800 },
-  { month: 'Apr', deposits: 2780, withdrawals: 3908 },
-  { month: 'May', deposits: 1890, withdrawals: 4800 },
-  { month: 'Jun', deposits: 2390, withdrawals: 3800 },
-];
+import { Game, listenForCompletedGames } from '@/lib/firebase/games';
+import { subMonths, format, getYear, getMonth } from 'date-fns';
 
 const chartConfig = {
   deposits: {
@@ -58,43 +51,100 @@ const getTypeBadgeVariant = (type: TransactionType) => {
 export default function AdminDashboardPage() {
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [kpiData, setKpiData] = useState([
-    { title: 'Total Revenue', value: '₹0', change: '', icon: DollarSign },
-    { title: 'Total Withdrawals', value: '₹0', change: '', icon: Wallet },
-    { title: 'Active Users', value: '0', change: '', icon: Users },
-    { title: 'Total Signups', value: '0', change: '', icon: TrendingUp },
+    { title: 'Total Revenue', value: '₹0', icon: DollarSign },
+    { title: 'Total Withdrawals', value: '₹0', icon: Wallet },
+    { title: 'Active Users', value: '0', icon: Users },
+    { title: 'Total Signups', value: '0', icon: TrendingUp },
   ]);
+  const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  useEffect(() => {
-      const unsubscribeTransactions = listenForAllTransactions(
-          10, // Fetch last 10 transactions
-          (transactions) => {
-              setRecentTransactions(transactions);
-          },
-          (error) => toast({ title: "Error", description: `Could not fetch transactions: ${error.message}`, variant: "destructive" })
-      );
+   useEffect(() => {
+        const processTransactionDataForChart = (transactions: Transaction[]) => {
+            const monthlyData: { [key: string]: { month: string, deposits: number, withdrawals: number } } = {};
 
-      const unsubscribeUsers = listenForAllUsers(
-          (users) => {
-            const totalSignups = users.length;
-            const activeUsers = users.filter(u => u.status === 'active').length;
-            const totalWithdrawals = users.reduce((sum, user) => sum + (user.lifetimeStats?.totalWithdrawals || 0), 0);
-            
-            setKpiData(prev => [
-                prev[0], // Keep revenue for now
-                { ...prev[1], value: `₹${totalWithdrawals.toLocaleString()}`},
-                { ...prev[2], value: activeUsers.toLocaleString()},
-                { ...prev[3], value: totalSignups.toLocaleString()},
-            ]);
-            setLoading(false);
-          },
-          (error) => toast({ title: "Error", description: `Could not fetch users: ${error.message}`, variant: "destructive" })
-      );
+            // Initialize last 6 months
+            for (let i = 5; i >= 0; i--) {
+                const d = subMonths(new Date(), i);
+                const monthKey = format(d, 'yyyy-MM');
+                const monthName = format(d, 'MMM');
+                monthlyData[monthKey] = { month: monthName, deposits: 0, withdrawals: 0 };
+            }
+
+            transactions.forEach(tx => {
+                if (tx.createdAt) {
+                    const date = tx.createdAt.toDate();
+                    const monthKey = format(date, 'yyyy-MM');
+                    
+                    if (monthlyData[monthKey]) {
+                        if (tx.type === 'deposit' && (tx.status === 'approved' || tx.status === 'completed')) {
+                            monthlyData[monthKey].deposits += tx.amount;
+                        } else if (tx.type === 'withdrawal' && (tx.status === 'approved' || tx.status === 'completed')) {
+                            monthlyData[monthKey].withdrawals += tx.amount;
+                        }
+                    }
+                }
+            });
+
+            setChartData(Object.values(monthlyData) as any);
+        };
+        
+        const sixMonthsAgo = subMonths(new Date(), 6);
+
+        const unsubscribeTransactions = listenForAllTransactions(
+            10,
+            (transactions) => setRecentTransactions(transactions),
+            (error) => toast({ title: "Error", description: `Could not fetch recent transactions: ${error.message}`, variant: "destructive" }),
+            undefined // No status filter for recent transactions
+        );
+        
+        const unsubscribeChartTransactions = listenForAllTransactions(
+            undefined, // No limit for chart data
+            processTransactionDataForChart,
+            (error) => toast({ title: "Error", description: `Could not fetch chart data: ${error.message}`, variant: "destructive" }),
+            ['completed', 'approved'],
+            sixMonthsAgo
+        );
+
+        const unsubscribeUsers = listenForAllUsers(
+            (users) => {
+                const totalSignups = users.length;
+                const activeUsers = users.filter(u => u.status === 'active').length;
+                const totalWithdrawals = users.reduce((sum, user) => sum + (user.lifetimeStats?.totalWithdrawals || 0), 0);
+                
+                setKpiData(prev => [
+                    prev[0], // Revenue is calculated separately
+                    { ...prev[1], value: `₹${totalWithdrawals.toLocaleString()}`},
+                    { ...prev[2], value: activeUsers.toLocaleString()},
+                    { ...prev[3], value: totalSignups.toLocaleString()},
+                ]);
+                if(!loading) setLoading(false);
+            },
+            (error) => toast({ title: "Error", description: `Could not fetch users: ${error.message}`, variant: "destructive" })
+        );
+
+        const unsubscribeGames = listenForCompletedGames(
+            (games) => {
+                 const totalRevenue = games.reduce((acc, game) => {
+                    const prizePool = game.type === 'computer' ? game.amount : game.amount * 2;
+                    const commission = prizePool * 0.05; // 5% commission
+                    return acc + commission;
+                }, 0);
+                 setKpiData(prev => [
+                    { ...prev[0], value: `₹${totalRevenue.toFixed(2)}`},
+                    ...prev.slice(1)
+                ]);
+                 setLoading(false);
+            },
+            (error) => toast({ title: "Error", description: `Could not fetch games for revenue: ${error.message}`, variant: "destructive" })
+        )
 
       return () => {
           unsubscribeTransactions();
+          unsubscribeChartTransactions();
           unsubscribeUsers();
+          unsubscribeGames();
       };
   }, [toast]);
   
@@ -117,7 +167,6 @@ export default function AdminDashboardPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{kpi.value}</div>
-                        <p className="text-xs text-muted-foreground">{kpi.change}</p>
                     </CardContent>
                 </Card>
             ))}
@@ -149,7 +198,7 @@ export default function AdminDashboardPage() {
                            cursor={false}
                            content={<ChartTooltipContent indicator="dot" />} 
                         />
-                        <Legend />
+                        <Legend content={<ChartTooltipContent hideLabel />} />
                         <Bar dataKey="deposits" fill="var(--color-deposits)" radius={4} />
                         <Bar dataKey="withdrawals" fill="var(--color-withdrawals)" radius={4} />
                      </BarChart>

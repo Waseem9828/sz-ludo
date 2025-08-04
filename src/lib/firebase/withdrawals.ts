@@ -11,7 +11,8 @@ import {
     writeBatch,
     increment,
     getDoc,
-    orderBy
+    orderBy,
+    runTransaction
 } from 'firebase/firestore';
 import { db } from './config';
 import { createTransaction } from './transactions';
@@ -73,16 +74,34 @@ export const createWithdrawalRequest = async (data: {
 
 export const updateWithdrawalStatus = async (id: string, status: Withdrawal['status']) => {
     const withdrawalRef = doc(db, WITHDRAWALS_COLLECTION, id);
-    const withdrawalSnap = await getDoc(withdrawalRef);
-    if (!withdrawalSnap.exists()) throw new Error("Withdrawal request not found");
-    const withdrawalData = withdrawalSnap.data() as Withdrawal;
+    
+    await runTransaction(db, async (transaction) => {
+        const withdrawalSnap = await transaction.get(withdrawalRef);
+        if (!withdrawalSnap.exists()) throw new Error("Withdrawal request not found");
+        
+        const withdrawalData = withdrawalSnap.data() as Withdrawal;
+        const userRef = doc(db, 'users', withdrawalData.userId);
 
-    await updateDoc(withdrawalRef, { status });
+        // Update the withdrawal document status
+        transaction.update(withdrawalRef, { status });
 
-    if (status === 'approved') {
-        // Update user's lifetime withdrawal stats
-        await updateUserWallet(withdrawalData.userId, withdrawalData.amount, 'winnings', 'withdrawal', 'Withdrawal Approved');
-    }
+        if (status === 'approved') {
+            // Update user's lifetime withdrawal stats
+            transaction.update(userRef, { 'lifetimeStats.totalWithdrawals': increment(withdrawalData.amount) });
+        } else if (status === 'rejected') {
+            // If rejected, refund the amount to the user's winnings wallet
+            transaction.update(userRef, { 'wallet.winnings': increment(withdrawalData.amount) });
+        }
+        
+        // Find and update the corresponding transaction log
+        const transQuery = query(collection(db, "transactions"), where("relatedId", "==", id), where("type", "==", "withdrawal"));
+        const transSnapshot = await getDocs(transQuery);
+        
+        if (!transSnapshot.empty) {
+            const transDocRef = transSnapshot.docs[0].ref;
+            transaction.update(transDocRef, { status: status });
+        }
+    });
 }
 
 

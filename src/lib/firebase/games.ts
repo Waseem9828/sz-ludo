@@ -239,6 +239,23 @@ export const listenForGames = (
     return unsubscribe;
 };
 
+// Listen for completed games (for revenue calculation)
+export const listenForCompletedGames = (
+    callback: (games: Game[]) => void,
+    onError?: (error: Error) => void
+) => {
+    const q = query(collection(db, GAMES_COLLECTION), where("status", "==", "completed"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        const games: Game[] = [];
+        snapshot.forEach(doc => games.push({ id: doc.id, ...doc.data() } as Game));
+        callback(games);
+    }, (error) => {
+        console.error("Error listening for completed games: ", error);
+        if (onError) onError(error);
+    });
+    return unsubscribe;
+}
+
 
 // Listen for real-time updates on games vs computer
 export const listenForComputerGames = (
