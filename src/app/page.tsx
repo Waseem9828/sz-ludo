@@ -105,12 +105,12 @@ export default function Home() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <section>
-                      <div className="flex items-center justify-between my-4">
-                          <span className="text-red-600 font-semibold whitespace-nowrap text-lg animate-shine">
-                          ≤--------------🏆Open Battles🏆------------&gt;
-                          </span>
-                          <Link href="/play">
-                              <Button variant="outline" size="sm">Create New</Button>
+                      <div className="flex flex-col sm:flex-row items-center justify-between my-4 gap-2">
+                          <h2 className="text-red-600 font-semibold text-lg text-center animate-shine">
+                              ≤--------------🏆Open Battles🏆------------&gt;
+                          </h2>
+                          <Link href="/play" className="w-full sm:w-auto">
+                              <Button variant="outline" size="sm" className="w-full">Create New</Button>
                           </Link>
                       </div>
                       <ChallengeList />
@@ -118,9 +118,9 @@ export default function Home() {
 
                   <section>
                       <div className="flex items-center justify-center my-4">
-                          <span className="text-red-600 font-semibold whitespace-nowrap text-lg animate-shine">
+                          <h2 className="text-red-600 font-semibold whitespace-nowrap text-lg animate-shine">
                           ⚔️ Ongoing Battles
-                          </span>
+                          </h2>
                       </div>
                       <BattleList />
                   </section>
