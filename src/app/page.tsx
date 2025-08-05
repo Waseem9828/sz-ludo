@@ -13,13 +13,14 @@ import ChallengeList from '@/components/play/challenge-list';
 import BattleList from '@/components/play/battle-list';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { FestiveDialog } from '@/components/ui/festive-dialog';
+import { FestiveDialog, FestiveBackground } from '@/components/ui/festive-dialog';
 
 export default function Home() {
   const { user, appUser, loading } = useAuth();
   const router = useRouter();
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [showFestiveDialog, setShowFestiveDialog] = useState(false);
+  const [showFestiveBackground, setShowFestiveBackground] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -27,15 +28,34 @@ export default function Home() {
     }
     
     getSettings().then(appSettings => {
-      setSettings(appSettings);
+      let activeSettings = appSettings;
+      const today = new Date();
+      const month = today.getMonth(); // 0-indexed (0 for Jan, 7 for Aug)
+      const day = today.getDate();
+
+      // Automatically trigger Independence Day theme from Aug 1 to Aug 15
+      if (month === 7 && day >= 1 && day <= 15) {
+        activeSettings = {
+          ...appSettings,
+          festiveGreeting: {
+            enabled: true,
+            type: 'IndependenceDay',
+            message: 'Happy Independence Day!',
+          }
+        };
+        setShowFestiveBackground(true);
+      }
+
+      setSettings(activeSettings);
       
-      if (appSettings.festiveGreeting?.enabled) {
-          const lastShown = localStorage.getItem('festiveGreetingLastShown');
+      if (activeSettings.festiveGreeting?.enabled) {
+          const lastShownKey = `festiveGreetingLastShown_${activeSettings.festiveGreeting.type}`;
+          const lastShown = localStorage.getItem(lastShownKey);
           const now = new Date().getTime();
           // Show if never shown or if it has been more than 24 hours
           if (!lastShown || (now - Number(lastShown) > 24 * 60 * 60 * 1000)) {
               setShowFestiveDialog(true);
-              localStorage.setItem('festiveGreetingLastShown', now.toString());
+              localStorage.setItem(lastShownKey, now.toString());
           }
       }
     });
@@ -50,6 +70,9 @@ export default function Home() {
 
   return (
     <>
+      {showFestiveBackground && settings?.festiveGreeting && (
+        <FestiveBackground type={settings.festiveGreeting.type} />
+      )}
       {showFestiveDialog && settings?.festiveGreeting && (
           <FestiveDialog
             isOpen={showFestiveDialog}
@@ -108,3 +131,5 @@ export default function Home() {
     </>
   );
 }
+
+    

@@ -390,6 +390,7 @@ export default function SettingsPage() {
                                                             <SelectItem value="Diwali">Diwali</SelectItem>
                                                             <SelectItem value="Eid">Eid</SelectItem>
                                                             <SelectItem value="Christmas">Christmas</SelectItem>
+                                                            <SelectItem value="IndependenceDay">Independence Day</SelectItem>
                                                         </SelectContent>
                                                     </Select>
                                                      <p className="text-xs text-muted-foreground">This determines the background animation.</p>
@@ -460,5 +461,7 @@ export default function SettingsPage() {
     </Card>
   );
 }
+
+    
 
     

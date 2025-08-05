@@ -1,11 +1,11 @@
 
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { motion, AnimatePresence } from 'framer-motion';
 
-type FestivalType = 'None' | 'Generic' | 'Holi' | 'Diwali' | 'Eid' | 'Christmas';
+export type FestivalType = 'None' | 'Generic' | 'Holi' | 'Diwali' | 'Eid' | 'Christmas' | 'IndependenceDay';
 
 interface FestiveDialogProps {
   isOpen: boolean;
@@ -34,6 +34,11 @@ const festivalConfig = {
     bg: 'bg-gradient-to-br from-red-800 via-green-900 to-red-900',
     textColor: 'text-white',
     animation: 'christmas',
+  },
+  IndependenceDay: {
+    bg: 'bg-gradient-to-b from-orange-500 via-white to-green-600',
+    textColor: 'text-blue-900',
+    animation: 'independence',
   },
   Generic: {
     bg: 'bg-gradient-to-br from-blue-500 to-purple-600',
@@ -158,6 +163,39 @@ const ChristmasAnimation = () => (
   </div>
 );
 
+const IndependenceDayAnimation = () => {
+    const balloonColors = ['#FF9933', '#FFFFFF', '#138808'];
+    return (
+        <div className="absolute inset-0 overflow-hidden">
+            {[...Array(18)].map((_, i) => (
+                <motion.div
+                    key={i}
+                    className="absolute bottom-[-50px] rounded-full"
+                    initial={{ y: 0, opacity: 0.7 }}
+                    animate={{
+                        y: '-110vh',
+                        x: (Math.random() - 0.5) * 200,
+                        opacity: 0,
+                    }}
+                    transition={{
+                        duration: 8 + Math.random() * 10,
+                        repeat: Infinity,
+                        delay: i * 0.7,
+                        ease: 'linear',
+                    }}
+                    style={{
+                        left: `${10 + Math.random() * 80}%`,
+                        width: `${30 + Math.random() * 30}px`,
+                        height: `${40 + Math.random() * 40}px`,
+                        background: balloonColors[i % 3],
+                        clipPath: 'ellipse(35% 50% at 50% 50%)',
+                    }}
+                />
+            ))}
+        </div>
+    );
+};
+
 
 const AnimationComponent = ({ type }: { type: FestivalType }) => {
   switch (type) {
@@ -165,6 +203,7 @@ const AnimationComponent = ({ type }: { type: FestivalType }) => {
     case 'Diwali': return <DiwaliAnimation />;
     case 'Eid': return <EidAnimation />;
     case 'Christmas': return <ChristmasAnimation />;
+    case 'IndependenceDay': return <IndependenceDayAnimation />;
     default: return null;
   }
 };
@@ -213,3 +252,16 @@ export function FestiveDialog({
     </AnimatePresence>
   );
 }
+
+
+export function FestiveBackground({ type }: { type: FestivalType }) {
+    if (!type) return null;
+
+    return (
+        <div className="fixed inset-0 w-full h-full -z-10 pointer-events-none">
+            <AnimationComponent type={type} />
+        </div>
+    )
+}
+
+    

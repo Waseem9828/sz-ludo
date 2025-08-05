@@ -13,7 +13,7 @@ export interface UpiId {
     currentAmount: number;
 }
 
-export type FestivalType = 'None' | 'Generic' | 'Holi' | 'Diwali' | 'Eid' | 'Christmas';
+export type FestivalType = 'None' | 'Generic' | 'Holi' | 'Diwali' | 'Eid' | 'Christmas' | 'IndependenceDay';
 
 export interface FestiveGreeting {
     enabled: boolean;
@@ -138,5 +138,7 @@ export const deleteBannerImage = async (url: string): Promise<void> => {
     const storageRef = ref(storage, url);
     await deleteObject(storageRef);
 };
+
+    
 
     
