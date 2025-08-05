@@ -203,10 +203,10 @@ function GamePageComponent() {
                         </div>
                         <a href="https://play.google.com/store/apps/details?id=com.ludo.king" target="_blank" rel="noopener noreferrer" className="inline-block">
                             <Image 
-                                src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgoZZmcBoW0TCUW_GBV0y6geNF5cxhpZX1dzBSwgve-9WoDxPBmOYnQGHtzf48FRyNwKH0U0Yd_qHiHhldRdbLY5IWLu7llJsdAfC9L2nh_rjOYHDfCh0AcMltEKWfn5fin1TY5NfKL-RXC5qcR81Xdix4BTJO42BY8edSIkmUP5lNKTOgzAeowrsx8LVc/s320/76984.webp"
+                                src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgoZZmcBoW0TCUW_GBV0y6geNF5cxhpZX1dzBSwgve-9WoDxPBmOYnQGHtzf48FRyNwKH0U0Yd_qHiHhldRdbLY5IWLu7llJsdAfC9L2nh_rjOYHDfCh0AcMltEKWfn5fin1TY5NfKL-RXC5qcR81Xdix4BTJO42BY8edSIkmUP5lNKTOgzAeowrsx8LVc/s180/76984.webp"
                                 alt="Open Ludo King" 
                                 width={180}
-                                height={180}
+                                height={54}
                                 className="mx-auto"
                                 data-ai-hint="ludo king button"
                             />
