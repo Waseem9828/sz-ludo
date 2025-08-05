@@ -149,3 +149,20 @@ export const listenForTournaments = (
 
     return unsubscribe;
 };
+
+// Listen for a single tournament
+export const listenForTournament = (
+    tournamentId: string,
+    callback: (tournament: Tournament | null) => void,
+    onError: (error: Error) => void,
+) => {
+    const tournamentRef = doc(db, TOURNAMENTS_COLLECTION, tournamentId);
+    const unsubscribe = onSnapshot(tournamentRef, (doc) => {
+        if (doc.exists()) {
+            callback({ id: doc.id, ...doc.data() } as Tournament);
+        } else {
+            callback(null);
+        }
+    }, onError);
+    return unsubscribe;
+};

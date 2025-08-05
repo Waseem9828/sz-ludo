@@ -86,7 +86,7 @@ export default function TournamentsPage() {
                             </TableRow>
                         ) : (
                             tournaments.map((t) => (
-                                <TableRow key={t.id}>
+                                <TableRow key={t.id} className="hover:bg-muted/50 cursor-pointer" onClick={() => router.push(`/admin/tournaments/${t.id}`)}>
                                     <TableCell className="font-medium">{t.title}</TableCell>
                                     <TableCell><Badge variant={getStatusVariant(t.status)}>{t.status}</Badge></TableCell>
                                     <TableCell>₹{t.entryFee}</TableCell>
@@ -94,8 +94,10 @@ export default function TournamentsPage() {
                                     <TableCell>₹{t.prizePool.toFixed(2)}</TableCell>
                                     <TableCell>{format(t.startTime.toDate(), 'PPpp')}</TableCell>
                                     <TableCell>
-                                        <Button variant="outline" size="sm" onClick={() => router.push(`/admin/tournaments/${t.id}`)}>
-                                            View
+                                        <Button variant="outline" size="sm" asChild>
+                                             <Link href={`/admin/tournaments/${t.id}`} onClick={(e) => e.stopPropagation()}>
+                                                View
+                                            </Link>
                                         </Button>
                                     </TableCell>
                                 </TableRow>
