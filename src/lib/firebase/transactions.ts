@@ -35,7 +35,7 @@ export const listenForUserTransactions = (
     callback: (transactions: Transaction[]) => void,
     onError?: (error: Error) => void
 ) => {
-    const q = query(collection(db, TRANSACTIONS_COLLECTION), where("userId", "==", userId), orderBy("createdAt", "desc"));
+    const q = query(collection(db, TRANSACTIONS_COLLECTION), where("userId", "==", userId), orderBy("createdAt", "desc"), limit(20));
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const transactions: Transaction[] = [];

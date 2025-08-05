@@ -24,6 +24,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { createWithdrawalRequest } from '@/lib/firebase/withdrawals';
+import { Transaction, listenForUserTransactions } from '@/lib/firebase/transactions';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const quickWithdrawAmounts = [300, 1000, 5000, 10000];
 
@@ -31,6 +35,7 @@ export default function WalletPage() {
     const { toast } = useToast();
     const router = useRouter();
     const { user, appUser, loading } = useAuth();
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [isWithdrawDialogOpen, setIsWithdrawDialogOpen] = useState(false);
     const [withdrawAmount, setWithdrawAmount] = useState('');
     const [upiId, setUpiId] = useState('');
@@ -39,10 +44,17 @@ export default function WalletPage() {
     useEffect(() => {
         if (!loading && !user) {
             router.push('/login');
+            return;
         }
-        if (!loading && appUser && appUser.upiId) {
+        if (appUser?.upiId) {
             setUpiId(appUser.upiId);
         }
+
+        if (user) {
+            const unsubscribe = listenForUserTransactions(user.uid, setTransactions);
+            return () => unsubscribe();
+        }
+
     }, [user, appUser, loading, router]);
 
 
@@ -110,6 +122,26 @@ export default function WalletPage() {
     const totalBalance = (appUser.wallet?.balance || 0) + (appUser.wallet?.winnings || 0);
     const isKycPending = appUser.kycStatus !== 'Verified';
 
+    const getStatusBadgeVariant = (status: Transaction['status']) => {
+        switch (status) {
+            case 'approved':
+            case 'completed':
+                return 'default';
+            case 'pending':
+                return 'secondary';
+            case 'rejected':
+            case 'failed':
+                return 'destructive';
+            default:
+                return 'outline';
+        }
+    };
+
+    const getTypeBadgeVariant = (type: Transaction['type']) => {
+        return type === 'deposit' || type === 'winnings' || type === 'Admin Credit' ? 'default' : 'secondary';
+    }
+
+
     return (
         <div className="flex flex-col min-h-screen bg-background font-body">
             <Header />
@@ -121,7 +153,6 @@ export default function WalletPage() {
                             Back
                         </Button>
                     </Link>
-                    <Button variant="outline">Wallet History</Button>
                 </div>
 
                 <Card>
@@ -230,6 +261,43 @@ export default function WalletPage() {
                         </CardContent>
                     </Card>
                 </div>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-center text-lg font-semibold text-red-600 animate-shine">Recent Transactions</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                       <ScrollArea className="h-72">
+                         <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Date</TableHead>
+                                    <TableHead>Amount</TableHead>
+                                    <TableHead>Type</TableHead>
+                                    <TableHead>Status</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {transactions.map(tx => (
+                                    <TableRow key={tx.id}>
+                                        <TableCell className="text-xs">{new Date(tx.createdAt?.toDate()).toLocaleString()}</TableCell>
+                                        <TableCell className={`font-bold ${tx.type === 'deposit' || tx.type === 'winnings' || tx.type === 'Admin Credit' ? 'text-green-600' : 'text-red-600'}`}>
+                                            ₹{tx.amount.toFixed(2)}
+                                        </TableCell>
+                                        <TableCell><Badge variant={getTypeBadgeVariant(tx.type)}>{tx.type.replace(/_/g, ' ')}</Badge></TableCell>
+                                        <TableCell><Badge variant={getStatusBadgeVariant(tx.status)}>{tx.status}</Badge></TableCell>
+                                    </TableRow>
+                                ))}
+                                {transactions.length === 0 && (
+                                    <TableRow>
+                                        <TableCell colSpan={4} className="text-center text-muted-foreground">No transactions yet.</TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                       </ScrollArea>
+                    </CardContent>
+                </Card>
             </main>
         </div>
     );
