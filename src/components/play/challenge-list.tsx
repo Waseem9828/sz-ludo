@@ -27,14 +27,15 @@ import { MessageSquare } from "lucide-react";
 
 export default function ChallengeList() {
     const [challenges, setChallenges] = useState<Game[]>([]);
-    const { user, appUser } = useAuth();
+    const { user, appUser } = useAuth(); // Still needed for accept/delete actions
     const { toast } = useToast();
     const router = useRouter();
 
     useEffect(() => {
+        // This listener fetches all challenges with 'challenge' status for everyone.
         const unsubscribe = listenForGames(setChallenges, 'challenge');
         return () => unsubscribe();
-    }, []);
+    }, []); // Empty dependency array ensures it runs once and is not tied to user state.
 
     const handleAccept = async (challenge: Game) => {
         if (!user || !appUser) {
