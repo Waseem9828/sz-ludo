@@ -1,7 +1,10 @@
 
+
 import { doc, getDoc, updateDoc, increment, collection, onSnapshot, writeBatch, serverTimestamp, runTransaction } from 'firebase/firestore';
 import { db } from './config';
 import { TransactionType } from './transactions';
+
+export type UserRole = 'superadmin' | 'finance' | 'support';
 
 export interface AppUser {
     uid: string;
@@ -9,6 +12,7 @@ export interface AppUser {
     displayName: string | null;
     phone?: string;
     photoURL?: string | null;
+    role?: UserRole;
     status?: 'active' | 'suspended';
     wallet?: {
         balance: number;

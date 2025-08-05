@@ -40,7 +40,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const userRef = doc(db, 'users', user.uid);
         const unsubscribeFirestore = onSnapshot(userRef, (doc) => {
             if (doc.exists()) {
-                setAppUser(doc.data() as AppUser);
+                const data = doc.data() as AppUser;
+                // Special case for admin to assign role on creation
+                if (data.email === 'admin@example.com' && !data.role) {
+                    data.role = 'superadmin';
+                }
+                setAppUser(data);
             }
             setLoading(false);
         });
@@ -72,8 +77,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           },
           kycStatus: 'Pending',
           gameStats: { played: 0, won: 0, lost: 0 },
-          lifetimeStats: { totalDeposits: 0, totalWithdrawals: 0 }
+          lifetimeStats: { totalDeposits: 0, totalWithdrawals: 0, totalWinnings: 0 },
+          referralStats: { referredCount: 0, totalEarnings: 0 },
       };
+      // Assign role if it's the admin user
+      if (email === 'admin@example.com') {
+          newAppUser.role = 'superadmin';
+      }
+      
       await setDoc(userRef, newAppUser);
       setAppUser(newAppUser);
       setUser(user);
@@ -99,7 +110,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         wallet: { balance: 0, winnings: 0 },
         kycStatus: 'Pending',
         gameStats: { played: 0, won: 0, lost: 0 },
-        lifetimeStats: { totalDeposits: 0, totalWithdrawals: 0 }
+        lifetimeStats: { totalDeposits: 0, totalWithdrawals: 0, totalWinnings: 0 },
+        referralStats: { referredCount: 0, totalEarnings: 0 },
       };
       await setDoc(userRef, newAppUser);
       setAppUser(newAppUser);

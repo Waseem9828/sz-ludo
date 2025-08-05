@@ -3,32 +3,41 @@
 'use client';
 
 import { Sidebar, SidebarProvider, SidebarTrigger, SidebarInset, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar } from "@/components/ui/sidebar";
-import { Home, BarChart, Users, Settings, CircleDollarSign, Banknote, Bot, Bell } from "lucide-react";
+import { Home, BarChart, Users, Settings, CircleDollarSign, Banknote, Bot, Bell, Trophy } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
 import { useRouter, usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { SplashScreen } from "@/components/ui/splash-screen";
+
+const allNavItems = [
+    { href: "/admin", icon: Home, label: "Dashboard", roles: ['superadmin', 'finance', 'support'] },
+    { href: "/admin/users", icon: Users, label: "Users", roles: ['superadmin', 'support'] },
+    { href: "/admin/winnings", icon: Trophy, label: "Winnings", roles: ['superadmin', 'finance'] },
+    { href: "/admin/matches", icon: BarChart, label: "Match History", roles: ['superadmin', 'support'] },
+    { href: "/admin/computer-pro", icon: Bot, label: "Computer Pro", roles: ['superadmin'] },
+    { href: "/admin/deposits", icon: Banknote, label: "Deposits", roles: ['superadmin', 'finance'] },
+    { href: "/admin/withdrawals", icon: CircleDollarSign, label: "Withdrawals", roles: ['superadmin', 'finance'] },
+    { href: "/admin/notifications", icon: Bell, label: "Notifications", roles: ['superadmin', 'support'] },
+    { href: "/admin/settings", icon: Settings, label: "Settings", roles: ['superadmin'] },
+];
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const { user, loading } = useAuth();
+  const { user, appUser, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
-  const navItems = [
-    { href: "/admin", icon: Home, label: "Dashboard" },
-    { href: "/admin/users", icon: Users, label: "Users" },
-    { href: "/admin/matches", icon: BarChart, label: "Matches" },
-    { href: "/admin/computer-pro", icon: Bot, label: "Computer Pro" },
-    { href: "/admin/deposits", icon: Banknote, label: "Deposits" },
-    { href: "/admin/withdrawals", icon: CircleDollarSign, label: "Withdrawals" },
-    { href: "/admin/notifications", icon: Bell, label: "Notifications" },
-    { href: "/admin/settings", icon: Settings, label: "Settings" },
-  ];
+  const navItems = useMemo(() => {
+    const userRole = appUser?.role || 'support'; // Default to least privileged role
+    if (userRole === 'superadmin') {
+        return allNavItems;
+    }
+    return allNavItems.filter(item => item.roles.includes(userRole));
+  }, [appUser]);
 
   const currentPage = navItems.find(item => pathname.startsWith(item.href));
   const pageTitle = currentPage ? currentPage.label : "Admin";
@@ -37,13 +46,25 @@ export default function AdminLayout({
     if (!loading && !user) {
       router.push('/login');
     }
-    if (!loading && user && user.email !== 'admin@example.com') {
+    // For now, allow anyone with an account that is not a standard user to access admin
+    // A more robust check for a specific role should be implemented
+    if (!loading && user && !appUser?.role) {
       router.push('/');
     }
-  }, [user, loading, router]);
+  }, [user, appUser, loading, router]);
 
-  if (loading || !user) {
+  if (loading || !user || !appUser) {
     return <SplashScreen />;
+  }
+  
+  if (!appUser.role) {
+    return (
+        <div className="flex flex-col items-center justify-center min-h-screen">
+            <h1 className="text-2xl font-bold">Access Denied</h1>
+            <p>You do not have permission to view this page.</p>
+            <Link href="/" className="mt-4 text-blue-500 hover:underline">Go to Home</Link>
+        </div>
+    );
   }
 
   return (
@@ -52,6 +73,7 @@ export default function AdminLayout({
           <SidebarHeader>
             <div className="p-4 text-center">
               <h1 className="text-2xl font-bold text-primary">Admin Panel</h1>
+              <p className="text-sm text-muted-foreground capitalize">{appUser.role}</p>
             </div>
           </SidebarHeader>
           <SidebarContent>

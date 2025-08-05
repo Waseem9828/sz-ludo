@@ -17,7 +17,8 @@ import {
     increment,
     orderBy,
     limit,
-    getDocs
+    getDocs,
+    QueryConstraint
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from './config';
@@ -219,12 +220,14 @@ export const listenForGames = (
     status?: Game['status'],
     onError?: (error: Error) => void
 ) => {
-    let q;
+    const queryConstraints: QueryConstraint[] = [orderBy('createdAt', 'desc')];
     if (status) {
-        q = query(collection(db, GAMES_COLLECTION), where("status", "==", status), where("type", "==", "user"));
+        queryConstraints.push(where("status", "==", status));
     } else {
-        q = query(collection(db, GAMES_COLLECTION), where("type", "==", "user"));
+         queryConstraints.push(where("type", "==", "user"));
     }
+    
+    const q = query(collection(db, GAMES_COLLECTION), ...queryConstraints);
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const games: Game[] = [];
@@ -311,6 +314,33 @@ export const listenForComputerGames = (
         callback(games);
     }, (error) => {
         console.error("Error listening for computer games: ", error);
+        if (onError) {
+            onError(error);
+        }
+    });
+
+    return unsubscribe;
+};
+
+// Listen for game history (completed, cancelled, disputed)
+export const listenForGamesHistory = (
+    callback: (games: Game[]) => void,
+    onError?: (error: Error) => void
+) => {
+    const q = query(
+        collection(db, GAMES_COLLECTION),
+        where("status", "in", ["completed", "cancelled", "disputed"]),
+        orderBy("createdAt", "desc")
+    );
+    
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const games: Game[] = [];
+        querySnapshot.forEach((doc) => {
+            games.push({ id: doc.id, ...doc.data() } as Game);
+        });
+        callback(games);
+    }, (error) => {
+        console.error("Error listening for game history: ", error);
         if (onError) {
             onError(error);
         }
