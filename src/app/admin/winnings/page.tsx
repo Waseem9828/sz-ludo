@@ -46,7 +46,7 @@ export default function WinningsPage() {
             return;
         }
 
-        const prizePool = match.type === 'computer' ? match.amount : (match.amount * 2);
+        const prizePool = match.amount * 2;
         const commission = prizePool * 0.05;
         const finalAmount = prizePool - commission;
 
@@ -105,7 +105,6 @@ export default function WinningsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Game Type</TableHead>
               <TableHead>Players</TableHead>
               <TableHead>Bet Amount</TableHead>
               <TableHead>Winner Declared</TableHead>
@@ -115,21 +114,19 @@ export default function WinningsPage() {
           <TableBody>
              {matches.length === 0 && (
                 <TableRow>
-                    <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+                    <TableCell colSpan={4} className="text-center py-10 text-muted-foreground">
                         No winnings to review right now.
                     </TableCell>
                 </TableRow>
             )}
             {matches.map((match) => {
-                const prizePool = match.type === 'computer' ? match.amount : match.amount * 2;
+                const prizePool = match.amount * 2;
                 const commission = prizePool * 0.05;
                 const finalAmount = prizePool - commission;
-                const isComputerGame = match.type === 'computer';
 
                 return (
               <TableRow key={match.id}>
-                <TableCell><Badge variant={isComputerGame ? "secondary" : "default"}>{isComputerGame ? 'Computer Pro' : 'User Battle'}</Badge></TableCell>
-                <TableCell>{isComputerGame ? match.player1?.displayName : `${match.player1?.displayName} vs ${match.player2?.displayName}`}</TableCell>
+                <TableCell>{`${match.player1?.displayName} vs ${match.player2?.displayName}`}</TableCell>
                 <TableCell>₹{match.amount}</TableCell>
                 <TableCell>{match.winner === match.player1.uid ? match.player1.displayName : match.player2?.displayName || 'N/A'}</TableCell>
                 <TableCell className="space-x-2">
@@ -156,12 +153,10 @@ export default function WinningsPage() {
                                             <span className="text-muted-foreground">Player 1:</span>
                                             <span className="font-medium">{match.player1.displayName}</span>
                                           </div>
-                                          {!isComputerGame && (
-                                            <div className="flex justify-between">
-                                                <span className="text-muted-foreground">Player 2:</span>
-                                                <span className="font-medium">{match.player2?.displayName}</span>
-                                            </div>
-                                          )}
+                                          <div className="flex justify-between">
+                                              <span className="text-muted-foreground">Player 2:</span>
+                                              <span className="font-medium">{match.player2?.displayName}</span>
+                                          </div>
                                            <div className="flex justify-between">
                                             <span className="text-muted-foreground">Room Code:</span>
                                             <span className="font-mono tracking-widest">{match.roomCode || 'N/A'}</span>

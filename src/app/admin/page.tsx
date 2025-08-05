@@ -5,7 +5,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'recharts';
 import { DollarSign, Users, Wallet, TrendingUp, Loader } from 'lucide-react';
 import ChallengeList from '@/components/play/challenge-list';
 import BattleList from '@/components/play/battle-list';
@@ -127,7 +127,7 @@ export default function AdminDashboardPage() {
         const unsubscribeGames = listenForCompletedGames(
             (games) => {
                  const totalRevenue = games.reduce((acc, game) => {
-                    const prizePool = game.type === 'computer' ? game.amount : game.amount * 2;
+                    const prizePool = game.type === 'user' ? game.amount * 2 : game.amount;
                     const commission = prizePool * 0.05; // 5% commission
                     return acc + commission;
                 }, 0);

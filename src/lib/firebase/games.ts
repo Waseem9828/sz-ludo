@@ -154,11 +154,6 @@ export const submitGameResult = async (gameId: string, winnerId: string, screens
         }
 
         const gameData = gameSnap.data() as Game;
-        const loserId = gameData.player1.uid === winnerId ? gameData.player2?.uid : gameData.player1.uid;
-        
-        if (!loserId) {
-            throw new Error("Opponent not found in the game.");
-        }
 
         // Update game document
         transaction.update(gameRef, {
@@ -174,12 +169,20 @@ export const submitGameResult = async (gameId: string, winnerId: string, screens
             'gameStats.won': increment(1),
         });
 
-        // Update loser's stats
-        const loserRef = doc(db, 'users', loserId);
-        transaction.update(loserRef, {
-            'gameStats.played': increment(1),
-            'gameStats.lost': increment(1),
-        });
+        // Only update loser stats if it's not a computer game
+        if (gameData.type === 'user') {
+            const loserId = gameData.player1.uid === winnerId ? gameData.player2?.uid : gameData.player1.uid;
+            
+            if (!loserId) {
+                throw new Error("Opponent not found in the game.");
+            }
+            // Update loser's stats
+            const loserRef = doc(db, 'users', loserId);
+            transaction.update(loserRef, {
+                'gameStats.played': increment(1),
+                'gameStats.lost': increment(1),
+            });
+        }
     });
 };
 
@@ -297,30 +300,6 @@ export const listenForCompletedGames = (
     });
     return unsubscribe;
 }
-
-
-// Listen for real-time updates on games vs computer
-export const listenForComputerGames = (
-    callback: (games: Game[]) => void, 
-    onError?: (error: Error) => void
-) => {
-    const q = query(collection(db, GAMES_COLLECTION), where("type", "==", "computer"));
-    
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const games: Game[] = [];
-        querySnapshot.forEach((doc) => {
-            games.push({ id: doc.id, ...doc.data() } as Game);
-        });
-        callback(games);
-    }, (error) => {
-        console.error("Error listening for computer games: ", error);
-        if (onError) {
-            onError(error);
-        }
-    });
-
-    return unsubscribe;
-};
 
 // Listen for game history (completed, cancelled, disputed)
 export const listenForGamesHistory = (

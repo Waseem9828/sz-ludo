@@ -15,7 +15,6 @@ const allNavItems = [
     { href: "/admin/users", icon: Users, label: "Users", roles: ['superadmin', 'support'] },
     { href: "/admin/winnings", icon: Trophy, label: "Winnings", roles: ['superadmin', 'finance'] },
     { href: "/admin/matches", icon: BarChart, label: "Match History", roles: ['superadmin', 'support'] },
-    { href: "/admin/computer-pro", icon: Bot, label: "Computer Pro", roles: ['superadmin'] },
     { href: "/admin/deposits", icon: Banknote, label: "Deposits", roles: ['superadmin', 'finance'] },
     { href: "/admin/withdrawals", icon: CircleDollarSign, label: "Withdrawals", roles: ['superadmin', 'finance'] },
     { href: "/admin/notifications", icon: Bell, label: "Notifications", roles: ['superadmin', 'support'] },
