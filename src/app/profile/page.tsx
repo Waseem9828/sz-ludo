@@ -133,9 +133,15 @@ export default function ProfilePage() {
                                 <AvatarImage src={user.photoURL || `https://placehold.co/96x96.png`} alt={username} data-ai-hint="avatar person" />
                                 <AvatarFallback>{getInitials(username)}</AvatarFallback>
                             </Avatar>
-                            <Button size="icon" className="absolute bottom-0 right-0 rounded-full bg-primary hover:bg-primary/90 h-8 w-8">
-                                <Pencil className="h-4 w-4 text-primary-foreground" />
-                            </Button>
+                            {isKycVerified ? (
+                                <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-1">
+                                    <ShieldCheck className="h-7 w-7 text-blue-500 fill-blue-100" />
+                                </div>
+                            ) : (
+                                <Button size="icon" className="absolute bottom-0 right-0 rounded-full bg-primary hover:bg-primary/90 h-8 w-8">
+                                    <Pencil className="h-4 w-4 text-primary-foreground" />
+                                </Button>
+                            )}
                         </div>
 
                         <div className="space-y-4">
@@ -149,15 +155,12 @@ export default function ProfilePage() {
                                             value={isEditingUsername ? tempUsername : username} 
                                             onChange={(e) => setTempUsername(e.target.value)}
                                             readOnly={!isEditingUsername}
-                                            className={cn(
-                                                isEditingUsername ? "bg-card" : "bg-muted",
-                                                isKycVerified && !isEditingUsername ? "pr-8" : ""
-                                            )}
+                                            className={cn("bg-muted")}
                                         />
-                                        {isKycVerified && !isEditingUsername && (
-                                            <ShieldCheck className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 text-blue-500 fill-current" />
-                                        )}
                                     </div>
+                                    {isKycVerified && !isEditingUsername && (
+                                        <ShieldCheck className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                                    )}
                                     <Button onClick={handleEditUsername}>{isEditingUsername ? 'Save' : 'Edit'}</Button>
                                 </div>
                             </div>
