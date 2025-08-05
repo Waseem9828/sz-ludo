@@ -176,7 +176,7 @@ export default function WithdrawalsPage() {
                            <TrendingUp size={14}/>
                            <span>₹{withdrawal.user?.lifetimeStats?.totalDeposits || 0}</span>
                         </div>
-                        <div className="flex items-center gap-1 text-red-600">
+                        <div className="flex items-center gap-1 text-red-600 animate-shine">
                            <TrendingDown size={14}/>
                            <span>₹{withdrawal.user?.lifetimeStats?.totalWithdrawals || 0}</span>
                         </div>
@@ -195,9 +195,9 @@ export default function WithdrawalsPage() {
                         </DialogTrigger>
                         <DialogContent className="max-w-md">
                            <DialogHeader>
-                                <DialogTitle>Review Withdrawal</DialogTitle>
+                                <DialogTitle>Step 1: Pay Manually</DialogTitle>
                                 <DialogDescription>
-                                    Scan the QR code to pay the user, then approve the transaction.
+                                    Scan the QR code with your UPI app to pay the user. After successful payment, click "Approve".
                                 </DialogDescription>
                            </DialogHeader>
                            <div className="mt-4 space-y-4 text-center">
@@ -210,14 +210,17 @@ export default function WithdrawalsPage() {
                                    <p className="text-2xl font-bold">Pay: ₹{withdrawal.amount}</p>
                                </div>
                             </div>
-                            <div className="flex justify-end gap-2 mt-6">
-                                <DialogClose asChild>
-                                    <Button variant="destructive" onClick={() => handleReject(withdrawal)}>Reject</Button>
-                                </DialogClose>
-                                <DialogClose asChild>
-                                    <Button onClick={() => handleApprove(withdrawal)}>Approve</Button>
-                                </DialogClose>
-                            </div>
+                           <div className="mt-6 space-y-2">
+                                <p className="text-center font-semibold text-lg">Step 2: Confirm Transaction</p>
+                                <div className="flex justify-end gap-2">
+                                    <DialogClose asChild>
+                                        <Button variant="destructive" onClick={() => handleReject(withdrawal)}>Reject</Button>
+                                    </DialogClose>
+                                    <DialogClose asChild>
+                                        <Button onClick={() => handleApprove(withdrawal)}>Approve</Button>
+                                    </DialogClose>
+                                </div>
+                           </div>
                         </DialogContent>
                      </Dialog>
                   )}
