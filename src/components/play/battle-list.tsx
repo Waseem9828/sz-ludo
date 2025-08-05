@@ -50,7 +50,7 @@ export default function BattleList() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {battles.map((battle) => {
         if (!battle.player1 || !battle.player2) return null;
         
@@ -60,23 +60,23 @@ export default function BattleList() {
                 className="bg-card shadow-sm hover:bg-accent/50 transition-colors cursor-pointer"
                 onClick={() => handleBattleClick(battle.id)}
             >
-                <CardContent className="p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                    <Avatar className="h-8 w-8">
+                <CardContent className="p-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2 basis-2/5 overflow-hidden">
+                    <Avatar className="h-8 w-8 flex-shrink-0">
                         <AvatarImage src={battle.player1.photoURL || undefined} alt={battle.player1.displayName || 'P1'} />
                         <AvatarFallback>{battle.player1.displayName?.charAt(0)}</AvatarFallback>
                     </Avatar>
-                    <span className="font-semibold">{battle.player1.displayName}</span>
+                    <span className="font-semibold truncate">{battle.player1.displayName}</span>
                     </div>
 
-                    <div className="text-center">
+                    <div className="text-center basis-1/5">
                         <p className="font-bold text-red-600 text-lg animate-shine">₹{battle.amount}</p>
-                        <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEilS2_YhPAJBDjdcIRsoMJLTWafsJuIyola3KN50zXQAZYWSSIbhLhWhOJGMG6UYkUB5ZOiVKgsy2bVstr2af0LVf2g-eWjXHnGO4Z0IbaePP4E7TSDB9x_eK8OqTidX968zc5Wn9p6uGlkLoD9iglU3KZ28_2IbXgl29zHTZgwxzMWPvbN6zhA5AhyH7s/s1600/74920.png" alt="vs" width={64} height={32} className="mx-auto" data-ai-hint="versus icon" />
+                        <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEilS2_YhPAJBDjdcIRsoMJLTWafsJuIyola3KN50zXQAZYWSSIbhLhWhOJGMG6UYkUB5ZOiVKgsy2bVstr2af0LVf2g-eWjXHnGO4Z0IbaePP4E7TSDB9x_eK8OqTidX968zc5Wn9p6uGlkLoD9iglU3KZ28_2IbXgl29zHTZgwxzMWPvbN6zhA5AhyH7s/s1600/74920.png" alt="vs" width={48} height={24} className="mx-auto" data-ai-hint="versus icon" />
                     </div>
 
-                    <div className="flex items-center gap-2">
-                    <span className="font-semibold">{battle.player2.displayName}</span>
-                    <Avatar className="h-8 w-8">
+                    <div className="flex items-center justify-end gap-2 basis-2/5 overflow-hidden">
+                    <span className="font-semibold truncate">{battle.player2.displayName}</span>
+                    <Avatar className="h-8 w-8 flex-shrink-0">
                         <AvatarImage src={battle.player2.photoURL || undefined} alt={battle.player2.displayName || 'P2'} />
                         <AvatarFallback>{battle.player2.displayName?.charAt(0)}</AvatarFallback>
                     </Avatar>
