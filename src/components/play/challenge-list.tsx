@@ -42,13 +42,13 @@ export default function ChallengeList() {
                 const userOngoingGames = games.filter(g => g.player1.uid === user.uid || g.player2?.uid === user.uid);
                 setOngoingGamesCount(userOngoingGames.length);
             }, 'ongoing');
-        } else {
-            setOngoingGamesCount(0);
         }
 
         return () => {
             unsubscribeChallenges();
-            unsubscribeOngoing();
+            if (unsubscribeOngoing) {
+                unsubscribeOngoing();
+            }
         };
     }, [user]);
 
