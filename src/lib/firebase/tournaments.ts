@@ -17,6 +17,7 @@ import {
 } from 'firebase/firestore';
 import { db } from './config';
 import type { AppUser } from './users';
+import { createTransaction } from './transactions';
 
 export interface PrizeDistribution {
   rankStart: number;
@@ -89,12 +90,31 @@ export const joinTournament = async (tournamentId: string, userId: string) => {
         // --- Database Updates ---
         // 1. Deduct entry fee from user's wallet
         const newBalance = (user.wallet?.balance || 0) - tournament.entryFee;
-        transaction.update(userRef, { 'wallet.balance': newBalance });
+        if(newBalance < 0){
+             const remainingDeduction = Math.abs(newBalance);
+             const newWinnings = (user.wallet?.winnings || 0) - remainingDeduction;
+             transaction.update(userRef, { 'wallet.balance': 0, 'wallet.winnings': newWinnings });
+        } else {
+            transaction.update(userRef, { 'wallet.balance': newBalance });
+        }
 
         // 2. Add user to the tournament's players list and update prize pool
         transaction.update(tournamentRef, {
             players: arrayUnion(userId),
             prizePool: increment(tournament.entryFee)
+        });
+
+        // 3. Create a transaction log
+        const transRef = doc(collection(db, 'transactions'));
+        transaction.set(transRef, {
+            userId,
+            userName: user.displayName,
+            amount: tournament.entryFee,
+            type: 'game_fee',
+            status: 'completed',
+            notes: `Joined tournament: ${tournament.title}`,
+            relatedId: tournamentId,
+            createdAt: serverTimestamp(),
         });
     });
 };

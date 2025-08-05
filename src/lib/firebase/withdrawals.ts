@@ -12,7 +12,9 @@ import {
     increment,
     getDoc,
     orderBy,
-    runTransaction
+    runTransaction,
+    getDocs,
+    where
 } from 'firebase/firestore';
 import { db } from './config';
 import { createTransaction } from './transactions';
