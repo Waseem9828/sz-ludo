@@ -16,16 +16,19 @@ export default function BattleList() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+        setBattles([]);
+        return;
+    }
     
-    const unsubscribeOngoing = listenForGames((ongoingGames) => {
+    // This listener fetches ongoing games where the current user is a player.
+    const unsubscribe = listenForGames((ongoingGames) => {
         const userBattles = ongoingGames.filter(b => b.player1?.uid === user.uid || b.player2?.uid === user.uid);
         setBattles(userBattles);
     }, 'ongoing');
     
-    return () => {
-        unsubscribeOngoing();
-    };
+    // Cleanup the listener when the component unmounts
+    return () => unsubscribe();
   }, [user]);
   
   const handleBattleClick = (gameId: string) => {
