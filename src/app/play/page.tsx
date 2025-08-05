@@ -65,10 +65,10 @@ export default function PlayPage() {
     const numericAmount = Number(amount);
     const totalBalance = (appUser.wallet.balance || 0) + (appUser.wallet.winnings || 0);
     
-    if (!amount || isNaN(numericAmount) || numericAmount <= 0) {
+    if (!amount || isNaN(numericAmount) || numericAmount < 50) {
       toast({
         title: 'Invalid Amount',
-        description: 'Please enter a valid amount to set a challenge.',
+        description: 'Minimum challenge amount is ₹50.',
         variant: 'destructive',
       });
       return;
