@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -36,7 +36,7 @@ const festivalConfig = {
     animation: 'christmas',
   },
   IndependenceDay: {
-    bg: 'bg-gradient-to-b from-orange-500 via-white to-green-600',
+    bg: 'bg-gradient-to-b from-orange-500/50 via-white/50 to-green-600/50',
     textColor: 'text-blue-900',
     animation: 'independence',
   },
@@ -163,34 +163,92 @@ const ChristmasAnimation = () => (
   </div>
 );
 
-const IndependenceDayAnimation = () => {
+const Balloon = ({ id, onBlast }: { id: number, onBlast: (id: number) => void }) => {
     const balloonColors = ['#FF9933', '#FFFFFF', '#138808'];
+    const [isBlasted, setIsBlasted] = useState(false);
+    const xStart = 10 + Math.random() * 80;
+    const xEnd = (Math.random() - 0.5) * 200;
+    const duration = 8 + Math.random() * 10;
+    const delay = id * 0.7;
+
+    const handleBlast = () => {
+        if (isBlasted) return;
+        setIsBlasted(true);
+        setTimeout(() => onBlast(id), 500); // Remove after animation
+    };
+
+    if (isBlasted) {
+        return (
+            <motion.div
+                className="absolute"
+                initial={{
+                    left: `${xStart}%`,
+                    bottom: '-50px',
+                    opacity: 1,
+                    scale: 1,
+                }}
+                animate={{
+                    opacity: 0,
+                    scale: [1, 2, 0],
+                }}
+                transition={{ duration: 0.5 }}
+                style={{
+                    width: `${30 + Math.random() * 30}px`,
+                    height: `${40 + Math.random() * 40}px`,
+                    background: balloonColors[id % 3],
+                    clipPath: 'ellipse(35% 50% at 50% 50%)',
+                }}
+            />
+        );
+    }
+    
+    return (
+        <motion.div
+            className="absolute bottom-[-50px] rounded-full cursor-pointer"
+            onClick={handleBlast}
+            initial={{ y: 0, opacity: 0.7, left: `${xStart}%` }}
+            animate={{
+                y: '-110vh',
+                x: xEnd,
+            }}
+            transition={{
+                duration: duration,
+                delay: delay,
+                ease: 'linear',
+                repeat: Infinity,
+                repeatType: 'loop',
+            }}
+            style={{
+                width: `${30 + Math.random() * 30}px`,
+                height: `${40 + Math.random() * 40}px`,
+                background: balloonColors[id % 3],
+                clipPath: 'ellipse(35% 50% at 50% 50%)',
+            }}
+        />
+    );
+};
+
+const IndependenceDayAnimation = () => {
+    const [balloons, setBalloons] = useState(() =>
+        Array.from({ length: 18 }, (_, i) => ({ id: i, key: i }))
+    );
+
+    const handleBlast = (idToRemove: number) => {
+        // Find the balloon to remove
+        const toRemove = balloons.find(b => b.id === idToRemove);
+        if(!toRemove) return;
+        
+        // Remove and add a new one to keep the flow
+        setBalloons(prev => [
+            ...prev.filter(b => b.id !== idToRemove),
+            { id: prev.length > 0 ? Math.max(...prev.map(b => b.key)) + 1 : 0, key: prev.length > 0 ? Math.max(...prev.map(b => b.key)) + 1 : 0 }
+        ]);
+    };
+
     return (
         <div className="absolute inset-0 overflow-hidden">
-            {[...Array(18)].map((_, i) => (
-                <motion.div
-                    key={i}
-                    className="absolute bottom-[-50px] rounded-full"
-                    initial={{ y: 0, opacity: 0.7 }}
-                    animate={{
-                        y: '-110vh',
-                        x: (Math.random() - 0.5) * 200,
-                        opacity: 0,
-                    }}
-                    transition={{
-                        duration: 8 + Math.random() * 10,
-                        repeat: Infinity,
-                        delay: i * 0.7,
-                        ease: 'linear',
-                    }}
-                    style={{
-                        left: `${10 + Math.random() * 80}%`,
-                        width: `${30 + Math.random() * 30}px`,
-                        height: `${40 + Math.random() * 40}px`,
-                        background: balloonColors[i % 3],
-                        clipPath: 'ellipse(35% 50% at 50% 50%)',
-                    }}
-                />
+            {balloons.map((b) => (
+                <Balloon key={b.key} id={b.id} onBlast={handleBlast} />
             ))}
         </div>
     );
@@ -256,12 +314,11 @@ export function FestiveDialog({
 
 export function FestiveBackground({ type }: { type: FestivalType }) {
     if (!type) return null;
+    const config = festivalConfig[type] || festivalConfig.Generic;
 
     return (
-        <div className="fixed inset-0 w-full h-full -z-10 pointer-events-none">
+        <div className={`fixed inset-0 w-full h-full z-20 pointer-events-auto ${config.bg}`}>
             <AnimationComponent type={type} />
         </div>
     )
 }
-
-    
