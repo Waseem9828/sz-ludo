@@ -14,7 +14,10 @@ import {
     runTransaction,
     FieldValue,
     deleteField,
-    increment
+    increment,
+    orderBy,
+    limit,
+    getDocs
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from './config';
@@ -237,6 +240,42 @@ export const listenForGames = (
     });
 
     return unsubscribe;
+};
+
+// Listen for a user's recent games
+export const listenForUserGames = (
+    userId: string,
+    limitCount: number,
+    callback: (games: Game[]) => void,
+    onError?: (error: Error) => void
+) => {
+    const gamesRef = collection(db, GAMES_COLLECTION);
+    const q1 = query(gamesRef, where("player1.uid", "==", userId), orderBy("createdAt", "desc"), limit(limitCount));
+    const q2 = query(gamesRef, where("player2.uid", "==", userId), orderBy("createdAt", "desc"), limit(limitCount));
+
+    const unsubscribe1 = onSnapshot(q1, (snap1) => {
+        const unsubscribe2 = onSnapshot(q2, (snap2) => {
+            const gamesMap = new Map<string, Game>();
+            snap1.docs.forEach(doc => gamesMap.set(doc.id, { id: doc.id, ...doc.data() } as Game));
+            snap2.docs.forEach(doc => gamesMap.set(doc.id, { id: doc.id, ...doc.data() } as Game));
+            
+            const allGames = Array.from(gamesMap.values());
+            allGames.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+            
+            callback(allGames.slice(0, limitCount));
+        }, (err) => {
+            console.error("Error in user games listener (p2): ", err);
+            if (onError) onError(err);
+        });
+
+        // Detach the second listener when the first one detaches
+        return () => unsubscribe2();
+    }, (err) => {
+        console.error("Error in user games listener (p1): ", err);
+        if (onError) onError(err);
+    });
+
+    return unsubscribe1;
 };
 
 // Listen for completed games (for revenue calculation)

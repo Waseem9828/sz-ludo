@@ -7,11 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ChevronLeft, Info, Upload, Loader, Send, Copy } from 'lucide-react';
+import { ChevronLeft, Info, Upload, Loader, Send, Copy, Clock, Hash } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Suspense, useState, useRef, useEffect } from 'react';
+import { Suspense, useState, useRef, useEffect, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,6 +20,7 @@ import { useAuth } from '@/context/auth-context';
 import { Game, listenForGameUpdates, updateGameStatus, submitGameResult, updateGameRoomCode, cancelAcceptedChallenge } from '@/lib/firebase/games';
 import { SplashScreen } from '@/components/ui/splash-screen';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { add, format } from 'date-fns';
 
 const penalties = [
     { amount: '₹100', reason: 'Fraud / Fake Screenshot' },
@@ -76,6 +77,17 @@ function GamePageComponent() {
         return () => unsubscribe();
 
     }, [gameId, router, toast, user, loading]);
+
+    const gameDetails = useMemo(() => {
+        if (!game) return null;
+        const createdAtDate = game.createdAt?.toDate();
+        const updateDeadlineDate = add(createdAtDate, { minutes: 30 });
+        return {
+            id: game.id,
+            createdAt: format(createdAtDate, 'PPpp'),
+            updateDeadline: format(updateDeadlineDate, 'PPpp')
+        }
+    }, [game]);
 
     const handleRoomCodeSubmit = async () => {
         if (!game || !roomCode) return;
@@ -167,7 +179,7 @@ function GamePageComponent() {
         toast({ title: 'Copied!', description: 'Room code copied to clipboard.' });
     };
     
-    if (loading || !game || !appUser) {
+    if (loading || !game || !appUser || !gameDetails) {
         return <SplashScreen />;
     }
 
@@ -295,6 +307,26 @@ function GamePageComponent() {
                                 <AvatarImage src={opponent?.photoURL || 'https://placehold.co/40x40.png'} alt={opponent?.displayName || 'Opponent'} data-ai-hint="avatar person" />
                                 <AvatarFallback>{opponent?.displayName?.charAt(0)}</AvatarFallback>
                             </Avatar>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                 <Card>
+                    <CardHeader className="py-3 bg-muted rounded-t-lg">
+                        <CardTitle className="text-center text-md font-semibold text-red-600 animate-shine">Battle Details</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 text-sm space-y-3">
+                        <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground flex items-center gap-2"><Hash />Battle ID</span>
+                            <span className="font-mono text-xs">{gameDetails.id}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground flex items-center gap-2"><Clock />Created At</span>
+                            <span className="font-medium">{gameDetails.createdAt}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground flex items-center gap-2"><Clock />Update Deadline</span>
+                            <span className="font-medium">{gameDetails.updateDeadline}</span>
                         </div>
                     </CardContent>
                 </Card>

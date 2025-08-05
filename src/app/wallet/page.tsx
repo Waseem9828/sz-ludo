@@ -1,11 +1,12 @@
 
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import Header from "@/components/play/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ChevronLeft, AlertCircle, Plus, Minus, Loader } from "lucide-react";
+import { ChevronLeft, AlertCircle, Plus, Minus, Loader, Gamepad2, Trophy, Users } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from 'next/navigation';
@@ -28,6 +29,7 @@ import { Transaction, listenForUserTransactions } from '@/lib/firebase/transacti
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Game, listenForUserGames } from '@/lib/firebase/games';
 
 const quickWithdrawAmounts = [300, 1000, 5000, 10000];
 
@@ -36,6 +38,7 @@ export default function WalletPage() {
     const router = useRouter();
     const { user, appUser, loading } = useAuth();
     const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [games, setGames] = useState<Game[]>([]);
     const [isWithdrawDialogOpen, setIsWithdrawDialogOpen] = useState(false);
     const [withdrawAmount, setWithdrawAmount] = useState('');
     const [upiId, setUpiId] = useState('');
@@ -51,8 +54,12 @@ export default function WalletPage() {
         }
 
         if (user) {
-            const unsubscribe = listenForUserTransactions(user.uid, setTransactions);
-            return () => unsubscribe();
+            const unsubscribeTransactions = listenForUserTransactions(user.uid, setTransactions);
+            const unsubscribeGames = listenForUserGames(user.uid, 20, setGames);
+            return () => {
+                unsubscribeTransactions();
+                unsubscribeGames();
+            };
         }
 
     }, [user, appUser, loading, router]);
@@ -261,6 +268,55 @@ export default function WalletPage() {
                         </CardContent>
                     </Card>
                 </div>
+
+                 <Card>
+                    <CardHeader>
+                        <CardTitle className="text-center text-lg font-semibold text-red-600 animate-shine">Recent Battles</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                       <ScrollArea className="h-72">
+                         <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Opponent</TableHead>
+                                    <TableHead>Amount</TableHead>
+                                    <TableHead>Result</TableHead>
+                                    <TableHead>Status</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {games.map(game => {
+                                    const opponent = game.player1.uid === user.uid ? game.player2 : game.player1;
+                                    const isWinner = game.winner === user.uid;
+                                    const result = game.status === 'completed' ? (isWinner ? 'Won' : 'Lost') : 'N/A';
+                                    return (
+                                        <TableRow key={game.id}>
+                                            <TableCell>
+                                                <div className="font-medium">{opponent?.displayName || 'N/A'}</div>
+                                                <div className="text-xs text-muted-foreground">{new Date(game.createdAt?.toDate()).toLocaleDateString()}</div>
+                                            </TableCell>
+                                            <TableCell className="font-bold">
+                                                ₹{game.amount}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge variant={result === 'Won' ? 'default' : result === 'Lost' ? 'destructive' : 'secondary'}>
+                                                    {result}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell><Badge variant="secondary">{game.status.replace(/_/g, ' ')}</Badge></TableCell>
+                                        </TableRow>
+                                    )
+                                })}
+                                {games.length === 0 && (
+                                    <TableRow>
+                                        <TableCell colSpan={4} className="text-center text-muted-foreground">No recent battles found.</TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                       </ScrollArea>
+                    </CardContent>
+                </Card>
 
                 <Card>
                     <CardHeader>
