@@ -3,42 +3,77 @@
 
 import { useState, useEffect } from 'react';
 import Header from "@/components/header";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { listenForTournaments, Tournament } from "@/lib/firebase/tournaments";
+import { listenForTournaments, Tournament, joinTournament } from "@/lib/firebase/tournaments";
 import { Loader, Users, Trophy } from 'lucide-react';
 import { format, formatDistanceToNowStrict } from 'date-fns';
 import { Progress } from '@/components/ui/progress';
 import { SplashScreen } from '@/components/ui/splash-screen';
+import { useAuth } from '@/context/auth-context';
+import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
     const [timeLeft, setTimeLeft] = useState('');
+    const { user } = useAuth();
+    const { toast } = useToast();
+    const [isJoining, setIsJoining] = useState(false);
 
     useEffect(() => {
-        const updateCountdown = () => {
-            if (tournament.status === 'upcoming' && tournament.startTime) {
-                const distance = formatDistanceToNowStrict(tournament.startTime.toDate());
-                setTimeLeft(distance);
-            }
-        };
-
-        updateCountdown();
-        const interval = setInterval(updateCountdown, 1000);
+        if (tournament.status !== 'upcoming' || !tournament.startTime) return;
+        const interval = setInterval(() => {
+            const distance = formatDistanceToNowStrict(tournament.startTime.toDate(), { addSuffix: true });
+            setTimeLeft(distance);
+        }, 1000);
         return () => clearInterval(interval);
     }, [tournament.startTime, tournament.status]);
 
     const playerProgress = (tournament.players.length / tournament.playerCap) * 100;
+    const isUserJoined = user ? tournament.players.includes(user.uid) : false;
+    const isJoinable = tournament.status === 'upcoming' && tournament.players.length < tournament.playerCap;
 
+    const handleJoin = async () => {
+        if (!user) {
+            toast({ title: "Login Required", description: "You need to be logged in to join.", variant: "destructive" });
+            return;
+        }
+        setIsJoining(true);
+        try {
+            await joinTournament(tournament.id, user.uid);
+            toast({ title: "Successfully Joined!", description: `You have joined the "${tournament.title}" tournament.` });
+        } catch (error: any) {
+            toast({ title: "Join Failed", description: error.message, variant: "destructive" });
+        } finally {
+            setIsJoining(false);
+        }
+    };
+    
     return (
         <Card className="overflow-hidden shadow-lg hover:shadow-primary/20 hover:shadow-xl transition-shadow duration-300 group flex flex-col">
             <CardHeader>
-                <CardTitle className="text-xl font-bold font-headline text-red-600 animate-shine">{tournament.title}</CardTitle>
-                <CardDescription>
-                    {tournament.status === 'upcoming'
-                        ? `Starts in: ${timeLeft}`
-                        : `Started on ${format(tournament.startTime.toDate(), 'PP')}`}
-                </CardDescription>
+                <div className="flex justify-between items-start">
+                    <div>
+                        <CardTitle className="text-xl font-bold font-headline text-red-600 animate-shine">{tournament.title}</CardTitle>
+                         <CardDescription>
+                            {tournament.status === 'upcoming' && timeLeft
+                                ? `Starts ${timeLeft}`
+                                : `Started on ${format(tournament.startTime.toDate(), 'PP')}`}
+                        </CardDescription>
+                    </div>
+                    <Badge variant={tournament.status === 'live' ? 'destructive' : 'secondary'}>{tournament.status}</Badge>
+                </div>
             </CardHeader>
             <CardContent className="space-y-4 flex-grow">
                 <div className="flex justify-between items-center text-lg">
@@ -62,11 +97,31 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
                     <Progress value={playerProgress} />
                 </div>
             </CardContent>
-            <div className="p-4 bg-muted/50">
-                <Button className="w-full font-bold">
-                    {tournament.status === 'upcoming' ? 'Join Now' : 'View Details'}
-                </Button>
-            </div>
+            <CardFooter className="p-4 bg-muted/50">
+                 {isUserJoined ? (
+                    <Button className="w-full font-bold" disabled>✅ Joined</Button>
+                ) : (
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                           <Button className="w-full font-bold" disabled={!isJoinable || isJoining}>
+                            {isJoining ? <Loader className="animate-spin" /> : isJoinable ? 'Join Now' : 'Tournament Full/Live'}
+                           </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                            <AlertDialogTitle>Confirm to Join "{tournament.title}"?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                An entry fee of ₹{tournament.entryFee} will be deducted from your wallet balance. This action cannot be undone.
+                            </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleJoin}>Confirm & Join</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                )}
+            </CardFooter>
         </Card>
     );
 };

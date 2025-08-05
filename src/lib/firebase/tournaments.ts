@@ -10,9 +10,13 @@ import {
     orderBy,
     Timestamp,
     where,
-    QueryConstraint
+    QueryConstraint,
+    runTransaction,
+    arrayUnion,
+    increment
 } from 'firebase/firestore';
 import { db } from './config';
+import type { AppUser } from './users';
 
 export interface PrizeDistribution {
   rankStart: number;
@@ -38,7 +42,7 @@ const TOURNAMENTS_COLLECTION = 'tournaments';
 
 // Admin: Create a new tournament
 export const createTournament = async (data: Omit<Tournament, 'id' | 'players' | 'status' | 'createdAt' | 'prizePool' | 'startTime'> & { startTime: Date }) => {
-    // Calculate initial prize pool (it will update as players join)
+    // The prize pool is now calculated dynamically based on players, so we can initialize it to 0.
     const prizePool = 0;
 
     return await addDoc(collection(db, TOURNAMENTS_COLLECTION), {
@@ -50,6 +54,51 @@ export const createTournament = async (data: Omit<Tournament, 'id' | 'players' |
         createdAt: serverTimestamp(),
     });
 };
+
+// User: Join a tournament
+export const joinTournament = async (tournamentId: string, userId: string) => {
+    const tournamentRef = doc(db, TOURNAMENTS_COLLECTION, tournamentId);
+    const userRef = doc(db, 'users', userId);
+
+    await runTransaction(db, async (transaction) => {
+        const tSnap = await transaction.get(tournamentRef);
+        const uSnap = await transaction.get(userRef);
+
+        if (!tSnap.exists() || !uSnap.exists()) {
+            throw new Error("Tournament or user not found.");
+        }
+
+        const tournament = tSnap.data() as Tournament;
+        const user = uSnap.data() as AppUser;
+
+        // --- Validation Checks ---
+        if (tournament.status !== 'upcoming') {
+            throw new Error("This tournament is no longer open for joining.");
+        }
+        if ((tournament.players || []).includes(userId)) {
+            throw new Error("You have already joined this tournament.");
+        }
+        if ((tournament.players || []).length >= tournament.playerCap) {
+            throw new Error("This tournament is full.");
+        }
+        const totalBalance = (user.wallet?.balance || 0) + (user.wallet?.winnings || 0);
+        if (totalBalance < tournament.entryFee) {
+            throw new Error("Insufficient balance to join.");
+        }
+
+        // --- Database Updates ---
+        // 1. Deduct entry fee from user's wallet
+        const newBalance = (user.wallet?.balance || 0) - tournament.entryFee;
+        transaction.update(userRef, { 'wallet.balance': newBalance });
+
+        // 2. Add user to the tournament's players list and update prize pool
+        transaction.update(tournamentRef, {
+            players: arrayUnion(userId),
+            prizePool: increment(tournament.entryFee)
+        });
+    });
+};
+
 
 // Admin: Update tournament details
 export const updateTournament = async (id: string, data: Partial<Tournament>) => {
@@ -80,9 +129,3 @@ export const listenForTournaments = (
 
     return unsubscribe;
 };
-
-// More functions will be needed:
-// - joinTournament(tournamentId, userId)
-// - submitMatchResult(tournamentId, matchId, userId, score)
-// - endTournament(tournamentId)
-// etc.
