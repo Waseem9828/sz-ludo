@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import {
@@ -26,6 +27,7 @@ import {
   LogOut,
   LayoutDashboard,
   CheckCheck,
+  Swords,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -90,6 +92,7 @@ export default function Header() {
 
   const navItems = [
     { icon: Dice5, label: "Play", href: "/play" },
+    { icon: Swords, label: "Tournaments", href: "/tournaments" },
     { icon: Wallet, label: "Wallet", href: "/wallet" },
     { icon: ShieldCheck, label: "KYC", href: "/kyc" },
     { icon: History, label: "History", href: "#" },

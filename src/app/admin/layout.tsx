@@ -3,7 +3,7 @@
 'use client';
 
 import { Sidebar, SidebarProvider, SidebarTrigger, SidebarInset, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar } from "@/components/ui/sidebar";
-import { Home, BarChart, Users, Settings, CircleDollarSign, Banknote, Bot, Bell, Trophy } from "lucide-react";
+import { Home, BarChart, Users, Settings, CircleDollarSign, Banknote, Bot, Bell, Trophy, Swords } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
 import { useRouter, usePathname } from "next/navigation";
@@ -13,6 +13,7 @@ import { SplashScreen } from "@/components/ui/splash-screen";
 const allNavItems = [
     { href: "/admin", icon: Home, label: "Dashboard", roles: ['superadmin', 'finance', 'support'] },
     { href: "/admin/users", icon: Users, label: "Users", roles: ['superadmin', 'support'] },
+    { href: "/admin/tournaments", icon: Swords, label: "Tournaments", roles: ['superadmin'] },
     { href: "/admin/winnings", icon: Trophy, label: "Winnings", roles: ['superadmin', 'finance'] },
     { href: "/admin/matches", icon: BarChart, label: "Match History", roles: ['superadmin', 'support'] },
     { href: "/admin/deposits", icon: Banknote, label: "Deposits", roles: ['superadmin', 'finance'] },
