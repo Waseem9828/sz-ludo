@@ -74,6 +74,10 @@ export default function Home() {
           )}
           <GameListing />
           
+          <div className="text-center my-4">
+            <p className="text-lg font-semibold text-muted-foreground">Or, choose from a running game below</p>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <section>
                   <div className="flex items-center justify-between my-4">
