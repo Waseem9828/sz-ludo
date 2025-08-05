@@ -90,11 +90,18 @@ export default function TournamentDetailPage() {
         const prizePoolAfterCommission = tournament.prizePool * (1 - (tournament.adminCommission / 100));
 
         return tournament.prizeDistribution.map(dist => {
-            const totalWinnersInRange = dist.rankEnd - dist.rankStart + 1;
             const totalAmountForRange = prizePoolAfterCommission * (dist.percentage / 100);
+            
+            let rank = `${dist.rankStart}`;
+            if (dist.rankEnd > dist.rankStart) {
+                rank = `${dist.rankStart} - ${dist.rankEnd}`;
+            }
+
+            const totalWinnersInRange = Math.max(0, dist.rankEnd - dist.rankStart + 1);
             const amountPerPlayer = totalWinnersInRange > 0 ? totalAmountForRange / totalWinnersInRange : 0;
+
             return {
-                rank: dist.rankStart === dist.rankEnd ? `${dist.rankStart}` : `${dist.rankStart} - ${dist.rankEnd}`,
+                rank,
                 percentage: `${dist.percentage}%`,
                 amountPerPlayer: `₹${amountPerPlayer.toFixed(2)}`,
                 totalAmountForRange: `₹${totalAmountForRange.toFixed(2)}`,
