@@ -34,7 +34,7 @@ export interface Game {
     id: string;
     amount: number;
     status: 'challenge' | 'ongoing' | 'under_review' | 'completed' | 'cancelled' | 'disputed';
-    type?: 'user' | 'computer';
+    type?: 'user';
     createdBy: PlayerInfo;
     player1: PlayerInfo;
     player2?: PlayerInfo;
@@ -169,20 +169,18 @@ export const submitGameResult = async (gameId: string, winnerId: string, screens
             'gameStats.won': increment(1),
         });
 
-        // Only update loser stats if it's not a computer game
-        if (gameData.type === 'user') {
-            const loserId = gameData.player1.uid === winnerId ? gameData.player2?.uid : gameData.player1.uid;
+        const loserId = gameData.player1.uid === winnerId ? gameData.player2?.uid : gameData.player1.uid;
             
-            if (!loserId) {
-                throw new Error("Opponent not found in the game.");
-            }
-            // Update loser's stats
-            const loserRef = doc(db, 'users', loserId);
-            transaction.update(loserRef, {
-                'gameStats.played': increment(1),
-                'gameStats.lost': increment(1),
-            });
+        if (!loserId) {
+             throw new Error("Opponent not found in the game.");
         }
+        // Update loser's stats
+        const loserRef = doc(db, 'users', loserId);
+        transaction.update(loserRef, {
+            'gameStats.played': increment(1),
+            'gameStats.lost': increment(1),
+        });
+        
     });
 };
 
@@ -306,10 +304,13 @@ export const listenForGamesHistory = (
     callback: (games: Game[]) => void,
     onError?: (error: Error) => void
 ) => {
+    // Firestore limitation: If you include an inequality filter (<, <=, !=, not-in), 
+    // you must order by the same field.
+    // We cannot use `where("status", "in", ...)` and `orderBy("createdAt", ...)` together.
+    // So, we fetch without ordering by date and sort it on the client-side.
     const q = query(
         collection(db, GAMES_COLLECTION),
-        where("status", "in", ["completed", "cancelled", "disputed"]),
-        orderBy("createdAt", "desc")
+        where("status", "in", ["completed", "cancelled", "disputed"])
     );
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -317,6 +318,14 @@ export const listenForGamesHistory = (
         querySnapshot.forEach((doc) => {
             games.push({ id: doc.id, ...doc.data() } as Game);
         });
+        
+        // Sort games by date on the client side
+        games.sort((a, b) => {
+            const dateA = a.createdAt?.toDate() || new Date(0);
+            const dateB = b.createdAt?.toDate() || new Date(0);
+            return dateB.getTime() - dateA.getTime();
+        });
+
         callback(games);
     }, (error) => {
         console.error("Error listening for game history: ", error);
