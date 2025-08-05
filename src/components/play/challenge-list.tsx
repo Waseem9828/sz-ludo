@@ -5,7 +5,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Game, listenForGames, acceptChallenge, deleteChallenge } from "@/lib/firebase/games";
 import { useAuth } from "@/context/auth-context";
@@ -27,20 +26,41 @@ import { MessageSquare } from "lucide-react";
 
 export default function ChallengeList() {
     const [challenges, setChallenges] = useState<Game[]>([]);
+    const [ongoingGamesCount, setOngoingGamesCount] = useState(0);
     const { user, appUser } = useAuth();
     const { toast } = useToast();
     const router = useRouter();
 
     useEffect(() => {
         // This listener fetches all challenges with 'challenge' status for everyone.
-        const unsubscribe = listenForGames(setChallenges, 'challenge');
-        return () => unsubscribe();
-    }, []);
+        const unsubscribeChallenges = listenForGames(setChallenges, 'challenge');
+        
+        // This listener checks if the current user has any ongoing games.
+        let unsubscribeOngoing: () => void = () => {};
+        if(user) {
+            unsubscribeOngoing = listenForGames((games) => {
+                const userOngoingGames = games.filter(g => g.player1.uid === user.uid || g.player2?.uid === user.uid);
+                setOngoingGamesCount(userOngoingGames.length);
+            }, 'ongoing');
+        } else {
+            setOngoingGamesCount(0);
+        }
+
+        return () => {
+            unsubscribeChallenges();
+            unsubscribeOngoing();
+        };
+    }, [user]);
 
     const handleAccept = async (challenge: Game) => {
         if (!user || !appUser) {
             toast({ title: 'Login Required', description: 'You must be logged in to accept a challenge.', variant: 'destructive' });
             router.push('/login');
+            return;
+        }
+        
+        if (ongoingGamesCount > 0) {
+            toast({ title: 'Battle Limit Reached', description: 'You can only be in one ongoing battle at a time.', variant: 'destructive' });
             return;
         }
 
