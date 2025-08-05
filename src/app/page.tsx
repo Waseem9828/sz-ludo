@@ -1,5 +1,4 @@
 
-
 'use client'
 
 import Header from '@/components/header';
@@ -107,7 +106,7 @@ export default function Home() {
                   <section>
                       <div className="flex flex-col sm:flex-row items-center justify-between my-4 gap-2">
                           <h2 className="text-red-600 font-semibold text-lg text-center animate-shine">
-                              ≤--------------🏆Open Battles🏆------------&gt;
+                            🏆 Open Battles 🏆
                           </h2>
                           <Link href="/play" className="w-full sm:w-auto">
                               <Button variant="outline" size="sm" className="w-full">Create New</Button>
@@ -118,8 +117,8 @@ export default function Home() {
 
                   <section>
                       <div className="flex items-center justify-center my-4">
-                          <h2 className="text-red-600 font-semibold whitespace-nowrap text-lg animate-shine">
-                          ⚔️ Ongoing Battles
+                          <h2 className="text-red-600 font-semibold text-lg text-center animate-shine">
+                            ⚔️ Ongoing Battles ⚔️
                           </h2>
                       </div>
                       <BattleList />
