@@ -82,7 +82,7 @@ export default function Home() {
               <section>
                   <div className="flex items-center justify-between my-4">
                       <span className="text-red-600 font-semibold whitespace-nowrap text-lg animate-shine">
-                      🏆 Open Challenges
+                      ≤--------------🏆Open Battles🏆------------>
                       </span>
                       <Link href="/play">
                           <Button variant="outline" size="sm">Create New</Button>
