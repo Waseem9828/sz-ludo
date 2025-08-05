@@ -79,8 +79,8 @@ function GamePageComponent() {
     }, [gameId, router, toast, user, loading]);
 
     const gameDetails = useMemo(() => {
-        if (!game) return null;
-        const createdAtDate = game.createdAt?.toDate();
+        if (!game || !game.createdAt) return null;
+        const createdAtDate = game.createdAt.toDate();
         const updateDeadlineDate = add(createdAtDate, { minutes: 30 });
         return {
             id: game.id,
@@ -201,11 +201,15 @@ function GamePageComponent() {
                                 <Copy className="h-6 w-6"/>
                             </Button>
                         </div>
-                        <a href="https://play.google.com/store/apps/details?id=com.ludo.king" target="_blank" rel="noopener noreferrer">
-                            <Button className="w-full bg-gray-700 hover:bg-gray-800 text-white">
-                                <Image src="/ludo_king.png" alt="Ludo King" width={20} height={20} className="mr-2" data-ai-hint="ludo icon" />
-                                Open Ludo King
-                            </Button>
+                        <a href="https://play.google.com/store/apps/details?id=com.ludo.king" target="_blank" rel="noopener noreferrer" className="inline-block">
+                            <Image 
+                                src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgoZZmcBoW0TCUW_GBV0y6geNF5cxhpZX1dzBSwgve-9WoDxPBmOYnQGHtzf48FRyNwKH0U0Yd_qHiHhldRdbLY5IWLu7llJsdAfC9L2nh_rjOYHDfCh0AcMltEKWfn5fin1TY5NfKL-RXC5qcR81Xdix4BTJO42BY8edSIkmUP5lNKTOgzAeowrsx8LVc/s320/76984.webp"
+                                alt="Open Ludo King" 
+                                width={180}
+                                height={180}
+                                className="mx-auto"
+                                data-ai-hint="ludo king button"
+                            />
                         </a>
                     </CardContent>
                 </Card>
@@ -424,5 +428,3 @@ export default function GamePage() {
         </Suspense>
     )
 }
-
-    
