@@ -16,7 +16,7 @@ import Link from 'next/link';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { ChartConfig } from '@/components/ui/chart';
 import { Game, listenForCompletedGames } from '@/lib/firebase/games';
-import { subMonths, format, getYear, getMonth } from 'date-fns';
+import { subMonths, format, getYear, getMonth, isAfter } from 'date-fns';
 
 const chartConfig = {
   deposits: {
@@ -63,6 +63,7 @@ export default function AdminDashboardPage() {
    useEffect(() => {
         const processTransactionDataForChart = (transactions: Transaction[]) => {
             const monthlyData: { [key: string]: { month: string, deposits: number, withdrawals: number } } = {};
+            const sixMonthsAgo = subMonths(new Date(), 6);
 
             // Initialize last 6 months
             for (let i = 5; i >= 0; i--) {
@@ -75,13 +76,16 @@ export default function AdminDashboardPage() {
             transactions.forEach(tx => {
                 if (tx.createdAt) {
                     const date = tx.createdAt.toDate();
-                    const monthKey = format(date, 'yyyy-MM');
-                    
-                    if (monthlyData[monthKey]) {
-                        if (tx.type === 'deposit' && (tx.status === 'approved' || tx.status === 'completed')) {
-                            monthlyData[monthKey].deposits += tx.amount;
-                        } else if (tx.type === 'withdrawal' && (tx.status === 'approved' || tx.status === 'completed')) {
-                            monthlyData[monthKey].withdrawals += tx.amount;
+                    // Client-side filtering for date
+                    if (isAfter(date, sixMonthsAgo)) {
+                         const monthKey = format(date, 'yyyy-MM');
+                        
+                        if (monthlyData[monthKey]) {
+                            if (tx.type === 'deposit' && (tx.status === 'approved' || tx.status === 'completed')) {
+                                monthlyData[monthKey].deposits += tx.amount;
+                            } else if (tx.type === 'withdrawal' && (tx.status === 'approved' || tx.status === 'completed')) {
+                                monthlyData[monthKey].withdrawals += tx.amount;
+                            }
                         }
                     }
                 }
@@ -90,21 +94,18 @@ export default function AdminDashboardPage() {
             setChartData(Object.values(monthlyData) as any);
         };
         
-        const sixMonthsAgo = subMonths(new Date(), 6);
 
         const unsubscribeTransactions = listenForAllTransactions(
-            10,
             (transactions) => setRecentTransactions(transactions),
             (error) => toast({ title: "Error", description: `Could not fetch recent transactions: ${error.message}`, variant: "destructive" }),
-            undefined // No status filter for recent transactions
+            { limitCount: 10 }
         );
         
+        // Fetch all relevant transactions and filter on client
         const unsubscribeChartTransactions = listenForAllTransactions(
-            undefined, // No limit for chart data
             processTransactionDataForChart,
             (error) => toast({ title: "Error", description: `Could not fetch chart data: ${error.message}`, variant: "destructive" }),
-            ['completed', 'approved'],
-            sixMonthsAgo
+            { statuses: ['completed', 'approved'] }
         );
 
         const unsubscribeUsers = listenForAllUsers(
@@ -127,7 +128,7 @@ export default function AdminDashboardPage() {
         const unsubscribeGames = listenForCompletedGames(
             (games) => {
                  const totalRevenue = games.reduce((acc, game) => {
-                    const prizePool = game.type === 'user' ? game.amount * 2 : game.amount;
+                    const prizePool = game.amount * 2; // Always 2 players now
                     const commission = prizePool * 0.05; // 5% commission
                     return acc + commission;
                 }, 0);

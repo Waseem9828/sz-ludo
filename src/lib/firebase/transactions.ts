@@ -1,6 +1,6 @@
 
 
-import { collection, addDoc, serverTimestamp, where, query, onSnapshot, updateDoc, doc, writeBatch, orderBy, getDocs, limit, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, where, query, onSnapshot, updateDoc, doc, writeBatch, orderBy, getDocs, limit, Timestamp, QueryConstraint } from 'firebase/firestore';
 import { db } from './config';
 
 const TRANSACTIONS_COLLECTION = 'transactions';
@@ -55,29 +55,33 @@ export const listenForUserTransactions = (
 
 // Listen for all transactions for admin dashboard
 export const listenForAllTransactions = (
-    limitCount: number | undefined,
     callback: (transactions: Transaction[]) => void,
     onError?: (error: Error) => void,
-    statuses?: TransactionStatus[],
-    startDate?: Date
+    options?: {
+        limitCount?: number;
+        statuses?: TransactionStatus[];
+        startDate?: Date;
+    }
 ) => {
-     const constraints = [
+     const constraints: QueryConstraint[] = [
         orderBy("createdAt", "desc"),
      ];
 
-     if (limitCount) {
-        constraints.push(limit(limitCount));
+     if (options?.limitCount) {
+        constraints.push(limit(options.limitCount));
      }
 
-     if (statuses && statuses.length > 0) {
-        constraints.push(where("status", "in", statuses));
+     if (options?.statuses && options.statuses.length > 0) {
+        // Firestore limitation: You cannot have an inequality filter on a different field than your orderBy when using 'in'
+        // So we will filter by status on the client-side for the chart
+        constraints.push(where("status", "in", options.statuses));
      }
 
-     if (startDate) {
-         constraints.push(where("createdAt", ">=", Timestamp.fromDate(startDate)))
+     if (options?.startDate) {
+        constraints.push(where("createdAt", ">=", Timestamp.fromDate(options.startDate)));
      }
-
-     const q = query(collection(db, TRANSACTIONS_COLLECTION), ...constraints as any);
+     
+     const q = query(collection(db, TRANSACTIONS_COLLECTION), ...constraints);
 
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const transactions: Transaction[] = [];
