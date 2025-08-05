@@ -1,7 +1,7 @@
 
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from "@/components/play/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,8 @@ import Image from "next/image";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/context/auth-context';
 import { SplashScreen } from '@/components/ui/splash-screen';
+import { getSettings, AppSettings } from '@/lib/firebase/settings';
+import { Loader } from 'lucide-react';
 
 const WhatsAppIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-white">
@@ -25,16 +27,33 @@ const TelegramIcon = () => (
     </svg>
 )
 
+const defaultSettings = {
+    imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEigtvhhJRucPCHR_BWwPVLk335J3yeFT8CTExF13JYJbogG0IOrplIRwu2FzgAca1G8ssvc83saCCnC7NdVFP15FnIOppoCDc0pa31pziFzf6hGq8qCo7yZa2K9_92MtBQet6Ii0wgVFYMEyfUn8R3s6vOgo2aavCvuzdNcsYX0YizIEy9xzVB_mBt5o_4/s320/77621.png',
+    shareText: "Hey! I'm playing on SZ LUDO and earning real cash. You should join too! Use my code {{referralCode}} to sign up and get a bonus. Let's play! Link: {{referralLink}}",
+    howItWorksText: "You can refer and earn 2% of your referral winning, every time. Like if your player plays for ₹10000 and wins, You will get ₹200 as referral amount."
+};
+
 
 export default function ReferPage() {
     const { toast } = useToast();
-    const { user, appUser, loading } = useAuth();
+    const { user, appUser, loading: authLoading } = useAuth();
+    const [settings, setSettings] = useState<AppSettings['referralSettings']>(undefined);
+    const [settingsLoading, setSettingsLoading] = useState(true);
     
-    // In a real app, you would get this from the environment variables or a configuration file.
+    useEffect(() => {
+        getSettings().then(s => {
+            setSettings(s.referralSettings);
+            setSettingsLoading(false);
+        });
+    }, []);
+    
+    const referralSettings = settings || defaultSettings;
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
     const referralCode = user ? `SZLUDO${user.uid.substring(0, 8).toUpperCase()}` : '';
     const referralLink = `${baseUrl}/login?ref=${referralCode}`;
-    const shareText = `Hey! I'm playing on SZ LUDO and earning real cash. You should join too! Use my code ${referralCode} to sign up and get a bonus. Let's play! Link: ${referralLink}`;
+    const shareText = (referralSettings.shareText || defaultSettings.shareText)
+        .replace('{{referralCode}}', referralCode)
+        .replace('{{referralLink}}', referralLink);
 
     const handleCopyToClipboard = () => {
         navigator.clipboard.writeText(referralLink);
@@ -54,7 +73,7 @@ export default function ReferPage() {
         window.open(url, '_blank');
     };
 
-    if (loading || !user || !appUser) {
+    if (authLoading || settingsLoading || !user || !appUser) {
         return <SplashScreen />;
     }
 
@@ -85,7 +104,7 @@ export default function ReferPage() {
                     </CardHeader>
                     <CardContent className="text-center">
                         <div className="flex justify-center my-4">
-                            <Image src="https://placehold.co/200x150.png" alt="Refer a friend" width={200} height={150} data-ai-hint="referral illustration"/>
+                            <Image src={referralSettings.imageUrl || defaultSettings.imageUrl} alt="Refer a friend" width={200} height={150} data-ai-hint="referral illustration" className="rounded-lg"/>
                         </div>
                         <div className="flex">
                             <Input type="text" value={referralCode} readOnly className="text-center bg-muted border-r-0 rounded-r-none" />
@@ -117,11 +136,12 @@ export default function ReferPage() {
                         <CardTitle className="text-center text-lg font-semibold text-red-600 animate-shine">How It Works</CardTitle>
                     </CardHeader>
                     <CardContent className="text-center text-muted-foreground">
-                        <p>You can refer and <span className="font-bold text-green-600">Earn 2%</span> of your referral winning, every time</p>
-                        <p className="mt-2">Like if your player plays for <span className="font-bold text-green-600">₹10000</span> and wins, You will get <span className="font-bold text-green-600">₹200</span> as referral amount.</p>
+                        <p>{referralSettings.howItWorksText || defaultSettings.howItWorksText}</p>
                     </CardContent>
                 </Card>
             </main>
         </div>
     );
 }
+
+    

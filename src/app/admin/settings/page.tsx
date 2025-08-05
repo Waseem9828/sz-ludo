@@ -16,9 +16,10 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Image from 'next/image';
 
-const BannerManager = ({ title, bannerUrls, gameType, onUpdate }: { title: string, bannerUrls: string[], gameType: 'classic' | 'popular', onUpdate: (urls: string[]) => void }) => {
+const BannerManager = ({ title, bannerUrls, gameType, onUpdate }: { title: string, bannerUrls: string[], gameType: 'classic' | 'popular' | 'referral', onUpdate: (urls: string[]) => void }) => {
     const [isUploading, setIsUploading] = useState(false);
     const { toast } = useToast();
+    const isSingleImage = gameType === 'referral';
 
     const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -27,7 +28,7 @@ const BannerManager = ({ title, bannerUrls, gameType, onUpdate }: { title: strin
         setIsUploading(true);
         try {
             const newUrl = await uploadBannerImage(file, gameType);
-            onUpdate([...bannerUrls, newUrl]);
+            onUpdate(isSingleImage ? [newUrl] : [...bannerUrls, newUrl]);
             toast({ title: 'Success', description: 'Banner uploaded!' });
         } catch (error: any) {
             toast({ title: 'Upload Failed', description: error.message, variant: 'destructive' });
@@ -52,7 +53,7 @@ const BannerManager = ({ title, bannerUrls, gameType, onUpdate }: { title: strin
                 <CardTitle className="text-base">{title}</CardTitle>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                <div className={`grid ${isSingleImage ? 'grid-cols-1' : 'grid-cols-2 md:grid-cols-3'} gap-4 mb-4`}>
                     {bannerUrls.map((url, index) => (
                         <div key={index} className="relative group">
                             <Image src={url} alt={`${title} Banner ${index + 1}`} width={200} height={112} className="rounded-md object-cover aspect-video" data-ai-hint="game banner"/>
@@ -67,13 +68,15 @@ const BannerManager = ({ title, bannerUrls, gameType, onUpdate }: { title: strin
                         </div>
                     ))}
                 </div>
-                <Label htmlFor={`banner-upload-${gameType}`} className="w-full">
-                    <div className="flex items-center justify-center w-full px-4 py-2 border-2 border-dashed rounded-md cursor-pointer hover:bg-muted">
-                        {isUploading ? <Loader className="animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                        <span>Upload Image</span>
-                    </div>
-                    <Input id={`banner-upload-${gameType}`} type="file" accept="image/*" className="sr-only" onChange={handleImageUpload} disabled={isUploading} />
-                </Label>
+                {(!isSingleImage || bannerUrls.length === 0) && (
+                    <Label htmlFor={`banner-upload-${gameType}`} className="w-full">
+                        <div className="flex items-center justify-center w-full px-4 py-2 border-2 border-dashed rounded-md cursor-pointer hover:bg-muted">
+                            {isUploading ? <Loader className="animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                            <span>Upload Image</span>
+                        </div>
+                        <Input id={`banner-upload-${gameType}`} type="file" accept="image/*" className="sr-only" onChange={handleImageUpload} disabled={isUploading} />
+                    </Label>
+                 )}
             </CardContent>
         </Card>
     )
@@ -128,6 +131,16 @@ export default function SettingsPage() {
           }
       }));
   };
+
+  const handleReferralSettingChange = (field: keyof NonNullable<AppSettings['referralSettings']>, value: any) => {
+      setSettings(prev => ({
+          ...prev,
+          referralSettings: {
+              ...prev.referralSettings!,
+              [field]: value
+          }
+      }));
+  }
 
   const handleBannerUpdate = (gameType: 'classic' | 'popular', urls: string[]) => {
       setSettings(prev => ({
@@ -392,6 +405,44 @@ export default function SettingsPage() {
                                                 </div>
                                             </div>
                                         )}
+                                    </CardContent>
+                                </Card>
+
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="text-base">Referral Settings</CardTitle>
+                                        <CardDescription className="text-sm">Manage the content for the 'Refer & Earn' page.</CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                        <BannerManager
+                                            title="Referral Page Image"
+                                            bannerUrls={settings.referralSettings?.imageUrl ? [settings.referralSettings.imageUrl] : []}
+                                            gameType="referral"
+                                            onUpdate={(urls) => handleReferralSettingChange('imageUrl', urls[0] || '')}
+                                        />
+                                        <div className="space-y-2">
+                                            <Label htmlFor="referral-share-text">Referral Share Text</Label>
+                                            <Textarea
+                                                id="referral-share-text"
+                                                value={settings.referralSettings?.shareText || ''}
+                                                onChange={(e) => handleReferralSettingChange('shareText', e.target.value)}
+                                                placeholder="Use {{referralCode}} and {{referralLink}} as placeholders."
+                                                rows={4}
+                                            />
+                                            <p className="text-xs text-muted-foreground">
+                                                Use placeholders: `{{referralCode}}` and `{{referralLink}}`.
+                                            </p>
+                                        </div>
+                                         <div className="space-y-2">
+                                            <Label htmlFor="referral-how-it-works">"How It Works" Text</Label>
+                                            <Textarea
+                                                id="referral-how-it-works"
+                                                value={settings.referralSettings?.howItWorksText || ''}
+                                                onChange={(e) => handleReferralSettingChange('howItWorksText', e.target.value)}
+                                                placeholder="Describe the referral program benefits."
+                                                rows={4}
+                                            />
+                                        </div>
                                     </CardContent>
                                 </Card>
 
