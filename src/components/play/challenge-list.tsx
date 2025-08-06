@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -33,19 +32,18 @@ export default function ChallengeList() {
 
     useEffect(() => {
         // This listener fetches all challenges with 'challenge' status for everyone.
-        // It is not dependent on a user being logged in.
         const unsubscribeChallenges = listenForGames(setChallenges, 'challenge');
 
         // This listener checks if the current user has any ongoing games.
         // It only runs if a user is logged in.
         let unsubscribeOngoing: () => void = () => {};
-        if(user) {
+        if (user) {
             unsubscribeOngoing = listenForGames((games) => {
                 const userOngoingGames = games.filter(g => g.player1.uid === user.uid || g.player2?.uid === user.uid);
                 setOngoingGamesCount(userOngoingGames.length);
             }, 'ongoing');
         } else {
-            setOngoingGamesCount(0);
+            setOngoingGamesCount(0); // Reset count if user logs out
         }
 
         // Cleanup listeners when the component unmounts or the user changes.
@@ -53,7 +51,7 @@ export default function ChallengeList() {
             unsubscribeChallenges();
             unsubscribeOngoing();
         };
-    }, [user]);
+    }, [user]); // Rerun this effect if the user object changes (login/logout)
 
     const handleAccept = async (challenge: Game) => {
         if (!user || !appUser) {
