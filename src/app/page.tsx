@@ -8,11 +8,9 @@ import { useEffect, useState } from 'react';
 import { SplashScreen } from '@/components/ui/splash-screen';
 import { getSettings, AppSettings } from '@/lib/firebase/settings';
 import GameListing from '@/components/game-listing';
-import ChallengeList from '@/components/play/challenge-list';
-import BattleList from '@/components/play/battle-list';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 import { FestiveDialog, FestiveBackground } from '@/components/ui/festive-dialog';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 export default function Home() {
   const { user, appUser, loading } = useAuth();
@@ -105,32 +103,12 @@ export default function Home() {
               )}
               <GameListing />
               
-              <div className="text-center my-4">
-                <p className="text-lg font-semibold text-muted-foreground">Or, choose from a running game below</p>
+               <div className="text-center my-4">
+                 <Link href="/tournaments">
+                  <Button size="lg" className="font-bold text-lg">View Tournaments</Button>
+                </Link>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <section>
-                      <div className="flex flex-col sm:flex-row items-center justify-between my-4 gap-2">
-                          <h2 className="text-red-600 font-semibold text-lg text-center">
-                            🏆 Open Battles 🏆
-                          </h2>
-                          <Link href="/play" className="w-full sm:w-auto">
-                              <Button variant="outline" size="sm" className="w-full">Create New</Button>
-                          </Link>
-                      </div>
-                      <ChallengeList />
-                  </section>
-
-                  <section>
-                      <div className="flex items-center justify-center my-4">
-                          <h2 className="text-red-600 font-semibold text-lg text-center">
-                            ⚔️ Ongoing Battles ⚔️
-                          </h2>
-                      </div>
-                      <BattleList />
-                  </section>
-              </div>
 
             </main>
             {/* Spacer to prevent content from being hidden by the fixed bottom nav */}

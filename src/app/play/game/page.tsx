@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import Header from '@/components/play/header';
@@ -113,7 +111,7 @@ function GamePageComponent() {
                 if (result === 'CANCEL' && user.uid === game.player2?.uid && !game.roomCode) {
                     await cancelAcceptedChallenge(game.id, user.uid);
                     toast({ title: 'Challenge Canceled', description: 'Your acceptance has been canceled and the challenge is open again.' });
-                    router.push('/');
+                    router.push('/play');
                     return;
                 }
 
@@ -132,7 +130,7 @@ function GamePageComponent() {
                     setIsResultDialogOpen(true);
                 } else {
                      toast({ title: 'Game Cancelled', description: 'Your cancellation request has been submitted.' });
-                     router.push('/');
+                     router.push('/play');
                 }
 
             } catch (err: any) {
@@ -274,13 +272,13 @@ function GamePageComponent() {
             variant={resultDialogProps.variant}
             title={resultDialogProps.title}
             description={resultDialogProps.description}
-            onClose={() => router.push('/')}
+            onClose={() => router.push('/play')}
         />
         <div className="flex flex-col min-h-screen bg-background font-body">
             <Header />
             <main className="flex-grow container mx-auto px-4 py-6 space-y-6">
                 <div className="flex justify-between items-center">
-                    <Link href="/">
+                    <Link href="/play">
                         <Button variant="outline" className="bg-primary text-primary-foreground hover:bg-primary/90">
                             <ChevronLeft className="mr-2 h-4 w-4" />
                             Back
@@ -383,7 +381,7 @@ function GamePageComponent() {
                         <CardContent className="text-center">
                             <p className="text-muted-foreground">This game is <span className="font-bold">{game.status.replace('_', ' ')}</span>.</p>
                              <p className="text-sm mt-2">The result is under review by the admin.</p>
-                             <Link href="/">
+                             <Link href="/play">
                                 <Button variant="outline" className="mt-4">Back to Lobby</Button>
                              </Link>
                         </CardContent>

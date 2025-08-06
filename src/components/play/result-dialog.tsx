@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -63,5 +62,3 @@ export function ResultDialog({
     </Dialog>
   );
 }
-
-    
