@@ -28,39 +28,45 @@ export default function Home() {
     }
     
     getSettings().then(appSettings => {
-      let activeSettings = appSettings;
+      let activeSettings = { ...appSettings };
       const today = new Date();
       const month = today.getMonth(); // 0-indexed (0 for Jan, 7 for Aug)
       const day = today.getDate();
 
-      // Automatically trigger Independence Day theme from Aug 1 to Aug 15
+      // Automatically trigger Independence Day theme from Aug 1 to Aug 15, overriding admin settings
       if (month === 7 && day >= 1 && day <= 15) {
-        activeSettings = {
-          ...appSettings,
-          festiveGreeting: {
-            enabled: true,
-            type: 'IndependenceDay',
-            message: 'Happy Independence Day!',
-          }
+        activeSettings.festiveGreeting = {
+          enabled: true,
+          type: 'IndependenceDay',
+          message: 'Happy Independence Day!',
         };
-        setShowFestiveBackground(true);
       }
 
       setSettings(activeSettings);
-      
-      if (activeSettings.festiveGreeting?.enabled) {
-          const lastShownKey = `festiveGreetingLastShown_${activeSettings.festiveGreeting.type}`;
-          const lastShown = localStorage.getItem(lastShownKey);
-          const now = new Date().getTime();
-          // Show if never shown or if it has been more than 24 hours
-          if (!lastShown || (now - Number(lastShown) > 24 * 60 * 60 * 1000)) {
-              setShowFestiveDialog(true);
-              localStorage.setItem(lastShownKey, now.toString());
-          }
+
+      // Show background if any festive greeting is enabled
+      if (activeSettings.festiveGreeting?.enabled && activeSettings.festiveGreeting.type !== 'None') {
+        setShowFestiveBackground(true);
+
+        // Logic to show the popup dialog only once per 24 hours
+        const lastShownKey = `festiveGreetingLastShown_${activeSettings.festiveGreeting.type}`;
+        const lastShown = localStorage.getItem(lastShownKey);
+        const now = new Date().getTime();
+        
+        if (!lastShown || (now - Number(lastShown) > 24 * 60 * 60 * 1000)) {
+          setShowFestiveDialog(true);
+          localStorage.setItem(lastShownKey, now.toString());
+        }
       }
     });
 
   }, [user, loading, router]);
+  
+  const handleDialogClose = (isOpen: boolean) => {
+    setShowFestiveDialog(isOpen);
+    // Optional: if you want the background to disappear when the dialog is manually closed
+    // setShowFestiveBackground(isOpen); 
+  }
 
   if (loading || !user || !appUser) {
     return <SplashScreen />;
@@ -75,10 +81,10 @@ export default function Home() {
             <FestiveBackground type={settings.festiveGreeting.type} />
           )}
           <div className="relative z-10 flex flex-col min-h-screen bg-transparent text-foreground font-body">
-            {showFestiveDialog && settings?.festiveGreeting && (
+            {settings?.festiveGreeting && (
                 <FestiveDialog
                   isOpen={showFestiveDialog}
-                  setIsOpen={setShowFestiveDialog}
+                  setIsOpen={handleDialogClose}
                   type={settings.festiveGreeting.type}
                   message={settings.festiveGreeting.message}
                 />
