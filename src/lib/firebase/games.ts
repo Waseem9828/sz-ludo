@@ -72,27 +72,11 @@ export const deleteChallenge = async (gameId: string) => {
         }
         
         const gameData = gameSnap.data() as Game;
-        const userRef = doc(db, 'users', gameData.createdBy.uid);
         
         // 1. Refund the creator's wallet.
-        transaction.update(userRef, {
-            'wallet.balance': increment(gameData.amount)
-        });
+        await updateUserWallet(gameData.createdBy.uid, gameData.amount, 'balance', 'refund', `Challenge Deleted: ${gameId}`);
         
-        // 2. Create a refund transaction log.
-        const transactionRef = doc(collection(db, 'transactions'));
-        transaction.set(transactionRef, {
-            userId: gameData.createdBy.uid,
-            userName: gameData.createdBy.displayName,
-            amount: gameData.amount,
-            type: 'refund',
-            status: 'completed',
-            notes: `Challenge Deleted: ${gameId}`,
-            relatedId: gameId,
-            createdAt: serverTimestamp(),
-        });
-
-        // 3. Delete the game document itself.
+        // 2. Delete the game document itself.
         transaction.delete(gameRef);
     });
 };
@@ -349,4 +333,5 @@ export const listenForGamesHistory = (
 
     return unsubscribe;
 };
+
 

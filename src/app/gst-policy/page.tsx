@@ -1,7 +1,7 @@
 
 'use client'
 
-import Header from "@/components/play/header";
+import Header from "@/components/header";
 import Typewriter from "@/components/ui/typewriter";
 import { useEffect, useState } from "react";
 import { getSettings } from "@/lib/firebase/settings";
