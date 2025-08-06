@@ -90,8 +90,8 @@ const BannerManager = ({ title, bannerUrls, gameType, onUpdate }: { title: strin
                  )}
             </CardContent>
         </Card>
-    )
-}
+    );
+};
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<AppSettings>({ upiIds: [], promotionBannerText: '', festiveGreeting: { enabled: false, type: 'None', message: '' }, gameBanners: {classic: [], popular: []} });
@@ -463,7 +463,7 @@ export default function SettingsPage() {
                                                 rows={4}
                                             />
                                             <p className="text-xs text-muted-foreground">
-                                                Use placeholders: `{{`{{referralCode}}`}}` and `{{`{{referralLink}}`}}`.
+                                                Use placeholders: {`{{referralCode}}`} and {`{{referralLink}}`}.
                                             </p>
                                         </div>
                                          <div className="space-y-2">
