@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { AlertCircle, ArrowUp, BarChart2, Gift, Pencil, Trophy, ShieldCheck } from "lucide-react";
+import { AlertCircle, ArrowUp, BarChart2, Gift, Pencil, Trophy, ShieldCheck, Check } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -100,20 +100,7 @@ export default function ProfilePage() {
         return <SplashScreen />;
     }
     
-    const isKycVerified = appUser.isKycVerified;
-
-    const getKycBadgeVariant = (status?: 'Pending' | 'Verified' | 'Rejected') => {
-        switch (status) {
-            case 'Verified':
-                return 'default';
-            case 'Pending':
-                return 'secondary';
-            case 'Rejected':
-                return 'destructive';
-            default:
-                return 'outline';
-        }
-    };
+    const isKycVerified = appUser.kycStatus === 'Verified';
 
     const getInitials = (name: string) => {
         return name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U';
@@ -137,16 +124,21 @@ export default function ProfilePage() {
                                 {isKycVerified ? (
                                     <ShieldCheck className="h-7 w-7 text-blue-500 fill-blue-100" />
                                 ) : (
-                                    <Button size="icon" className="rounded-full bg-primary hover:bg-primary/90 h-8 w-8">
-                                        <Pencil className="h-4 w-4 text-primary-foreground" />
-                                    </Button>
+                                    <Link href="/kyc">
+                                        <Button size="icon" className="rounded-full bg-primary hover:bg-primary/90 h-8 w-8">
+                                            <Pencil className="h-4 w-4 text-primary-foreground" />
+                                        </Button>
+                                    </Link>
                                 )}
                             </div>
                         </div>
 
                         <div className="space-y-4">
                             <div>
-                                <label htmlFor="username" className="text-sm font-medium text-muted-foreground">Username</label>
+                                <div className="flex items-center gap-2">
+                                     <label htmlFor="username" className="text-sm font-medium text-muted-foreground">Username</label>
+                                     {isKycVerified && <ShieldCheck className="h-4 w-4 text-blue-500" />}
+                                </div>
                                 <div className="flex items-center gap-2 mt-1">
                                     <div className="flex-grow relative">
                                         <Input 
@@ -158,7 +150,7 @@ export default function ProfilePage() {
                                             className={cn("bg-muted")}
                                         />
                                     </div>
-                                    <Button onClick={handleEditUsername}>{isEditingUsername ? 'Save' : 'Edit'}</Button>
+                                    <Button onClick={handleEditUsername}>{isEditingUsername ? <Check /> : <Pencil />}</Button>
                                 </div>
                             </div>
                             <div>
