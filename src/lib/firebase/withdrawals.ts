@@ -18,7 +18,7 @@ import {
 } from 'firebase/firestore';
 import { db } from './config';
 import { createTransaction } from './transactions';
-import { updateUserWallet } from './users';
+import { AppUser, getUser, updateUserWallet } from './users';
 
 export interface Withdrawal {
     id: string;
@@ -29,6 +29,8 @@ export interface Withdrawal {
     upiId: string;
     createdAt: any; // Firestore timestamp
     status: 'pending' | 'approved' | 'rejected';
+    processedByAdminId?: string;
+    processedByAdminName?: string;
 }
 
 const WITHDRAWALS_COLLECTION = 'withdrawals';
@@ -74,7 +76,7 @@ export const createWithdrawalRequest = async (data: {
 };
 
 
-export const updateWithdrawalStatus = async (id: string, status: Withdrawal['status']) => {
+export const updateWithdrawalStatus = async (id: string, status: Withdrawal['status'], adminId: string) => {
     const withdrawalRef = doc(db, WITHDRAWALS_COLLECTION, id);
     
     await runTransaction(db, async (transaction) => {
@@ -83,11 +85,33 @@ export const updateWithdrawalStatus = async (id: string, status: Withdrawal['sta
         
         const withdrawalData = withdrawalSnap.data() as Withdrawal;
         const userRef = doc(db, 'users', withdrawalData.userId);
+        const adminRef = doc(db, 'users', adminId);
+
+        const adminSnap = await transaction.get(adminRef);
+        if (!adminSnap.exists()) throw new Error("Admin user not found.");
+        const adminData = adminSnap.data() as AppUser;
+
+        const updatePayload: Partial<Withdrawal> = { 
+            status,
+            processedByAdminId: adminId,
+            processedByAdminName: adminData.displayName || adminData.email,
+        };
 
         // Update the withdrawal document status
-        transaction.update(withdrawalRef, { status });
+        transaction.update(withdrawalRef, updatePayload);
 
         if (status === 'approved') {
+            // Deduct from agent's wallet if they are a finance agent
+            if (adminData.role === 'finance') {
+                const agentBalance = adminData.agentWallet?.balance || 0;
+                if (agentBalance < withdrawalData.amount) {
+                    throw new Error("The agent has insufficient funds to process this withdrawal.");
+                }
+                transaction.update(adminRef, {
+                    'agentWallet.balance': increment(-withdrawalData.amount),
+                    'agentWallet.totalOut': increment(withdrawalData.amount),
+                });
+            }
             // Update user's lifetime withdrawal stats
             transaction.update(userRef, { 'lifetimeStats.totalWithdrawals': increment(withdrawalData.amount) });
         } else if (status === 'rejected') {

@@ -1,5 +1,6 @@
 
-import { doc, getDoc, updateDoc, increment, collection, onSnapshot, writeBatch, serverTimestamp, runTransaction } from 'firebase/firestore';
+
+import { doc, getDoc, updateDoc, increment, collection, onSnapshot, writeBatch, serverTimestamp, runTransaction, query, where, getDocs } from 'firebase/firestore';
 import { db } from './config';
 import { TransactionType } from './transactions';
 
@@ -17,6 +18,12 @@ export interface AppUser {
         balance: number;
         winnings: number;
     },
+    // Agent Wallet for Finance role
+    agentWallet?: {
+        balance: number;
+        totalIn: number; // Total amount received from superadmin
+        totalOut: number; // Total amount paid to users
+    }
     // KYC Details
     kycStatus?: 'Pending' | 'Verified' | 'Rejected';
     isKycVerified?: boolean; // Derived field for easy access
@@ -79,7 +86,7 @@ export const updateUserKycDetails = async (uid: string, details: KycDetails) => 
 };
 
 
-export const updateUserWallet = async (uid: string, amount: number, walletType: 'balance' | 'winnings', transactionType: TransactionType, notes?: string, relatedId?: string) => {
+export const updateUserWallet = async (uid: string, amount: number, walletType: 'balance' | 'winnings' | 'agent', transactionType: TransactionType, notes?: string, relatedId?: string) => {
     // Special case for revenue, which is not a real transaction for a user wallet
     if (transactionType === 'revenue') {
         const adminUserRef = doc(db, 'users', uid);
@@ -133,8 +140,15 @@ export const updateUserWallet = async (uid: string, amount: number, walletType: 
 
         } else {
             // If adding, add to the specified wallet type
-            const fieldToUpdate = walletType === 'balance' ? 'wallet.balance' : 'wallet.winnings';
-            transaction.update(userRef, { [fieldToUpdate]: increment(amount) });
+            if (walletType === 'agent') {
+                transaction.update(userRef, {
+                    'agentWallet.balance': increment(amount),
+                    'agentWallet.totalIn': increment(amount)
+                });
+            } else {
+                const fieldToUpdate = walletType === 'balance' ? 'wallet.balance' : 'wallet.winnings';
+                transaction.update(userRef, { [fieldToUpdate]: increment(amount) });
+            }
         }
         
         // Update lifetime stats for deposits or approved withdrawals
@@ -176,9 +190,12 @@ export const updateUserStatus = async (uid: string, status: AppUser['status']) =
 
 export const listenForAllUsers = (
     callback: (users: AppUser[]) => void,
-    onError?: (error: Error) => void
+    onError?: (error: Error) => void,
+    role?: UserRole
 ) => {
-    const q = collection(db, 'users');
+    const usersCollection = collection(db, 'users');
+    const constraints = role ? [where('role', '==', role)] : [];
+    const q = query(usersCollection, ...constraints);
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const users: AppUser[] = [];

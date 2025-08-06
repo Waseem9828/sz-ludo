@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -9,11 +10,12 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { Withdrawal, listenForWithdrawals, updateWithdrawalStatus } from '@/lib/firebase/withdrawals';
-import { Loader, TrendingUp, TrendingDown } from 'lucide-react';
+import { Loader, TrendingUp, TrendingDown, User, AlertCircle } from 'lucide-react';
 import { updateUserWallet, AppUser, getUser } from '@/lib/firebase/users';
 import Link from 'next/link';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import Image from 'next/image';
+import { useAuth } from '@/context/auth-context';
 
 type WithdrawalWithUser = Withdrawal & {
     user?: AppUser;
@@ -23,6 +25,7 @@ export default function WithdrawalsPage() {
     const [withdrawals, setWithdrawals] = useState<WithdrawalWithUser[]>([]);
     const [loading, setLoading] = useState(true);
     const { toast } = useToast();
+    const { appUser: adminUser } = useAuth(); // The currently logged-in admin
 
     useEffect(() => {
       const unsubscribe = listenForWithdrawals(
@@ -55,9 +58,13 @@ export default function WithdrawalsPage() {
 
 
     const handleApprove = async (withdrawal: Withdrawal) => {
+        if (!adminUser || !adminUser.uid) {
+            toast({ title: 'Error', description: 'Could not identify the admin.', variant: 'destructive' });
+            return;
+        }
+
         try {
-            // This transaction is now handled inside updateWithdrawalStatus
-            await updateWithdrawalStatus(withdrawal.id, 'approved');
+            await updateWithdrawalStatus(withdrawal.id, 'approved', adminUser.uid);
             toast({
                 title: 'Withdrawal Approved',
                 description: 'The user will receive their funds shortly. Remember to process the payment manually.',
@@ -72,8 +79,12 @@ export default function WithdrawalsPage() {
     };
 
     const handleReject = async (withdrawal: Withdrawal) => {
+        if (!adminUser || !adminUser.uid) {
+            toast({ title: 'Error', description: 'Could not identify the admin.', variant: 'destructive' });
+            return;
+        }
          try {
-            await updateWithdrawalStatus(withdrawal.id, 'rejected');
+            await updateWithdrawalStatus(withdrawal.id, 'rejected', adminUser.uid);
              toast({
                 title: 'Withdrawal Rejected',
                 description: 'The withdrawal request has been rejected. The funds have been returned to the user\'s wallet.',
@@ -131,6 +142,17 @@ export default function WithdrawalsPage() {
       <CardHeader>
         <CardTitle>Manage Withdrawals</CardTitle>
         <CardDescription>Review and process user withdrawal requests.</CardDescription>
+        {adminUser?.role === 'finance' && (
+            <Alert variant="default" className="mt-4 bg-blue-50 border-blue-200">
+                <User className="h-4 w-4 text-blue-700" />
+                <CardTitle className="text-blue-800">Your Agent Wallet</CardTitle>
+                <AlertDescription className="text-blue-700">
+                    Your current balance for paying out withdrawals is 
+                    <span className="font-bold text-lg"> ₹{(adminUser.agentWallet?.balance || 0).toFixed(2)}</span>.
+                    You cannot approve withdrawals exceeding this amount.
+                </AlertDescription>
+            </Alert>
+        )}
       </CardHeader>
       <CardContent>
         <Table>
@@ -150,6 +172,9 @@ export default function WithdrawalsPage() {
             {withdrawals.map((withdrawal) => {
                 const upiLink = `upi://pay?pa=${withdrawal.upiId}&pn=${encodeURIComponent(withdrawal.userName)}&am=${withdrawal.amount}&cu=INR`;
                 const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiLink)}`;
+                const canApprove = adminUser?.role === 'finance' 
+                    ? (adminUser.agentWallet?.balance || 0) >= withdrawal.amount
+                    : true; // superadmin can always approve in theory
 
                 return (
               <TableRow key={withdrawal.id}>
@@ -184,13 +209,16 @@ export default function WithdrawalsPage() {
                 </TableCell>
                 <TableCell>
                     <Badge variant={getStatusBadgeVariant(withdrawal.status)}>{withdrawal.status}</Badge>
+                    {withdrawal.status === 'approved' && withdrawal.processedByAdminName && (
+                        <p className="text-xs text-muted-foreground mt-1">by {withdrawal.processedByAdminName}</p>
+                    )}
                 </TableCell>
                 <TableCell className="space-x-2">
                   {withdrawal.status === 'pending' && (
                      <Dialog>
                         <DialogTrigger asChild>
-                            <Button variant="outline" size="sm" disabled={withdrawal.user?.kycStatus !== 'Verified'}>
-                                {withdrawal.user?.kycStatus !== 'Verified' ? 'KYC Pending' : 'Review & Pay'}
+                            <Button variant="outline" size="sm" disabled={withdrawal.user?.kycStatus !== 'Verified' || !canApprove}>
+                                {withdrawal.user?.kycStatus !== 'Verified' ? 'KYC Pending' : !canApprove ? 'Insuff. Funds' : 'Review & Pay'}
                             </Button>
                         </DialogTrigger>
                         <DialogContent className="max-w-md">
