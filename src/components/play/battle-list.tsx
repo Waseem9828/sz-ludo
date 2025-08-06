@@ -15,11 +15,12 @@ export default function BattleList() {
 
   useEffect(() => {
     // This listener fetches all ongoing games for public view.
+    // It runs once on component mount and stays active.
     const unsubscribe = listenForGames(setBattles, 'ongoing');
     
     // Cleanup the listener when the component unmounts
     return () => unsubscribe();
-  }, []);
+  }, []); // Empty dependency array ensures this runs only once
   
   const handleBattleClick = (gameId: string) => {
     router.push(`/play/game?id=${gameId}`);

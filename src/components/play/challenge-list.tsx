@@ -32,10 +32,16 @@ export default function ChallengeList() {
 
     useEffect(() => {
         // This listener fetches all challenges with 'challenge' status for everyone.
+        // It runs once and stays active, independent of the user state.
         const unsubscribeChallenges = listenForGames(setChallenges, 'challenge');
 
-        // This listener checks if the current user has any ongoing games.
-        // It only runs if a user is logged in.
+        // Cleanup the listener when the component unmounts
+        return () => unsubscribeChallenges();
+    }, []); // Empty dependency array ensures this runs only once on mount
+
+    useEffect(() => {
+        // This listener specifically checks for the current user's ongoing games.
+        // It should re-run if the user logs in or out.
         let unsubscribeOngoing: () => void = () => {};
         if (user) {
             unsubscribeOngoing = listenForGames((games) => {
@@ -45,13 +51,11 @@ export default function ChallengeList() {
         } else {
             setOngoingGamesCount(0); // Reset count if user logs out
         }
+        
+        // Cleanup the ongoing games listener when the component unmounts or the user changes.
+        return () => unsubscribeOngoing();
+    }, [user]);
 
-        // Cleanup listeners when the component unmounts or the user changes.
-        return () => {
-            unsubscribeChallenges();
-            unsubscribeOngoing();
-        };
-    }, [user]); // Rerun this effect if the user object changes (login/logout)
 
     const handleAccept = async (challenge: Game) => {
         if (!user || !appUser) {
