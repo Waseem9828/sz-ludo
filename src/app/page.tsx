@@ -64,8 +64,10 @@ export default function Home() {
   
   const handleDialogClose = (isOpen: boolean) => {
     setShowFestiveDialog(isOpen);
-    // Optional: if you want the background to disappear when the dialog is manually closed
-    // setShowFestiveBackground(isOpen); 
+    // if the background should disappear when the dialog is manually closed
+    if (!isOpen) {
+        setShowFestiveBackground(false); 
+    }
   }
 
   if (loading || !user || !appUser) {
@@ -123,7 +125,7 @@ export default function Home() {
 
                   <section>
                       <div className="flex items-center justify-center my-4">
-                          <h2 className="text-red-600 font-semibold text-lg text-center animate-shine">
+                          <h2 className="text-red-600 font-semibold text-lg text-center">
                             ⚔️ Ongoing Battles ⚔️
                           </h2>
                       </div>
