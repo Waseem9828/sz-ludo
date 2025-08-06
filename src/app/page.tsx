@@ -1,4 +1,3 @@
-
 'use client'
 
 import Header from '@/components/header';
@@ -113,7 +112,7 @@ export default function Home() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <section>
                       <div className="flex flex-col sm:flex-row items-center justify-between my-4 gap-2">
-                          <h2 className="text-red-600 font-semibold text-lg text-center animate-shine">
+                          <h2 className="text-red-600 font-semibold text-lg text-center">
                             🏆 Open Battles 🏆
                           </h2>
                           <Link href="/play" className="w-full sm:w-auto">
