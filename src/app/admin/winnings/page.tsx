@@ -57,7 +57,6 @@ export default function WinningsPage() {
             await updateUserWallet(match.winner, finalAmount, 'winnings', 'winnings', `Win Match: ${match.id}`);
             
             // Then, credit the admin's revenue
-            // This is a special use case of updateUserWallet just for tracking revenue
             await updateUserWallet(appUser.uid, commission, 'balance', 'revenue', `Commission from Match: ${match.id}`);
 
             // Finally, update the game status

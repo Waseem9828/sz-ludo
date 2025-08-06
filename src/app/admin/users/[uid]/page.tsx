@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { getUser, AppUser, updateUserWallet, updateUserKycStatus, updateUserStatus } from '@/lib/firebase/users';
+import { getUser, AppUser, updateUserKycStatus, updateUserStatus } from '@/lib/firebase/users';
 import { listenForUserTransactions, Transaction } from '@/lib/firebase/transactions';
 import { SplashScreen } from '@/components/ui/splash-screen';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -40,10 +40,6 @@ export default function UserProfilePage() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const [isWalletDialogOpen, setIsWalletDialogOpen] = useState(false);
-    const [walletAmount, setWalletAmount] = useState('');
-    const [walletType, setWalletType] = useState<'balance' | 'winnings'>('balance');
-    const [walletNotes, setWalletNotes] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
@@ -75,36 +71,6 @@ export default function UserProfilePage() {
         return () => unsubscribe();
 
     }, [uid, router, toast]);
-
-    const handleWalletUpdate = async () => {
-        if (!user) return;
-        const amount = parseFloat(walletAmount);
-        if (isNaN(amount)) {
-            toast({ title: "Invalid amount", variant: 'destructive' });
-            return;
-        }
-
-        setIsSubmitting(true);
-        try {
-            await updateUserWallet(user.uid, amount, walletType, amount > 0 ? 'Admin Credit' : 'Admin Debit', walletNotes);
-            toast({ title: "Success", description: "Wallet updated successfully." });
-            // Manually update user state to reflect change immediately
-            setUser(prevUser => {
-                if (!prevUser) return null;
-                const newWallet = { ...prevUser.wallet! };
-                if (walletType === 'balance') newWallet.balance += amount;
-                else newWallet.winnings += amount;
-                return { ...prevUser, wallet: newWallet };
-            });
-            setIsWalletDialogOpen(false);
-            setWalletAmount('');
-            setWalletNotes('');
-        } catch (error: any) {
-            toast({ title: "Error", description: error.message, variant: 'destructive' });
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
 
     const handleKycUpdate = async (status: AppUser['kycStatus']) => {
         if (!user) return;
@@ -207,46 +173,6 @@ export default function UserProfilePage() {
                             <CardTitle>Admin Actions</CardTitle>
                         </CardHeader>
                         <CardContent className="flex flex-wrap gap-2">
-                            <Dialog open={isWalletDialogOpen} onOpenChange={setIsWalletDialogOpen}>
-                                <DialogTrigger asChild>
-                                    <Button><Wallet className="mr-2 h-4 w-4" /> Adjust Wallet</Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle>Adjust User Wallet</DialogTitle>
-                                        <DialogDescription>
-                                            Manually add or remove funds. Use a negative number to subtract.
-                                        </DialogDescription>
-                                    </DialogHeader>
-                                    <div className="space-y-4">
-                                        <div>
-                                            <Label htmlFor="wallet-amount">Amount</Label>
-                                            <Input id="wallet-amount" type="number" value={walletAmount} onChange={e => setWalletAmount(e.target.value)} placeholder="e.g., 100 or -50" />
-                                        </div>
-                                        <div>
-                                            <Label htmlFor="wallet-type">Wallet Type</Label>
-                                            <Select onValueChange={(value: 'balance' | 'winnings') => setWalletType(value)} defaultValue={walletType}>
-                                                <SelectTrigger id="wallet-type">
-                                                    <SelectValue placeholder="Select wallet type" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="balance">Deposit Balance</SelectItem>
-                                                    <SelectItem value="winnings">Winnings Balance</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                        <div>
-                                            <Label htmlFor="wallet-notes">Notes (Reason)</Label>
-                                            <Input id="wallet-notes" value={walletNotes} onChange={e => setWalletNotes(e.target.value)} placeholder="e.g., Bonus credit" />
-                                        </div>
-                                    </div>
-                                    <DialogFooter>
-                                        <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
-                                        <Button onClick={handleWalletUpdate} disabled={isSubmitting}>{isSubmitting ? 'Updating...' : 'Update Wallet'}</Button>
-                                    </DialogFooter>
-                                </DialogContent>
-                            </Dialog>
-                            
                             <Button variant="default" onClick={() => handleKycUpdate('Verified')} disabled={user.kycStatus === 'Verified' || isSubmitting}><Check className="mr-2 h-4 w-4" /> Approve KYC</Button>
                             <Button variant="destructive" onClick={() => handleKycUpdate('Rejected')} disabled={user.kycStatus === 'Rejected' || isSubmitting}><X className="mr-2 h-4 w-4" /> Reject KYC</Button>
                             {user.status !== 'suspended' ? (
