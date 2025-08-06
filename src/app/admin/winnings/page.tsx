@@ -12,11 +12,13 @@ import { useToast } from '@/hooks/use-toast';
 import { Game, listenForGames, updateGameStatus } from '@/lib/firebase/games';
 import { Loader } from 'lucide-react';
 import { updateUserWallet } from '@/lib/firebase/users';
+import { useAuth } from '@/context/auth-context';
 
 export default function WinningsPage() {
     const [matches, setMatches] = useState<Game[]>([]);
     const [loading, setLoading] = useState(true);
     const { toast } = useToast();
+    const { appUser } = useAuth(); // Get admin user to update revenue
 
     useEffect(() => {
         const unsubscribe = listenForGames(
@@ -37,10 +39,10 @@ export default function WinningsPage() {
 
 
     const handleApprove = async (match: Game) => {
-        if (!match.winner || !match.player1) {
+        if (!match.winner || !match.player1 || !appUser?.uid) {
              toast({
                 title: 'Error',
-                description: 'Match data is incomplete.',
+                description: 'Match data or admin user is incomplete.',
                 variant: 'destructive',
             });
             return;
@@ -53,6 +55,10 @@ export default function WinningsPage() {
         try {
             // First, credit the winner
             await updateUserWallet(match.winner, finalAmount, 'winnings', 'winnings', `Win Match: ${match.id}`);
+            
+            // Then, credit the admin's revenue
+            // This is a special use case of updateUserWallet just for tracking revenue
+            await updateUserWallet(appUser.uid, commission, 'balance', 'revenue', `Commission from Match: ${match.id}`);
 
             // Finally, update the game status
             await updateGameStatus(match.id, 'completed');

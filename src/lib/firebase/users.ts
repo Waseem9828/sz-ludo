@@ -1,5 +1,4 @@
 
-
 import { doc, getDoc, updateDoc, increment, collection, onSnapshot, writeBatch, serverTimestamp, runTransaction } from 'firebase/firestore';
 import { db } from './config';
 import { TransactionType } from './transactions';
@@ -36,6 +35,7 @@ export interface AppUser {
         totalDeposits: number;
         totalWithdrawals: number;
         totalWinnings: number;
+        totalRevenue?: number; // For admin user
     },
     referralStats?: {
         referredBy?: string; // UID of the user who referred them
@@ -73,6 +73,14 @@ export const updateUserKycDetails = async (uid: string, details: KycDetails) => 
 
 
 export const updateUserWallet = async (uid: string, amount: number, walletType: 'balance' | 'winnings', transactionType: TransactionType, notes?: string, relatedId?: string) => {
+    // Special case for revenue, which is not a real transaction for a user wallet
+    if (transactionType === 'revenue') {
+        const adminUserRef = doc(db, 'users', uid);
+        return await updateDoc(adminUserRef, {
+            'lifetimeStats.totalRevenue': increment(amount)
+        });
+    }
+
     const userRef = doc(db, 'users', uid);
     
     return await runTransaction(db, async (transaction) => {

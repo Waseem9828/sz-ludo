@@ -7,14 +7,25 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { getSettings, updateSettings, UpiId, AppSettings, uploadBannerImage, deleteBannerImage } from '@/lib/firebase/settings';
-import { Loader, Trash2, PlusCircle, Upload } from 'lucide-react';
+import { getSettings, updateSettings, UpiId, AppSettings, uploadBannerImage, deleteBannerImage, deleteOldGameRecords } from '@/lib/firebase/settings';
+import { Loader, Trash2, PlusCircle, Upload, Archive } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Image from 'next/image';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const BannerManager = ({ title, bannerUrls, gameType, onUpdate }: { title: string, bannerUrls: string[], gameType: 'classic' | 'popular' | 'referral', onUpdate: (urls: string[]) => void }) => {
     const [isUploading, setIsUploading] = useState(false);
@@ -86,6 +97,7 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<AppSettings>({ upiIds: [], promotionBannerText: '', festiveGreeting: { enabled: false, type: 'None', message: '' }, gameBanners: {classic: [], popular: []} });
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -142,7 +154,7 @@ export default function SettingsPage() {
       }));
   }
 
-  const handleBannerUpdate = (gameType: 'classic' | 'popular', urls: string[]) => {
+  const handleBannerUpdate = (gameType: 'classic' | 'popular' | 'referral', urls: string[]) => {
       setSettings(prev => ({
           ...prev,
           gameBanners: {
@@ -203,6 +215,25 @@ export default function SettingsPage() {
       }
   }
 
+   const handleCleanup = async () => {
+    setIsDeleting(true);
+    try {
+      const deletedCount = await deleteOldGameRecords();
+      toast({
+        title: 'Cleanup Complete',
+        description: `${deletedCount} old battle records have been deleted.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Cleanup Failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-full">
@@ -219,10 +250,11 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent>
             <Tabs defaultValue="payments">
-                <TabsList className="grid grid-cols-2 md:grid-cols-3">
-                    <TabsTrigger value="payments">Payment Settings</TabsTrigger>
-                    <TabsTrigger value="content">Content Management</TabsTrigger>
-                    <TabsTrigger value="app">App Settings</TabsTrigger>
+                <TabsList className="grid grid-cols-2 md:grid-cols-4">
+                    <TabsTrigger value="payments">Payment</TabsTrigger>
+                    <TabsTrigger value="content">Content</TabsTrigger>
+                    <TabsTrigger value="app">App</TabsTrigger>
+                    <TabsTrigger value="data">Data Management</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="payments">
@@ -431,7 +463,7 @@ export default function SettingsPage() {
                                                 rows={4}
                                             />
                                             <p className="text-xs text-muted-foreground">
-                                                Use placeholders: `{{referralCode}}` and `{{referralLink}}`.
+                                                Use placeholders: `{{`{{referralCode}}`}}` and `{{`{{referralLink}}`}}`.
                                             </p>
                                         </div>
                                          <div className="space-y-2">
@@ -456,10 +488,47 @@ export default function SettingsPage() {
                         </div>
                     </div>
                 </TabsContent>
+
+                 <TabsContent value="data">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Data Management</CardTitle>
+                            <CardDescription>Manage and clean up old database records.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Card className="p-4 bg-muted/50">
+                                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                    <div>
+                                        <h3 className="font-semibold">Clean Up Old Battle Records</h3>
+                                        <p className="text-sm text-muted-foreground">Permanently delete battle records older than 30 days. This action cannot be undone.</p>
+                                    </div>
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="destructive" disabled={isDeleting}>
+                                                {isDeleting ? <Loader className="animate-spin" /> : <Archive className="mr-2 h-4 w-4" />}
+                                                Clean Up Now
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This will permanently delete all 'completed', 'cancelled', and 'disputed' battle records older than 30 days. This action cannot be undone and the data cannot be recovered.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={handleCleanup}>Yes, delete records</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                </div>
+                            </Card>
+                        </CardContent>
+                    </Card>
+                 </TabsContent>
             </Tabs>
         </CardContent>
     </Card>
   );
 }
-
-    

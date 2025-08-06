@@ -1,5 +1,5 @@
 
-import { doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, increment, collection, query, where, getDocs, writeBatch, Timestamp } from 'firebase/firestore';
 import { db, storage } from './config';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 
@@ -139,6 +139,31 @@ export const deleteBannerImage = async (url: string): Promise<void> => {
     await deleteObject(storageRef);
 };
 
-    
+// Admin: Delete old game records
+export const deleteOldGameRecords = async (): Promise<number> => {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const timestamp = Timestamp.fromDate(thirtyDaysAgo);
 
+    const gamesRef = collection(db, 'games');
+    const q = query(
+        gamesRef,
+        where('status', 'in', ['completed', 'cancelled', 'disputed']),
+        where('createdAt', '<=', timestamp)
+    );
+
+    const snapshot = await getDocs(q);
     
+    if (snapshot.empty) {
+        return 0;
+    }
+
+    const batch = writeBatch(db);
+    snapshot.docs.forEach(doc => {
+        batch.delete(doc.ref);
+    });
+
+    await batch.commit();
+
+    return snapshot.size;
+}

@@ -17,6 +17,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/
 import type { ChartConfig } from '@/components/ui/chart';
 import { Game, listenForCompletedGames } from '@/lib/firebase/games';
 import { subMonths, format, getYear, getMonth, isAfter } from 'date-fns';
+import { useAuth } from '@/context/auth-context';
 
 const chartConfig = {
   deposits: {
@@ -49,6 +50,7 @@ const getTypeBadgeVariant = (type: TransactionType) => {
 }
 
 export default function AdminDashboardPage() {
+  const { appUser } = useAuth(); // Get the admin user
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [kpiData, setKpiData] = useState([
     { title: 'Total Revenue', value: '₹0', icon: DollarSign },
@@ -61,6 +63,14 @@ export default function AdminDashboardPage() {
   const { toast } = useToast();
 
    useEffect(() => {
+        // Update revenue KPI from appUser state
+        if (appUser?.lifetimeStats?.totalRevenue) {
+            setKpiData(prev => [
+                { ...prev[0], value: `₹${appUser.lifetimeStats.totalRevenue.toFixed(2)}`},
+                ...prev.slice(1)
+            ]);
+        }
+
         const processTransactionDataForChart = (transactions: Transaction[]) => {
             const monthlyData: { [key: string]: { month: string, deposits: number, withdrawals: number } } = {};
             const sixMonthsAgo = subMonths(new Date(), 6);
@@ -96,7 +106,10 @@ export default function AdminDashboardPage() {
         
 
         const unsubscribeTransactions = listenForAllTransactions(
-            (transactions) => setRecentTransactions(transactions),
+            (transactions) => {
+                setRecentTransactions(transactions)
+                setLoading(false); // Transactions are a good indicator for loading state
+            },
             (error) => toast({ title: "Error", description: `Could not fetch recent transactions: ${error.message}`, variant: "destructive" }),
             { limitCount: 10 }
         );
@@ -115,39 +128,21 @@ export default function AdminDashboardPage() {
                 const totalWithdrawals = users.reduce((sum, user) => sum + (user.lifetimeStats?.totalWithdrawals || 0), 0);
                 
                 setKpiData(prev => [
-                    prev[0], // Revenue is calculated separately
+                    prev[0], // Revenue is handled separately
                     { ...prev[1], value: `₹${totalWithdrawals.toLocaleString()}`},
                     { ...prev[2], value: activeUsers.toLocaleString()},
                     { ...prev[3], value: totalSignups.toLocaleString()},
                 ]);
-                if(!loading) setLoading(false);
             },
             (error) => toast({ title: "Error", description: `Could not fetch users: ${error.message}`, variant: "destructive" })
         );
-
-        const unsubscribeGames = listenForCompletedGames(
-            (games) => {
-                 const totalRevenue = games.reduce((acc, game) => {
-                    const prizePool = game.amount * 2; // Always 2 players now
-                    const commission = prizePool * 0.05; // 5% commission
-                    return acc + commission;
-                }, 0);
-                 setKpiData(prev => [
-                    { ...prev[0], value: `₹${totalRevenue.toFixed(2)}`},
-                    ...prev.slice(1)
-                ]);
-                 setLoading(false);
-            },
-            (error) => toast({ title: "Error", description: `Could not fetch games for revenue: ${error.message}`, variant: "destructive" })
-        )
 
       return () => {
           unsubscribeTransactions();
           unsubscribeChartTransactions();
           unsubscribeUsers();
-          unsubscribeGames();
       };
-  }, [toast]);
+  }, [toast, appUser]);
   
    if (loading) {
     return (

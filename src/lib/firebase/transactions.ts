@@ -1,11 +1,10 @@
 
-
 import { collection, addDoc, serverTimestamp, where, query, onSnapshot, updateDoc, doc, writeBatch, orderBy, getDocs, limit, Timestamp, QueryConstraint } from 'firebase/firestore';
 import { db } from './config';
 
 const TRANSACTIONS_COLLECTION = 'transactions';
 
-export type TransactionType = 'deposit' | 'withdrawal' | 'winnings' | 'game_fee' | 'penalty' | 'refund' | 'Admin Credit' | 'Admin Debit' | 'Withdrawal Rejected' | 'Challenge Created' ;
+export type TransactionType = 'deposit' | 'withdrawal' | 'winnings' | 'game_fee' | 'penalty' | 'refund' | 'Admin Credit' | 'Admin Debit' | 'Withdrawal Rejected' | 'Challenge Created' | 'revenue';
 export type TransactionStatus = 'pending' | 'completed' | 'failed' | 'rejected' | 'approved';
 
 export interface Transaction {
