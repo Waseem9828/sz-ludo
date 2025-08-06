@@ -1,5 +1,6 @@
 
 
+
 export interface GameCardType {
   title: string;
   description: string;
@@ -11,5 +12,3 @@ export interface GameBanners {
     classic: string[];
     popular: string[];
 }
-
-    

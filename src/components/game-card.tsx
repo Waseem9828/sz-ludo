@@ -1,12 +1,12 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import type { GameCardType } from '@/types';
+import type { HomePageCard } from '@/lib/firebase/settings';
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 import Link from 'next/link';
 
-export default function GameCard({ title, description, images, aiHint }: GameCardType) {
+export default function GameCard({ title, description, images, link, aiHint }: HomePageCard & {link: string}) {
 
   const hasMultipleImages = images.length > 1;
 
@@ -48,7 +48,7 @@ export default function GameCard({ title, description, images, aiHint }: GameCar
       <CardContent className="p-4 bg-card text-center">
         <h3 className="text-xl font-bold font-headline text-red-600 animate-shine">{title}</h3>
         <p className="text-sm text-muted-foreground mb-3">{description}</p>
-        <Link href="/play">
+        <Link href={link}>
           <Button className="w-full font-bold">Play Now</Button>
         </Link>
       </CardContent>

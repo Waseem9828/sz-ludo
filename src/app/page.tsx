@@ -101,14 +101,7 @@ export default function Home() {
                   description="Complete KYC to unlock all features."
                 />
               )}
-              <GameListing />
-              
-               <div className="text-center my-4">
-                 <Link href="/tournaments">
-                  <Button size="lg" className="font-bold text-lg">View Tournaments</Button>
-                </Link>
-              </div>
-
+              {settings && <GameListing cards={settings.homePageCards} />}
 
             </main>
             {/* Spacer to prevent content from being hidden by the fixed bottom nav */}

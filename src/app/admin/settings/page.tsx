@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { getSettings, updateSettings, UpiId, AppSettings, uploadBannerImage, deleteBannerImage, deleteOldGameRecords } from '@/lib/firebase/settings';
+import { getSettings, updateSettings, UpiId, AppSettings, uploadBannerImage, deleteBannerImage, deleteOldGameRecords, HomePageCard } from '@/lib/firebase/settings';
 import { Loader, Trash2, PlusCircle, Upload, Archive } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -27,10 +27,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-const BannerManager = ({ title, bannerUrls, gameType, onUpdate }: { title: string, bannerUrls: string[], gameType: 'classic' | 'popular' | 'referral', onUpdate: (urls: string[]) => void }) => {
+const BannerManager = ({ title, bannerUrls, onUpdate, singleImage = false }: { title: string, bannerUrls: string[], onUpdate: (urls: string[]) => void, singleImage?: boolean }) => {
     const [isUploading, setIsUploading] = useState(false);
     const { toast } = useToast();
-    const isSingleImage = gameType === 'referral';
 
     const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -38,9 +37,10 @@ const BannerManager = ({ title, bannerUrls, gameType, onUpdate }: { title: strin
 
         setIsUploading(true);
         try {
-            const newUrl = await uploadBannerImage(file, gameType);
-            onUpdate(isSingleImage ? [newUrl] : [...bannerUrls, newUrl]);
-            toast({ title: 'Success', description: 'Banner uploaded!' });
+            // Re-using 'classic' as a generic folder, can be changed if needed
+            const newUrl = await uploadBannerImage(file, 'classic'); 
+            onUpdate(singleImage ? [newUrl] : [...bannerUrls, newUrl]);
+            toast({ title: 'Success', description: 'Image uploaded!' });
         } catch (error: any) {
             toast({ title: 'Upload Failed', description: error.message, variant: 'destructive' });
         } finally {
@@ -52,49 +52,45 @@ const BannerManager = ({ title, bannerUrls, gameType, onUpdate }: { title: strin
         try {
             await deleteBannerImage(urlToDelete);
             onUpdate(bannerUrls.filter(url => url !== urlToDelete));
-            toast({ title: 'Success', description: 'Banner deleted!' });
+            toast({ title: 'Success', description: 'Image deleted!' });
         } catch (error: any) {
             toast({ title: 'Delete Failed', description: error.message, variant: 'destructive' });
         }
     };
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-base">{title}</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className={`grid ${isSingleImage ? 'grid-cols-1' : 'grid-cols-2 md:grid-cols-3'} gap-4 mb-4`}>
-                    {bannerUrls.map((url, index) => (
-                        <div key={index} className="relative group">
-                            <Image src={url} alt={`${title} Banner ${index + 1}`} width={200} height={112} className="rounded-md object-cover aspect-video" data-ai-hint="game banner"/>
-                            <Button
-                                variant="destructive"
-                                size="icon"
-                                className="absolute top-1 right-1 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={() => handleImageDelete(url)}
-                            >
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    ))}
-                </div>
-                {(!isSingleImage || bannerUrls.length === 0) && (
-                    <Label htmlFor={`banner-upload-${gameType}`} className="w-full">
-                        <div className="flex items-center justify-center w-full px-4 py-2 border-2 border-dashed rounded-md cursor-pointer hover:bg-muted">
-                            {isUploading ? <Loader className="animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                            <span>Upload Image</span>
-                        </div>
-                        <Input id={`banner-upload-${gameType}`} type="file" accept="image/*" className="sr-only" onChange={handleImageUpload} disabled={isUploading} />
-                    </Label>
-                 )}
-            </CardContent>
+        <Card className="p-4 bg-muted/20">
+            <CardTitle className="text-sm font-medium mb-2">{title}</CardTitle>
+            <div className={`grid ${singleImage ? 'grid-cols-1' : 'grid-cols-2 md:grid-cols-3'} gap-4 mb-4`}>
+                {bannerUrls.map((url, index) => (
+                    <div key={index} className="relative group">
+                        <Image src={url} alt={`${title} Banner ${index + 1}`} width={200} height={112} className="rounded-md object-cover aspect-video" data-ai-hint="game banner"/>
+                        <Button
+                            variant="destructive"
+                            size="icon"
+                            className="absolute top-1 right-1 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => handleImageDelete(url)}
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </div>
+                ))}
+            </div>
+            {(!singleImage || bannerUrls.length === 0) && (
+                <Label htmlFor={`banner-upload-${title.replace(/\s+/g, '-')}`} className="w-full">
+                    <div className="flex items-center justify-center w-full px-4 py-2 border-2 border-dashed rounded-md cursor-pointer hover:bg-muted">
+                        {isUploading ? <Loader className="animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                        <span>Upload Image</span>
+                    </div>
+                    <Input id={`banner-upload-${title.replace(/\s+/g, '-')}`} type="file" accept="image/*" className="sr-only" onChange={handleImageUpload} disabled={isUploading} />
+                </Label>
+             )}
         </Card>
     );
 };
 
 export default function SettingsPage() {
-  const [settings, setSettings] = useState<AppSettings>({ upiIds: [], promotionBannerText: '', festiveGreeting: { enabled: false, type: 'None', message: '' }, gameBanners: {classic: [], popular: []} });
+  const [settings, setSettings] = useState<AppSettings>({ upiIds: [], promotionBannerText: '', festiveGreeting: { enabled: false, type: 'None', message: '' }, homePageCards: [] });
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -144,24 +140,10 @@ export default function SettingsPage() {
       }));
   };
 
-  const handleReferralSettingChange = (field: keyof NonNullable<AppSettings['referralSettings']>, value: any) => {
-      setSettings(prev => ({
-          ...prev,
-          referralSettings: {
-              ...prev.referralSettings!,
-              [field]: value
-          }
-      }));
-  }
-
-  const handleBannerUpdate = (gameType: 'classic' | 'popular' | 'referral', urls: string[]) => {
-      setSettings(prev => ({
-          ...prev,
-          gameBanners: {
-              ...prev.gameBanners!,
-              [gameType]: urls,
-          }
-      }));
+  const handleHomePageCardChange = (index: number, field: keyof HomePageCard, value: any) => {
+    const newCards = [...(settings.homePageCards || [])];
+    newCards[index] = { ...newCards[index], [field]: value };
+    setSettings(prev => ({...prev, homePageCards: newCards }));
   }
 
   const addUpiId = () => {
@@ -367,7 +349,48 @@ export default function SettingsPage() {
                      <div className="space-y-6">
                         <Card>
                             <CardHeader>
-                                <CardTitle>App Content</CardTitle>
+                                <CardTitle>Home Page Cards</CardTitle>
+                                <CardDescription>Manage the game and tournament cards displayed on the home page.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {(settings.homePageCards || []).map((card, index) => (
+                                    <Card key={index} className="p-4 border-2">
+                                        <div className="flex justify-between items-center mb-4">
+                                            <CardTitle className="text-lg">{card.type === 'game' ? 'Game Card' : 'Tournament Card'}</CardTitle>
+                                            <div className="flex items-center space-x-2">
+                                                <Label htmlFor={`card-enabled-${index}`}>Enable</Label>
+                                                <Switch
+                                                    id={`card-enabled-${index}`}
+                                                    checked={card.enabled}
+                                                    onCheckedChange={(checked) => handleHomePageCardChange(index, 'enabled', checked)}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="grid md:grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label htmlFor={`card-title-${index}`}>Title</Label>
+                                                <Input id={`card-title-${index}`} value={card.title} onChange={(e) => handleHomePageCardChange(index, 'title', e.target.value)} />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor={`card-desc-${index}`}>Description</Label>
+                                                <Input id={`card-desc-${index}`} value={card.description} onChange={(e) => handleHomePageCardChange(index, 'description', e.target.value)} />
+                                            </div>
+                                        </div>
+                                        <div className="mt-4">
+                                            <BannerManager 
+                                                title="Card Images" 
+                                                bannerUrls={card.images}
+                                                onUpdate={(urls) => handleHomePageCardChange(index, 'images', urls)}
+                                            />
+                                        </div>
+                                    </Card>
+                                ))}
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Other App Content</CardTitle>
                                 <CardDescription>Manage banners and popups that appear in the app.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6">
@@ -376,20 +399,7 @@ export default function SettingsPage() {
                                     <Input id="promotion-banner" value={settings.promotionBannerText || ''} onChange={(e) => handleContentChange('promotionBannerText', e.target.value)} placeholder="e.g., Get 10% off on all games today!" />
                                     <p className="text-sm text-muted-foreground">This text will appear on the user's home page. Leave empty to hide.</p>
                                 </div>
-                                <div className="space-y-4">
-                                    <BannerManager
-                                        title="Classic Ludo Banners"
-                                        bannerUrls={settings.gameBanners?.classic || []}
-                                        gameType="classic"
-                                        onUpdate={(urls) => handleBannerUpdate('classic', urls)}
-                                    />
-                                    <BannerManager
-                                        title="Popular Ludo Banners"
-                                        bannerUrls={settings.gameBanners?.popular || []}
-                                        gameType="popular"
-                                        onUpdate={(urls) => handleBannerUpdate('popular', urls)}
-                                    />
-                                </div>
+                                
                                 <Card>
                                     <CardHeader>
                                         <CardTitle className="text-base">Festive Greeting Popup</CardTitle>
@@ -440,45 +450,6 @@ export default function SettingsPage() {
                                         )}
                                     </CardContent>
                                 </Card>
-
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle className="text-base">Referral Settings</CardTitle>
-                                        <CardDescription className="text-sm">Manage the content for the 'Refer & Earn' page.</CardDescription>
-                                    </CardHeader>
-                                    <CardContent className="space-y-4">
-                                        <BannerManager
-                                            title="Referral Page Image"
-                                            bannerUrls={settings.referralSettings?.imageUrl ? [settings.referralSettings.imageUrl] : []}
-                                            gameType="referral"
-                                            onUpdate={(urls) => handleReferralSettingChange('imageUrl', urls[0] || '')}
-                                        />
-                                        <div className="space-y-2">
-                                            <Label htmlFor="referral-share-text">Referral Share Text</Label>
-                                            <Textarea
-                                                id="referral-share-text"
-                                                value={settings.referralSettings?.shareText || ''}
-                                                onChange={(e) => handleReferralSettingChange('shareText', e.target.value)}
-                                                placeholder="Use {{referralCode}} and {{referralLink}} as placeholders."
-                                                rows={4}
-                                            />
-                                            <p className="text-xs text-muted-foreground">
-                                                Use placeholders: {`{{referralCode}}`} and {`{{referralLink}}`}.
-                                            </p>
-                                        </div>
-                                         <div className="space-y-2">
-                                            <Label htmlFor="referral-how-it-works">"How It Works" Text</Label>
-                                            <Textarea
-                                                id="referral-how-it-works"
-                                                value={settings.referralSettings?.howItWorksText || ''}
-                                                onChange={(e) => handleReferralSettingChange('howItWorksText', e.target.value)}
-                                                placeholder="Describe the referral program benefits."
-                                                rows={4}
-                                            />
-                                        </div>
-                                    </CardContent>
-                                </Card>
-
                             </CardContent>
                         </Card>
                         <div className="flex flex-col sm:flex-row gap-2">

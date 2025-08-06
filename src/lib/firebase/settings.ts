@@ -21,15 +21,14 @@ export interface FestiveGreeting {
     message: string;
 }
 
-export interface GameBanners {
-    classic: string[];
-    popular: string[];
-}
-
-export interface ReferralSettings {
-    imageUrl: string;
-    shareText: string;
-    howItWorksText: string;
+export interface HomePageCard {
+  id: string;
+  type: 'game' | 'tournament';
+  enabled: boolean;
+  title: string;
+  description: string;
+  images: string[];
+  aiHint?: string;
 }
 
 export interface AppSettings {
@@ -42,8 +41,7 @@ export interface AppSettings {
   // App Settings
   promotionBannerText?: string;
   festiveGreeting?: FestiveGreeting;
-  gameBanners?: GameBanners;
-  referralSettings?: ReferralSettings;
+  homePageCards: HomePageCard[];
 }
 
 export const getSettings = async (): Promise<AppSettings> => {
@@ -62,15 +60,44 @@ export const getSettings = async (): Promise<AppSettings> => {
             type: 'None',
             message: ''
         },
-        gameBanners: {
-            classic: [],
-            popular: []
-        },
-        referralSettings: {
-            imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEigtvhhJRucPCHR_BWwPVLk335J3yeFT8CTExF13JYJbogG0IOrplIRwu2FzgAca1G8ssvc83saCCnC7NdVFP15FnIOppoCDc0pa31pziFzf6hGq8qCo7yZa2K9_92MtBQet6Ii0wgVFYMEyfUn8R3s6vOgo2aavCvuzdNcsYX0YizIEy9xzVB_mBt5o_4/s320/77621.png',
-            shareText: "Hey! I'm playing on SZ LUDO and earning real cash. You should join too! Use my code {{referralCode}} to sign up and get a bonus. Let's play! Link: {{referralLink}}",
-            howItWorksText: "You can refer and earn 2% of your referral winning, every time. Like if your player plays for ₹10000 and wins, You will get ₹200 as referral amount."
-        }
+        homePageCards: [
+          {
+            id: 'classic-ludo',
+            type: 'game',
+            enabled: true,
+            title: 'Classic Ludo',
+            description: 'Entry: ₹50 - ₹50,000',
+            images: ['https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhB0r-oO8dVhvrf38QyLfm-51CbBGQpTf1vaodlbX-FTEwAoIRD1Erekk472T8ToyMbvpcYsbPk9w5p6dz9RyoSHp5ZR91ThRUe7yCebrAH445VkNJBXJXImhpJsBNpgyOXY_HUJIFErAPUQqtDyxZwoqi8zfjWYRpgeMM4U2EBOd7crErzdxFY_-KIDmw/s1600/74360.jpg'],
+            aiHint: 'ludo game'
+          },
+          {
+            id: 'popular-ludo',
+            type: 'game',
+            enabled: true,
+            title: 'Popular Ludo',
+            description: 'Entry: ₹50,000 - ₹1,00,000',
+            images: ['https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhB0r-oO8dVhvrf38QyLfm-51CbBGQpTf1vaodlbX-FTEwAoIRD1Erekk472T8ToyMbvpcYsbPk9w5p6dz9RyoSHp5ZR91ThRUe7yCebrAH445VkNJBXJXImhpJsBNpgyOXY_HUJIFErAPUQqtDyxZwoqi8zfjWYRpgeMM4U2EBOd7crErzdxFY_-KIDmw/s1600/74360.jpg'],
+            aiHint: 'ludo board'
+          },
+          {
+            id: 'ludo-tournament',
+            type: 'tournament',
+            enabled: true,
+            title: 'Ludo Tournament',
+            description: 'Join the battle & win big!',
+            images: ['https://placehold.co/600x400.png'],
+            aiHint: 'trophy prize'
+          },
+          {
+            id: 'mega-tournament',
+            type: 'tournament',
+            enabled: false,
+            title: 'Mega Tournament',
+            description: 'The ultimate prize awaits!',
+            images: ['https://placehold.co/600x400.png'],
+            aiHint: 'gold prize'
+          }
+        ]
     };
 
   if (docSnap.exists()) {
@@ -78,10 +105,9 @@ export const getSettings = async (): Promise<AppSettings> => {
     // Ensure nested objects have defaults
     const upiIds = (data.upiIds || []).map(upi => ({ name: '', currentAmount: 0, limit: 50000, ...upi }));
     const festiveGreeting = data.festiveGreeting || defaults.festiveGreeting;
-    const gameBanners = data.gameBanners || defaults.gameBanners;
-    const referralSettings = data.referralSettings || defaults.referralSettings;
+    const homePageCards = data.homePageCards && data.homePageCards.length > 0 ? data.homePageCards : defaults.homePageCards;
 
-    return { ...defaults, ...data, upiIds, festiveGreeting, gameBanners, referralSettings };
+    return { ...defaults, ...data, upiIds, festiveGreeting, homePageCards };
   } else {
     // If the document doesn't exist, create it with default values
     await setDoc(docRef, defaults);
@@ -126,8 +152,8 @@ export const incrementUpiAmount = async (upiId: string, amount: number) => {
 };
 
 // Upload a banner image to storage
-export const uploadBannerImage = async (file: File, gameType: 'classic' | 'popular' | 'referral'): Promise<string> => {
-    const filePath = `banners/${gameType}/${Date.now()}_${file.name}`;
+export const uploadBannerImage = async (file: File, folder: string): Promise<string> => {
+    const filePath = `banners/${folder}/${Date.now()}_${file.name}`;
     const storageRef = ref(storage, filePath);
     await uploadBytes(storageRef, file);
     return await getDownloadURL(storageRef);
@@ -135,8 +161,17 @@ export const uploadBannerImage = async (file: File, gameType: 'classic' | 'popul
 
 // Delete a banner image from storage
 export const deleteBannerImage = async (url: string): Promise<void> => {
-    const storageRef = ref(storage, url);
-    await deleteObject(storageRef);
+    try {
+        const storageRef = ref(storage, url);
+        await deleteObject(storageRef);
+    } catch (error: any) {
+        // If the object does not exist, Firebase throws an error. We can ignore it.
+        if (error.code === 'storage/object-not-found') {
+            console.warn(`Attempted to delete an image that doesn't exist: ${url}`);
+            return;
+        }
+        throw error;
+    }
 };
 
 // Admin: Delete old game records
