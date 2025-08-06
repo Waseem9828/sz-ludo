@@ -28,6 +28,7 @@ export interface PlayerInfo {
     uid: string;
     displayName: string | null;
     photoURL: string | null;
+    isKycVerified: boolean;
 }
 
 export interface Game {

@@ -20,6 +20,7 @@ export interface AppUser {
     },
     // KYC Details
     kycStatus?: 'Pending' | 'Verified' | 'Rejected';
+    isKycVerified?: boolean; // Derived field for easy access
     aadhaar?: string;
     pan?: string;
     bankAccount?: string;
@@ -59,7 +60,12 @@ export const getUser = async (uid: string): Promise<AppUser | null> => {
     const docRef = doc(db, "users", uid);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-        return { uid: docSnap.id, ...docSnap.data() } as AppUser;
+        const data = docSnap.data() as AppUser;
+        return { 
+            uid: docSnap.id, 
+            ...data,
+            isKycVerified: data.kycStatus === 'Verified' 
+        };
     }
     return null;
 }
@@ -69,6 +75,7 @@ export const updateUserKycDetails = async (uid: string, details: KycDetails) => 
     return await updateDoc(userRef, {
         ...details,
         kycStatus: 'Pending',
+        isKycVerified: false,
     });
 };
 
@@ -158,7 +165,8 @@ export const updateUserWallet = async (uid: string, amount: number, walletType: 
 
 export const updateUserKycStatus = async (uid: string, status: AppUser['kycStatus']) => {
     const userRef = doc(db, 'users', uid);
-    return await updateDoc(userRef, { kycStatus: status });
+    const isVerified = status === 'Verified';
+    return await updateDoc(userRef, { kycStatus: status, isKycVerified: isVerified });
 }
 
 export const updateUserStatus = async (uid: string, status: AppUser['status']) => {
@@ -176,7 +184,12 @@ export const listenForAllUsers = (
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const users: AppUser[] = [];
         querySnapshot.forEach((doc) => {
-            users.push({ uid: doc.id, ...doc.data() } as AppUser);
+            const data = doc.data() as AppUser;
+            users.push({ 
+                uid: doc.id, 
+                ...data,
+                isKycVerified: data.kycStatus === 'Verified'
+            });
         });
         callback(users);
     }, (error) => {

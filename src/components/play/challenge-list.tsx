@@ -21,7 +21,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, ShieldCheck } from "lucide-react";
 
 export default function ChallengeList() {
     const [challenges, setChallenges] = useState<Game[]>([]);
@@ -93,6 +93,7 @@ export default function ChallengeList() {
                 uid: user.uid,
                 displayName: appUser.displayName || '',
                 photoURL: appUser.photoURL || '',
+                isKycVerified: appUser.isKycVerified || false,
             });
 
             toast({ title: 'Challenge Accepted!', description: `You are now in a battle for ₹${challenge.amount}.` });
@@ -138,7 +139,10 @@ export default function ChallengeList() {
                             <AvatarFallback>{challenge.createdBy.displayName?.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div>
-                             <span className="font-semibold">{challenge.createdBy.displayName}</span>
+                             <div className="flex items-center gap-1">
+                                <span className="font-semibold">{challenge.createdBy.displayName}</span>
+                                {challenge.createdBy.isKycVerified && <ShieldCheck className="h-4 w-4 text-blue-500" />}
+                             </div>
                              <p className="text-xs text-muted-foreground">has set a challenge</p>
                         </div>
                     </div>

@@ -93,6 +93,7 @@ export default function PlayPage() {
                 uid: user.uid,
                 displayName: appUser.displayName || '',
                 photoURL: appUser.photoURL || '',
+                isKycVerified: appUser.isKycVerified || false,
             },
             message: message || `Play a game for ₹${numericAmount}!`,
         });

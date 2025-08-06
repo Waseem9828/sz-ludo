@@ -8,6 +8,7 @@ import { Game, listenForGames } from "@/lib/firebase/games";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/auth-context";
 import { useRouter } from "next/navigation";
+import { ShieldCheck } from "lucide-react";
 
 export default function BattleList() {
   const [battles, setBattles] = useState<Game[]>([]);
@@ -68,7 +69,10 @@ export default function BattleList() {
                         <AvatarImage src={battle.player1.photoURL || undefined} alt={battle.player1.displayName || 'P1'} />
                         <AvatarFallback>{battle.player1.displayName?.charAt(0)}</AvatarFallback>
                     </Avatar>
-                    <span className="font-semibold truncate">{battle.player1.displayName}</span>
+                     <div className="flex items-center gap-1">
+                        <span className="font-semibold truncate">{battle.player1.displayName}</span>
+                        {battle.player1.isKycVerified && <ShieldCheck className="h-4 w-4 text-blue-500 flex-shrink-0" />}
+                    </div>
                     </div>
 
                     <div className="text-center basis-1/5">
@@ -77,7 +81,10 @@ export default function BattleList() {
                     </div>
 
                     <div className="flex items-center justify-end gap-2 basis-2/5 overflow-hidden">
-                    <span className="font-semibold truncate">{battle.player2.displayName}</span>
+                     <div className="flex items-center gap-1">
+                        <span className="font-semibold truncate">{battle.player2.displayName}</span>
+                        {battle.player2.isKycVerified && <ShieldCheck className="h-4 w-4 text-blue-500 flex-shrink-0" />}
+                    </div>
                     <Avatar className="h-8 w-8 flex-shrink-0">
                         <AvatarImage src={battle.player2.photoURL || undefined} alt={battle.player2.displayName || 'P2'} />
                         <AvatarFallback>{battle.player2.displayName?.charAt(0)}</AvatarFallback>

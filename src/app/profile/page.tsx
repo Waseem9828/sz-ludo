@@ -100,7 +100,7 @@ export default function ProfilePage() {
         return <SplashScreen />;
     }
     
-    const isKycVerified = appUser.kycStatus === 'Verified';
+    const isKycVerified = appUser.isKycVerified;
 
     const getKycBadgeVariant = (status?: 'Pending' | 'Verified' | 'Rejected') => {
         switch (status) {
@@ -158,7 +158,7 @@ export default function ProfilePage() {
                                             className={cn("bg-muted")}
                                         />
                                     </div>
-                                    {isKycVerified && !isEditingUsername && (
+                                    {isKycVerified && (
                                         <ShieldCheck className="h-5 w-5 text-blue-500 flex-shrink-0" />
                                     )}
                                     <Button onClick={handleEditUsername}>{isEditingUsername ? 'Save' : 'Edit'}</Button>
