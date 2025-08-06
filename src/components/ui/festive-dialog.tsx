@@ -163,47 +163,37 @@ const ChristmasAnimation = () => (
   </div>
 );
 
-const Balloon = ({ initialX, initialY, duration, delay, color, onBlast }: { initialX: number; initialY: number, duration: number; delay: number; color: string; onBlast: () => void }) => {
+const Balloon = ({ id, color, onBlast }: { id: any; color: string; onBlast: (id: any) => void; }) => {
     const [isBlasted, setIsBlasted] = useState(false);
-    const xEnd = (Math.random() - 0.5) * 200;
+    const initialX = Math.random() * 100;
+    const duration = 8 + Math.random() * 8;
+    const delay = Math.random() * 5;
+    const sway = (Math.random() - 0.5) * 200;
 
     const handleBlast = () => {
         if (isBlasted) return;
         setIsBlasted(true);
-        onBlast();
+        setTimeout(() => onBlast(id), 300); // Allow blast animation to play
     };
 
     return (
-        <AnimatePresence>
-            {!isBlasted && (
-                <motion.div
-                    className="absolute bottom-[-100px] cursor-pointer"
-                    style={{
-                        width: `${30 + Math.random() * 30}px`,
-                        height: `${40 + Math.random() * 40}px`,
-                        background: color,
-                        clipPath: 'ellipse(35% 50% at 50% 50%)',
-                        left: `${initialX}%`,
-                    }}
-                    initial={{ y: 0, opacity: 0.8 }}
-                    animate={{
-                        y: '-110vh',
-                        x: xEnd,
-                    }}
-                    exit={{
-                        scale: 3,
-                        opacity: 0,
-                        transition: { duration: 0.4 }
-                    }}
-                    transition={{
-                        duration: duration,
-                        delay: delay,
-                        ease: 'linear',
-                    }}
-                    onClick={handleBlast}
-                />
-            )}
-        </AnimatePresence>
+        <motion.div
+            className="absolute bottom-[-100px] cursor-pointer"
+            style={{
+                width: `${40 + Math.random() * 20}px`,
+                height: `${50 + Math.random() * 25}px`,
+                background: color,
+                clipPath: 'ellipse(35% 50% at 50% 50%)',
+                left: `${initialX}%`,
+            }}
+            initial={{ y: 0, x: 0 }}
+            animate={isBlasted ? { scale: 1.5, opacity: 0 } : { y: '-120vh', x: sway }}
+            transition={isBlasted ? 
+                { duration: 0.3, ease: 'easeOut' } : 
+                { duration: duration, delay: delay, ease: 'linear' }
+            }
+            onClick={handleBlast}
+        />
     );
 };
 
@@ -212,27 +202,18 @@ const IndependenceDayAnimation = () => {
     const balloonColors = ['#FF9933', '#FFFFFF', '#138808'];
 
     useEffect(() => {
-        const createBalloon = () => ({
-            id: Date.now() + Math.random(),
-            color: balloonColors[Math.floor(Math.random() * 3)],
-            initialX: 10 + Math.random() * 80,
-            initialY: 0,
-            duration: 8 + Math.random() * 10,
-            delay: Math.random() * 2,
-        });
-
-        const initialBalloons = Array.from({ length: 15 }, createBalloon);
+        const createBalloon = () => ({ id: Date.now() + Math.random(), color: balloonColors[Math.floor(Math.random() * balloonColors.length)] });
+        const initialBalloons = Array.from({ length: 20 }, createBalloon);
         setBalloons(initialBalloons);
-
-        const interval = setInterval(() => {
-            setBalloons(prev => [...prev.slice(1), createBalloon()]);
-        }, 1000); // Add a new balloon every second
-
-        return () => clearInterval(interval);
     }, []);
 
-    const handleBlast = (id: number) => {
+    const handleBlast = (id: any) => {
         setBalloons(prev => prev.filter(b => b.id !== id));
+        // Add a new balloon to replace the blasted one
+        const newBalloon = { id: Date.now() + Math.random(), color: balloonColors[Math.floor(Math.random() * balloonColors.length)] };
+        setTimeout(() => {
+            setBalloons(prev => [...prev, newBalloon]);
+        }, 500);
     };
 
     return (
@@ -240,8 +221,9 @@ const IndependenceDayAnimation = () => {
             {balloons.map((b) => (
                 <Balloon
                     key={b.id}
-                    {...b}
-                    onBlast={() => handleBlast(b.id)}
+                    id={b.id}
+                    color={b.color}
+                    onBlast={handleBlast}
                 />
             ))}
         </div>
@@ -307,7 +289,7 @@ export function FestiveDialog({
 
 
 export function FestiveBackground({ type }: { type: FestivalType }) {
-    if (!type) return null;
+    if (!type || type === 'None') return null;
     const config = festivalConfig[type] || festivalConfig.Generic;
 
     return (
