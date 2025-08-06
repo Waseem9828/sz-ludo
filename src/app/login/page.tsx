@@ -3,18 +3,19 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/auth-context';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Github, Chrome } from 'lucide-react';
+import { Chrome } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Suspense } from 'react';
 
-export default function LoginPage() {
+function LoginPageContent() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -22,6 +23,8 @@ export default function LoginPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const { signUp, signIn, signInWithGoogle, user } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const refCode = searchParams.get('ref');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -42,7 +45,7 @@ export default function LoginPage() {
       return;
     }
     try {
-      await signUp(email, password, name, phone);
+      await signUp(email, password, name, phone, refCode || undefined);
       router.push('/');
       toast({
         title: 'Success',
@@ -77,7 +80,7 @@ export default function LoginPage() {
 
   const handleGoogleSignIn = async () => {
     try {
-      await signInWithGoogle();
+      await signInWithGoogle(refCode || undefined);
       router.push('/');
       toast({
         title: 'Success',
@@ -104,7 +107,7 @@ export default function LoginPage() {
               <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg2oNx0s_EsUtQCxkYGCkEqHAcVCA4PAgVdyNX-mDF_KO228qsfmqMAOefbIFmb-yD98WpX7jVLor2AJzeDhfqG6wC8n7lWtxU9euuYIYhPWStqYgbGjkGp6gu1JrfKmXMwCn7I_KjLGu_GlGy3PMNmf9ljC8Yr__ZpsiGxHJRKbtH6MfTuG4ofViNRsAY/s1600/73555.png" alt="SZ LUDO Logo" width={40} height={40} />
             </Link>
             <Link href="/">
-              <h1 className="text-3xl font-headline font-bold text-red-600 animate-shine">SZ LUDO</h1>
+              <h1 className="text-3xl font-headline font-bold text-red-600">SZ LUDO</h1>
             </Link>
           </div>
         <Tabs defaultValue="login" className="w-full">
@@ -138,9 +141,8 @@ export default function LoginPage() {
                     <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1">
                     <Button variant="outline" onClick={handleGoogleSignIn}><Chrome className="mr-2 h-4 w-4"/>Google</Button>
-                    <Button variant="outline"><Github className="mr-2 h-4 w-4" />GitHub</Button>
                 </div>
               </CardContent>
             </Card>
@@ -182,4 +184,12 @@ export default function LoginPage() {
       </div>
     </div>
   );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginPageContent />
+    </Suspense>
+  )
 }

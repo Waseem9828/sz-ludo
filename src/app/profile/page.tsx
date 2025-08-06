@@ -2,7 +2,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import Header from "@/components/play/header";
+import Header from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -125,7 +125,7 @@ export default function ProfilePage() {
             <main className="flex-grow container mx-auto px-4 py-6 space-y-6">
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-center text-xl font-semibold text-red-600 animate-shine">Profile</CardTitle>
+                        <CardTitle className="text-center text-xl font-semibold text-red-600">Profile</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <div className="flex justify-center relative w-24 h-24 mx-auto">
@@ -133,15 +133,15 @@ export default function ProfilePage() {
                                 <AvatarImage src={user.photoURL || `https://placehold.co/96x96.png`} alt={username} data-ai-hint="avatar person" />
                                 <AvatarFallback>{getInitials(username)}</AvatarFallback>
                             </Avatar>
-                            {isKycVerified ? (
-                                <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-1">
+                             <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-1">
+                                {isKycVerified ? (
                                     <ShieldCheck className="h-7 w-7 text-blue-500 fill-blue-100" />
-                                </div>
-                            ) : (
-                                <Button size="icon" className="absolute bottom-0 right-0 rounded-full bg-primary hover:bg-primary/90 h-8 w-8">
-                                    <Pencil className="h-4 w-4 text-primary-foreground" />
-                                </Button>
-                            )}
+                                ) : (
+                                    <Button size="icon" className="rounded-full bg-primary hover:bg-primary/90 h-8 w-8">
+                                        <Pencil className="h-4 w-4 text-primary-foreground" />
+                                    </Button>
+                                )}
+                            </div>
                         </div>
 
                         <div className="space-y-4">
@@ -158,9 +158,6 @@ export default function ProfilePage() {
                                             className={cn("bg-muted")}
                                         />
                                     </div>
-                                    {isKycVerified && (
-                                        <ShieldCheck className="h-5 w-5 text-blue-500 flex-shrink-0" />
-                                    )}
                                     <Button onClick={handleEditUsername}>{isEditingUsername ? 'Save' : 'Edit'}</Button>
                                 </div>
                             </div>
@@ -201,13 +198,13 @@ export default function ProfilePage() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-center text-xl font-semibold text-red-600 animate-shine">Metrics</CardTitle>
+                        <CardTitle className="text-center text-xl font-semibold text-red-600">Metrics</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="grid grid-cols-2 gap-4">
                             <MetricCard icon={<BarChart2 className="h-4 w-4" />} label="Games Played" value={appUser.gameStats?.played || 0} />
                             <MetricCard icon={<Trophy className="h-4 w-4" />} label="Chips Won" value={`₹${(appUser.lifetimeStats?.totalWinnings || 0).toFixed(2)}`} />
-                            <MetricCard icon={<Gift className="h-4 w-4" />} label="Referal Earning" value="₹0" />
+                            <MetricCard icon={<Gift className="h-4 w-4" />} label="Referal Earning" value={`₹${(appUser.referralStats?.totalEarnings || 0).toFixed(2)}`} />
                             <MetricCard icon={<ArrowUp className="h-4 w-4" />} label="Penalty" value="₹0" />
                         </div>
                     </CardContent>
@@ -216,6 +213,9 @@ export default function ProfilePage() {
                 <Button onClick={handleLogout} variant="destructive" className="w-full font-bold text-lg py-6">
                     LOG OUT
                 </Button>
+
+                {/* Spacer to prevent content from being hidden by the fixed bottom nav */}
+                <div className="h-20 md:hidden" />
             </main>
         </div>
     );

@@ -1,3 +1,4 @@
+
 'use client'
 
 import Header from '@/components/header';
@@ -102,10 +103,7 @@ export default function Home() {
                 />
               )}
               {settings && <GameListing cards={settings.homePageCards} />}
-
             </main>
-            {/* Spacer to prevent content from being hidden by the fixed bottom nav */}
-            <div className="h-20 md:hidden" />
           </div>
       </div>
     </>

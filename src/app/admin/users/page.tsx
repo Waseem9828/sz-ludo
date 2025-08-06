@@ -80,7 +80,7 @@ export default function UsersPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-red-600 animate-shine">User Analytics</CardTitle>
+        <CardTitle>User Analytics</CardTitle>
         <CardDescription>A detailed overview of all users and their activities.</CardDescription>
       </CardHeader>
       <CardContent>
@@ -123,7 +123,7 @@ export default function UsersPage() {
                            <TrendingUp size={16}/>
                            <span>₹{user.lifetimeStats?.totalDeposits || 0}</span>
                         </div>
-                        <div className="flex items-center gap-1 text-red-600 animate-shine">
+                        <div className="flex items-center gap-1 text-red-600">
                            <TrendingDown size={16}/>
                            <span>₹{user.lifetimeStats?.totalWithdrawals || 0}</span>
                         </div>
@@ -150,8 +150,6 @@ export default function UsersPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
                             <DropdownMenuItem onClick={() => router.push(`/admin/users/${user.uid}`)}><User className="mr-2 h-4 w-4"/>View Profile</DropdownMenuItem>
-                            <DropdownMenuItem><Wallet className="mr-2 h-4 w-4"/>Adjust Wallet</DropdownMenuItem>
-                            <DropdownMenuItem><Shield className="mr-2 h-4 w-4"/>Update KYC</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </TableCell>

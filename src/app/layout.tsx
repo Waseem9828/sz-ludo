@@ -4,6 +4,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from '@/context/auth-context';
+import BottomNav from '@/components/bottom-nav';
 
 export const metadata: Metadata = {
   title: 'SZ LUDO',
@@ -31,6 +32,7 @@ export default function RootLayout({
               disableTransitionOnChange
             >
               {children}
+              <BottomNav />
               <Toaster />
             </ThemeProvider>
         </AuthProvider>

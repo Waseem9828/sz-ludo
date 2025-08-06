@@ -31,8 +31,17 @@ export interface HomePageCard {
   aiHint?: string;
 }
 
+export interface ReferralSettings {
+    imageUrl: string;
+    shareText: string;
+    howItWorksText: string;
+}
+
 export interface AppSettings {
   upiIds?: UpiId[];
+  appSettings?: {
+      adminCommission: number; // Percentage
+  }
   // Content Management
   termsContent?: string;
   privacyContent?: string;
@@ -42,6 +51,7 @@ export interface AppSettings {
   promotionBannerText?: string;
   festiveGreeting?: FestiveGreeting;
   homePageCards: HomePageCard[];
+  referralSettings?: ReferralSettings;
 }
 
 export const getSettings = async (): Promise<AppSettings> => {
@@ -50,6 +60,7 @@ export const getSettings = async (): Promise<AppSettings> => {
 
   const defaults: AppSettings = { 
         upiIds: [],
+        appSettings: { adminCommission: 5 },
         termsContent: '',
         privacyContent: '',
         refundContent: '',
@@ -79,7 +90,7 @@ export const getSettings = async (): Promise<AppSettings> => {
             images: ['https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhB0r-oO8dVhvrf38QyLfm-51CbBGQpTf1vaodlbX-FTEwAoIRD1Erekk472T8ToyMbvpcYsbPk9w5p6dz9RyoSHp5ZR91ThRUe7yCebrAH445VkNJBXJXImhpJsBNpgyOXY_HUJIFErAPUQqtDyxZwoqi8zfjWYRpgeMM4U2EBOd7crErzdxFY_-KIDmw/s1600/74360.jpg'],
             aiHint: 'ludo board'
           },
-          {
+           {
             id: 'ludo-tournament',
             type: 'tournament',
             enabled: true,

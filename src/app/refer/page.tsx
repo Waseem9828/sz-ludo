@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Header from "@/components/play/header";
+import Header from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -83,7 +83,7 @@ export default function ReferPage() {
             <main className="flex-grow container mx-auto px-4 py-6 space-y-6">
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-center text-lg font-semibold text-red-600 animate-shine">Your Referral Earnings</CardTitle>
+                        <CardTitle className="text-center text-lg font-semibold text-red-600">Your Referral Earnings</CardTitle>
                     </CardHeader>
                     <CardContent className="flex justify-around text-center">
                         <div>
@@ -100,7 +100,7 @@ export default function ReferPage() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-center text-lg font-semibold text-red-600 animate-shine">Referral Code</CardTitle>
+                        <CardTitle className="text-center text-lg font-semibold text-red-600">Referral Code</CardTitle>
                     </CardHeader>
                     <CardContent className="text-center">
                         <div className="flex justify-center my-4">
@@ -133,15 +133,16 @@ export default function ReferPage() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-center text-lg font-semibold text-red-600 animate-shine">How It Works</CardTitle>
+                        <CardTitle className="text-center text-lg font-semibold text-red-600">How It Works</CardTitle>
                     </CardHeader>
                     <CardContent className="text-center text-muted-foreground">
                         <p>{referralSettings.howItWorksText || defaultSettings.howItWorksText}</p>
                     </CardContent>
                 </Card>
+
+                 {/* Spacer to prevent content from being hidden by the fixed bottom nav */}
+                <div className="h-20 md:hidden" />
             </main>
         </div>
     );
 }
-
-    

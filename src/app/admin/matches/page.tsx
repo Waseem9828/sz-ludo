@@ -48,6 +48,13 @@ export default function MatchesPage() {
                 return 'outline';
         }
     };
+    
+    const getWinnerDisplayName = (match: Game) => {
+        if (!match.winner) return 'N/A';
+        if (match.player1?.uid === match.winner) return match.player1.displayName;
+        if (match.player2?.uid === match.winner) return match.player2.displayName;
+        return 'N/A';
+    }
 
   if (loading) {
     return (
@@ -60,7 +67,7 @@ export default function MatchesPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-red-600 animate-shine">Match History</CardTitle>
+        <CardTitle>Match History</CardTitle>
         <CardDescription>A log of all completed, cancelled, or disputed matches.</CardDescription>
       </CardHeader>
       <CardContent>
@@ -84,9 +91,9 @@ export default function MatchesPage() {
             )}
             {matches.map((match) => (
               <TableRow key={match.id}>
-                <TableCell>{match.player1?.displayName} vs {match.player2?.displayName}</TableCell>
+                <TableCell>{match.player1?.displayName} vs {match.player2?.displayName || 'N/A'}</TableCell>
                 <TableCell>₹{match.amount}</TableCell>
-                <TableCell>{match.winner === match.player1.uid ? match.player1.displayName : match.player2?.displayName || 'N/A'}</TableCell>
+                <TableCell>{getWinnerDisplayName(match)}</TableCell>
                 <TableCell>{match.roomCode}</TableCell>
                 <TableCell>
                     <Badge variant={getStatusBadgeVariant(match.status)}>{match.status.replace('_', ' ')}</Badge>

@@ -1,9 +1,8 @@
 
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Header from "@/components/play/header";
+import Header from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ChevronLeft, AlertCircle, Plus, Minus, Loader, Gamepad2, Trophy, Users } from "lucide-react";
@@ -153,15 +152,6 @@ export default function WalletPage() {
         <div className="flex flex-col min-h-screen bg-background font-body">
             <Header />
             <main className="flex-grow container mx-auto px-4 py-6 space-y-6">
-                <div className="flex justify-between items-center">
-                    <Link href="/">
-                        <Button variant="outline">
-                            <ChevronLeft className="mr-2 h-4 w-4" />
-                            Back
-                        </Button>
-                    </Link>
-                </div>
-
                 <Card>
                     <CardHeader className="text-center">
                         <CardDescription>Total Balance</CardDescription>
@@ -186,7 +176,7 @@ export default function WalletPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-center text-lg font-semibold text-red-600 animate-shine">Deposit Chips</CardTitle>
+                            <CardTitle className="text-center text-lg font-semibold text-red-600">Deposit Chips</CardTitle>
                             <CardDescription className="text-center">Available for Gameplay</CardDescription>
                         </CardHeader>
                         <CardContent className="text-center space-y-4">
@@ -202,7 +192,7 @@ export default function WalletPage() {
                     
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-center text-lg font-semibold text-red-600 animate-shine">Winning Chips</CardTitle>
+                            <CardTitle className="text-center text-lg font-semibold text-red-600">Winning Chips</CardTitle>
                             <CardDescription className="text-center">Withdrawable Balance</CardDescription>
                         </CardHeader>
                         <CardContent className="text-center space-y-4">
@@ -271,7 +261,7 @@ export default function WalletPage() {
 
                  <Card>
                     <CardHeader>
-                        <CardTitle className="text-center text-lg font-semibold text-red-600 animate-shine">Recent Battles</CardTitle>
+                        <CardTitle className="text-center text-lg font-semibold text-red-600">Recent Battles</CardTitle>
                     </CardHeader>
                     <CardContent>
                        <ScrollArea className="h-72">
@@ -320,7 +310,7 @@ export default function WalletPage() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-center text-lg font-semibold text-red-600 animate-shine">Recent Transactions</CardTitle>
+                        <CardTitle className="text-center text-lg font-semibold text-red-600">Recent Transactions</CardTitle>
                     </CardHeader>
                     <CardContent>
                        <ScrollArea className="h-72">
@@ -354,6 +344,9 @@ export default function WalletPage() {
                        </ScrollArea>
                     </CardContent>
                 </Card>
+
+                 {/* Spacer to prevent content from being hidden by the fixed bottom nav */}
+                <div className="h-20 md:hidden" />
             </main>
         </div>
     );

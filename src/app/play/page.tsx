@@ -1,3 +1,4 @@
+
 'use client'
 
 import React, { useState, useEffect } from 'react';
@@ -59,6 +60,8 @@ export default function PlayPage() {
                 <BattleList />
             </section>
         </div>
+        {/* Spacer to prevent content from being hidden by the fixed bottom nav */}
+        <div className="h-20 md:hidden" />
       </main>
     </div>
   );

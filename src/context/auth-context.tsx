@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, User, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, updateProfile } from 'firebase/auth';
 import { auth, db, googleAuthProvider } from '@/lib/firebase/config';
-import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, getDoc, onSnapshot, updateDoc, increment } from 'firebase/firestore';
 import { SplashScreen } from '@/components/ui/splash-screen';
 import type { AppUser } from '@/lib/firebase/users';
 
@@ -12,9 +12,9 @@ interface AuthContextType {
   user: User | null;
   appUser: AppUser | null;
   loading: boolean;
-  signUp: (email:string, password:string, name:string, phone:string) => Promise<any>;
+  signUp: (email:string, password:string, name:string, phone:string, referralCode?: string) => Promise<any>;
   signIn: (email:string, password:string) => Promise<any>;
-  signInWithGoogle: () => Promise<any>;
+  signInWithGoogle: (referralCode?: string) => Promise<any>;
   logout: () => Promise<void>;
 }
 
@@ -45,7 +45,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 if (data.email === 'admin@example.com' && !data.role) {
                     data.role = 'superadmin';
                 }
-                setAppUser(data);
+                setAppUser({ ...data, isKycVerified: data.kycStatus === 'Verified' });
             }
             setLoading(false);
         });
@@ -59,7 +59,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => unsubscribeAuth();
   }, []);
   
-  const signUp = async (email:string, password:string, name:string, phone:string) => {
+  const signUp = async (email:string, password:string, name:string, phone:string, referralCode?: string) => {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       await updateProfile(user, { displayName: name });
@@ -80,9 +80,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           lifetimeStats: { totalDeposits: 0, totalWithdrawals: 0, totalWinnings: 0 },
           referralStats: { referredCount: 0, totalEarnings: 0 },
       };
+      
+      // Handle referral
+      if (referralCode && referralCode.startsWith('SZLUDO')) {
+          const referrerUid = referralCode.replace('SZLUDO', '');
+          const referrerRef = doc(db, 'users', referrerUid);
+          const referrerSnap = await getDoc(referrerRef);
+          if (referrerSnap.exists()) {
+              newAppUser.referralStats.referredBy = referrerUid;
+              await updateDoc(referrerRef, {
+                  'referralStats.referredCount': increment(1)
+              });
+          }
+      }
+
       // Assign role if it's the admin user
       if (email === 'admin@example.com') {
           newAppUser.role = 'superadmin';
+          newAppUser.lifetimeStats.totalRevenue = 0;
       }
       
       await setDoc(userRef, newAppUser);
@@ -95,7 +110,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return signInWithEmailAndPassword(auth, email, password);
   }
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = async (referralCode?: string) => {
     const result = await signInWithPopup(auth, googleAuthProvider);
     const user = result.user;
     const userRef = doc(db, 'users', user.uid);
@@ -113,6 +128,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         lifetimeStats: { totalDeposits: 0, totalWithdrawals: 0, totalWinnings: 0 },
         referralStats: { referredCount: 0, totalEarnings: 0 },
       };
+       // Handle referral
+      if (referralCode && referralCode.startsWith('SZLUDO')) {
+          const referrerUid = referralCode.replace('SZLUDO', '');
+          const referrerRef = doc(db, 'users', referrerUid);
+          const referrerSnap = await getDoc(referrerRef);
+          if (referrerSnap.exists()) {
+              newAppUser.referralStats.referredBy = referrerUid;
+              await updateDoc(referrerRef, {
+                  'referralStats.referredCount': increment(1)
+              });
+          }
+      }
       await setDoc(userRef, newAppUser);
       setAppUser(newAppUser);
     }

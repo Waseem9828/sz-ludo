@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -64,7 +65,7 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
             <CardHeader>
                 <div className="flex justify-between items-start">
                     <div>
-                        <CardTitle className="text-xl font-bold font-headline text-red-600 animate-shine">{tournament.title}</CardTitle>
+                        <CardTitle className="text-xl font-bold font-headline text-red-600">{tournament.title}</CardTitle>
                          <CardDescription>
                             {tournament.status === 'upcoming' && timeLeft
                                 ? `Starts ${timeLeft}`
@@ -153,7 +154,7 @@ export default function TournamentsPage() {
             <Header />
             <main className="flex-grow container mx-auto px-4 py-6 space-y-6">
                 <div className="text-center">
-                    <h1 className="text-3xl font-bold text-red-600 animate-shine">Ludo Tournaments</h1>
+                    <h1 className="text-3xl font-bold text-red-600">Ludo Tournaments</h1>
                     <p className="text-muted-foreground">Join the battle and win big prizes!</p>
                 </div>
 
@@ -172,6 +173,9 @@ export default function TournamentsPage() {
                         </p>
                     </Card>
                 )}
+
+                 {/* Spacer to prevent content from being hidden by the fixed bottom nav */}
+                <div className="h-20 md:hidden" />
             </main>
         </div>
     );

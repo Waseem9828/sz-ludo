@@ -13,14 +13,23 @@ import { Game, listenForGames, updateGameStatus } from '@/lib/firebase/games';
 import { Loader } from 'lucide-react';
 import { updateUserWallet } from '@/lib/firebase/users';
 import { useAuth } from '@/context/auth-context';
+import { getSettings } from '@/lib/firebase/settings';
 
 export default function WinningsPage() {
     const [matches, setMatches] = useState<Game[]>([]);
     const [loading, setLoading] = useState(true);
+    const [commissionRate, setCommissionRate] = useState(0.05); // Default 5%
     const { toast } = useToast();
     const { appUser } = useAuth(); // Get admin user to update revenue
 
     useEffect(() => {
+        getSettings().then(settings => {
+            const commission = settings.appSettings?.adminCommission;
+            if (commission && commission > 0) {
+                setCommissionRate(commission / 100);
+            }
+        });
+
         const unsubscribe = listenForGames(
             (games) => {
                 setMatches(games);
@@ -49,7 +58,7 @@ export default function WinningsPage() {
         }
 
         const prizePool = match.amount * 2;
-        const commission = prizePool * 0.05;
+        const commission = prizePool * commissionRate;
         const finalAmount = prizePool - commission;
 
         try {
@@ -57,7 +66,7 @@ export default function WinningsPage() {
             await updateUserWallet(match.winner, finalAmount, 'winnings', 'winnings', `Win Match: ${match.id}`);
             
             // Then, credit the admin's revenue
-            await updateUserWallet(appUser.uid, commission, 'balance', 'revenue', `Commission from Match: ${match.id}`);
+            await updateUserWallet(appUser.uid, commission, 'revenue', `Commission from Match: ${match.id}`);
 
             // Finally, update the game status
             await updateGameStatus(match.id, 'completed');
@@ -103,7 +112,7 @@ export default function WinningsPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-red-600 animate-shine">Review Winnings</CardTitle>
+        <CardTitle>Review Winnings</CardTitle>
         <CardDescription>Review match results and screenshots to approve or decline outcomes.</CardDescription>
       </CardHeader>
       <CardContent>
@@ -126,7 +135,7 @@ export default function WinningsPage() {
             )}
             {matches.map((match) => {
                 const prizePool = match.amount * 2;
-                const commission = prizePool * 0.05;
+                const commission = prizePool * commissionRate;
                 const finalAmount = prizePool - commission;
 
                 return (
@@ -182,8 +191,8 @@ export default function WinningsPage() {
                                              <span className="text-muted-foreground">Prize Pool:</span>
                                              <span className="font-medium">₹{prizePool.toFixed(2)}</span>
                                          </div>
-                                         <div className="flex justify-between text-red-600 animate-shine">
-                                             <span className="text-muted-foreground">Platform Commission (5%):</span>
+                                         <div className="flex justify-between text-red-600">
+                                             <span className="text-muted-foreground">Platform Commission ({(commissionRate * 100).toFixed(0)}%):</span>
                                              <span className="font-medium">- ₹{commission.toFixed(2)}</span>
                                          </div>
                                          <hr/>
