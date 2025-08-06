@@ -1,6 +1,17 @@
+# Specifies the version of the App Hosting platform.
+# https://firebase.google.com/docs/app-hosting/configure#version
+version: 1
+
+# Specifies the command to build your app.
+# https://firebase.google.com/docs/app-hosting/configure#build
+build: npm run build
+
+# Specifies the command to run your app.
+# https://firebase.google.com/docs/app-hosting/configure#run
+run: npm run start
+
 # Settings to manage and configure a Firebase App Hosting backend.
 # https://firebase.google.com/docs/app-hosting/configure
-
 runConfig:
   # Increase this value if you'd like to automatically spin up
   # more instances in response to increased traffic.
