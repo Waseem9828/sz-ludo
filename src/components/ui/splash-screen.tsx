@@ -12,7 +12,7 @@ export const SplashScreen = () => {
           height={100} 
         />
       </div>
-      <p className="mt-4 text-lg font-semibold animate-pulse">Loading...</p>
+      <p className="mt-4 text-2xl font-black text-red-600 animate-pulse font-headline">Loading...</p>
     </div>
   );
 };
