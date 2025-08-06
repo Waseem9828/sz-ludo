@@ -1,0 +1,13 @@
+
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+     // Allow write access for all users to upload screenshots, etc.
+     // Restrict read access to only authenticated users.
+    match /{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write;
+    }
+  }
+}
