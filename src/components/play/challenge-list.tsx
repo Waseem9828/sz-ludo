@@ -25,36 +25,14 @@ import { MessageSquare, ShieldCheck } from "lucide-react";
 
 export default function ChallengeList() {
     const [challenges, setChallenges] = useState<Game[]>([]);
-    const [ongoingGamesCount, setOngoingGamesCount] = useState(0);
     const { user, appUser } = useAuth();
     const { toast } = useToast();
     const router = useRouter();
 
     useEffect(() => {
-        // This listener fetches all challenges with 'challenge' status for everyone.
-        // It runs once and stays active, independent of the user state.
-        const unsubscribeChallenges = listenForGames(setChallenges, 'challenge');
-
-        // Cleanup the listener when the component unmounts
-        return () => unsubscribeChallenges();
-    }, []); // Empty dependency array ensures this runs only once on mount
-
-    useEffect(() => {
-        // This listener specifically checks for the current user's ongoing games.
-        // It should re-run if the user logs in or out.
-        let unsubscribeOngoing: () => void = () => {};
-        if (user) {
-            unsubscribeOngoing = listenForGames((games) => {
-                const userOngoingGames = games.filter(g => g.player1.uid === user.uid || g.player2?.uid === user.uid);
-                setOngoingGamesCount(userOngoingGames.length);
-            }, 'ongoing');
-        } else {
-            setOngoingGamesCount(0); // Reset count if user logs out
-        }
-        
-        // Cleanup the ongoing games listener when the component unmounts or the user changes.
-        return () => unsubscribeOngoing();
-    }, [user]);
+        const unsubscribe = listenForGames(setChallenges, 'challenge');
+        return () => unsubscribe();
+    }, []);
 
 
     const handleAccept = async (challenge: Game) => {
@@ -64,6 +42,7 @@ export default function ChallengeList() {
             return;
         }
         
+        const ongoingGamesCount = await listenForGames((games) => games.filter(g => g.player1.uid === user.uid || g.player2?.uid === user.uid).length, 'ongoing');
         if (ongoingGamesCount > 0) {
             toast({ title: 'Battle Limit Reached', description: 'You can only be in one ongoing battle at a time.', variant: 'destructive' });
             return;
@@ -90,7 +69,6 @@ export default function ChallengeList() {
         }
         
         try {
-            // Deduct amount from acceptor's wallet
             await updateUserWallet(user.uid, -challenge.amount, 'balance', 'Challenge Accepted');
             
             await acceptChallenge(challenge.id, {
@@ -103,7 +81,6 @@ export default function ChallengeList() {
             toast({ title: 'Challenge Accepted!', description: `You are now in a battle for ₹${challenge.amount}.` });
             router.push(`/play/game?id=${challenge.id}`);
         } catch (error: any) {
-             // Re-credit user if accept fails
             await updateUserWallet(user.uid, challenge.amount, 'balance', 'refund', 'Accept Challenge Failed');
             toast({ title: 'Failed to Accept', description: error.message, variant: 'destructive' });
         }
