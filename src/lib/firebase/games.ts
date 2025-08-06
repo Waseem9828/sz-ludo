@@ -64,7 +64,7 @@ export const deleteChallenge = async (gameId: string) => {
     const gameRef = doc(db, GAMES_COLLECTION, gameId);
     
     // Use a transaction to ensure both operations (refund and delete) succeed or fail together.
-    await runTransaction(db, async (transaction) => {
+    return await runTransaction(db, async (transaction) => {
         const gameSnap = await transaction.get(gameRef);
 
         if (!gameSnap.exists() || gameSnap.data().status !== 'challenge') {
@@ -72,13 +72,27 @@ export const deleteChallenge = async (gameId: string) => {
         }
         
         const gameData = gameSnap.data() as Game;
+        const userRef = doc(db, 'users', gameData.createdBy.uid);
         
         // 1. Refund the creator's wallet.
-        // The `updateUserWallet` function is designed to handle this.
-        // We pass a positive amount to add it back.
-        await updateUserWallet(gameData.createdBy.uid, gameData.amount, 'balance', 'refund', `Challenge Deleted: ${gameId}`);
+        transaction.update(userRef, {
+            'wallet.balance': increment(gameData.amount)
+        });
         
-        // 2. Delete the game document itself.
+        // 2. Create a refund transaction log.
+        const transactionRef = doc(collection(db, 'transactions'));
+        transaction.set(transactionRef, {
+            userId: gameData.createdBy.uid,
+            userName: gameData.createdBy.displayName,
+            amount: gameData.amount,
+            type: 'refund',
+            status: 'completed',
+            notes: `Challenge Deleted: ${gameId}`,
+            relatedId: gameId,
+            createdAt: serverTimestamp(),
+        });
+
+        // 3. Delete the game document itself.
         transaction.delete(gameRef);
     });
 };
@@ -222,11 +236,9 @@ export const listenForGames = (
     status?: Game['status'],
     onError?: (error: Error) => void
 ) => {
-    const queryConstraints: QueryConstraint[] = [orderBy('createdAt', 'desc')];
+    const queryConstraints: QueryConstraint[] = [where("type", "==", "user"), orderBy('createdAt', 'desc')];
     if (status) {
         queryConstraints.push(where("status", "==", status));
-    } else {
-         queryConstraints.push(where("type", "==", "user"));
     }
     
     const q = query(collection(db, GAMES_COLLECTION), ...queryConstraints);
@@ -337,3 +349,4 @@ export const listenForGamesHistory = (
 
     return unsubscribe;
 };
+
