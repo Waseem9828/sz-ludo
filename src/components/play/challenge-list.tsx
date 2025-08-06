@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -93,7 +92,7 @@ export default function ChallengeList() {
                 uid: user.uid,
                 displayName: appUser.displayName || '',
                 photoURL: appUser.photoURL || '',
-                isKycVerified: appUser.isKycVerified || false,
+                isKycVerified: appUser.kycStatus === 'Verified',
             });
 
             toast({ title: 'Challenge Accepted!', description: `You are now in a battle for ₹${challenge.amount}.` });

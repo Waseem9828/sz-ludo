@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,42 +5,24 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Image from "next/image";
 import { Game, listenForGames } from "@/lib/firebase/games";
 import { useEffect, useState } from "react";
-import { useAuth } from "@/context/auth-context";
 import { useRouter } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
 
 export default function BattleList() {
   const [battles, setBattles] = useState<Game[]>([]);
-  const { user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!user) {
-        setBattles([]);
-        return;
-    }
-    
-    // This listener fetches ongoing games where the current user is a player.
-    const unsubscribe = listenForGames((ongoingGames) => {
-        const userBattles = ongoingGames.filter(b => b.player1?.uid === user.uid || b.player2?.uid === user.uid);
-        setBattles(userBattles);
-    }, 'ongoing');
+    // This listener fetches all ongoing games for public view.
+    const unsubscribe = listenForGames(setBattles, 'ongoing');
     
     // Cleanup the listener when the component unmounts
     return () => unsubscribe();
-  }, [user]);
+  }, []);
   
   const handleBattleClick = (gameId: string) => {
     router.push(`/play/game?id=${gameId}`);
   };
-
-  if (!user) {
-       return (
-          <div className="text-center text-muted-foreground py-4">
-              <p>Login to see your battles.</p>
-          </div>
-      )
-  }
 
   if (battles.length === 0) {
       return (
