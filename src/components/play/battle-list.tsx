@@ -8,6 +8,29 @@ import { Game, listenForGames } from "@/lib/firebase/games";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
+import { motion } from 'framer-motion';
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      type: "spring",
+      stiffness: 100,
+    },
+  },
+};
 
 export default function BattleList() {
   const [battles, setBattles] = useState<Game[]>([]);
@@ -32,47 +55,53 @@ export default function BattleList() {
   }
 
   return (
-    <div className="space-y-3">
+    <motion.div 
+        className="space-y-3"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+    >
       {battles.map((battle) => {
         if (!battle.player1 || !battle.player2) return null;
         
         return (
-            <Card 
-                key={battle.id} 
-                className="bg-card shadow-sm hover:bg-accent/50 transition-colors cursor-pointer"
-                onClick={() => handleBattleClick(battle.id)}
-            >
-                <CardContent className="p-3 flex items-center justify-between">
-                    <div className="flex items-center gap-2 basis-2/5 overflow-hidden">
-                    <Avatar className="h-8 w-8 flex-shrink-0">
-                        <AvatarImage src={battle.player1.photoURL || undefined} alt={battle.player1.displayName || 'P1'} />
-                        <AvatarFallback>{battle.player1.displayName?.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                     <div className="flex items-center gap-1">
-                        <span className="font-semibold truncate">{battle.player1.displayName}</span>
-                        {battle.player1.isKycVerified && <ShieldCheck className="h-4 w-4 text-blue-500 flex-shrink-0" />}
-                    </div>
-                    </div>
+            <motion.div key={battle.id} variants={itemVariants}>
+                <Card 
+                    className="bg-card shadow-sm hover:bg-accent/50 transition-colors cursor-pointer"
+                    onClick={() => handleBattleClick(battle.id)}
+                >
+                    <CardContent className="p-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2 basis-2/5 overflow-hidden">
+                        <Avatar className="h-8 w-8 flex-shrink-0">
+                            <AvatarImage src={battle.player1.photoURL || undefined} alt={battle.player1.displayName || 'P1'} />
+                            <AvatarFallback>{battle.player1.displayName?.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                         <div className="flex items-center gap-1">
+                            <span className="font-semibold truncate">{battle.player1.displayName}</span>
+                            {battle.player1.isKycVerified && <ShieldCheck className="h-4 w-4 text-blue-500 flex-shrink-0" />}
+                        </div>
+                        </div>
 
-                    <div className="text-center basis-1/5">
-                        <p className="font-bold text-red-600">₹{battle.amount}</p>
-                        <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEilS2_YhPAJBDjdcIRsoMJLTWafsJuIyola3KN50zXQAZYWSSIbhLhWhOJGMG6UYkUB5ZOiVKgsy2bVstr2af0LVf2g-eWjXHnGO4Z0IbaePP4E7TSDB9x_eK8OqTidX968zc5Wn9p6uGlkLoD9iglU3KZ28_2IbXgl29zHTZgwxzMWPvbN6zhA5AhyH7s/s1600/74920.png" alt="vs" width={32} height={16} className="mx-auto" data-ai-hint="versus icon" />
-                    </div>
+                        <div className="text-center basis-1/5">
+                            <p className="font-bold text-red-600">₹{battle.amount}</p>
+                            <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEilS2_YhPAJBDjdcIRsoMJLTWafsJuIyola3KN50zXQAZYWSSIbhLhWhOJGMG6UYkUB5ZOiVKgsy2bVstr2af0LVf2g-eWjXHnGO4Z0IbaePP4E7TSDB9x_eK8OqTidX968zc5Wn9p6uGlkLoD9iglU3KZ28_2IbXgl29zHTZgwxzMWPvbN6zhA5AhyH7s/s1600/74920.png" alt="vs" width={32} height={16} className="mx-auto" data-ai-hint="versus icon" />
+                        </div>
 
-                    <div className="flex items-center justify-end gap-2 basis-2/5 overflow-hidden">
-                     <div className="flex items-center gap-1">
-                        <span className="font-semibold truncate">{battle.player2.displayName}</span>
-                        {battle.player2.isKycVerified && <ShieldCheck className="h-4 w-4 text-blue-500 flex-shrink-0" />}
-                    </div>
-                    <Avatar className="h-8 w-8 flex-shrink-0">
-                        <AvatarImage src={battle.player2.photoURL || undefined} alt={battle.player2.displayName || 'P2'} />
-                        <AvatarFallback>{battle.player2.displayName?.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    </div>
-                </CardContent>
-            </Card>
+                        <div className="flex items-center justify-end gap-2 basis-2/5 overflow-hidden">
+                         <div className="flex items-center gap-1">
+                            <span className="font-semibold truncate">{battle.player2.displayName}</span>
+                            {battle.player2.isKycVerified && <ShieldCheck className="h-4 w-4 text-blue-500 flex-shrink-0" />}
+                        </div>
+                        <Avatar className="h-8 w-8 flex-shrink-0">
+                            <AvatarImage src={battle.player2.photoURL || undefined} alt={battle.player2.displayName || 'P2'} />
+                            <AvatarFallback>{battle.player2.displayName?.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        </div>
+                    </CardContent>
+                </Card>
+            </motion.div>
         )
     })}
-    </div>
+    </motion.div>
   );
 }

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,6 +22,30 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { MessageSquare, ShieldCheck } from "lucide-react";
+import { motion } from 'framer-motion';
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      type: "spring",
+      stiffness: 100,
+    },
+  },
+};
+
 
 export default function ChallengeList() {
     const [challenges, setChallenges] = useState<Game[]>([]);
@@ -108,67 +133,74 @@ export default function ChallengeList() {
     }
 
     return (
-        <div className="space-y-4">
+        <motion.div 
+            className="space-y-4"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+        >
         {challenges.map((challenge) => (
-            <Card key={challenge.id} className="bg-card shadow-sm">
-            <CardContent className="p-3">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <Avatar className="h-10 w-10">
-                            <AvatarImage src={challenge.createdBy.photoURL || undefined} alt={challenge.createdBy.displayName || 'User'} />
-                            <AvatarFallback>{challenge.createdBy.displayName?.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                             <div className="flex items-center gap-1">
-                                <span className="font-semibold">{challenge.createdBy.displayName}</span>
-                                {challenge.createdBy.isKycVerified && <ShieldCheck className="h-4 w-4 text-blue-500" />}
-                             </div>
-                             <p className="text-xs text-muted-foreground">has created an open battle</p>
+            <motion.div key={challenge.id} variants={itemVariants}>
+                <Card className="bg-card shadow-sm">
+                    <CardContent className="p-3">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Avatar className="h-10 w-10">
+                                    <AvatarImage src={challenge.createdBy.photoURL || undefined} alt={challenge.createdBy.displayName || 'User'} />
+                                    <AvatarFallback>{challenge.createdBy.displayName?.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                     <div className="flex items-center gap-1">
+                                        <span className="font-semibold">{challenge.createdBy.displayName}</span>
+                                        {challenge.createdBy.isKycVerified && <ShieldCheck className="h-4 w-4 text-blue-500" />}
+                                     </div>
+                                     <p className="text-xs text-muted-foreground">has created an open battle</p>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-xl text-green-600 font-bold">₹ {challenge.amount}</p>
+                            </div>
                         </div>
-                    </div>
-                    <div className="text-right">
-                        <p className="text-xl text-green-600 font-bold">₹ {challenge.amount}</p>
-                    </div>
-                </div>
-                 {challenge.message && (
-                     <div className="relative mt-3 ml-4">
-                         <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-0 h-0 border-y-8 border-y-transparent border-r-8 border-r-muted"></div>
-                         <div className="bg-muted p-2 rounded-md flex items-center gap-2">
-                             <MessageSquare className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                            <p className="text-sm text-muted-foreground italic">"{challenge.message}"</p>
-                         </div>
-                     </div>
-                 )}
-                <div className="mt-3">
-                    {user?.uid === challenge.createdBy.uid ? (
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button size="sm" variant="destructive" className="w-full">
-                                    Delete Battle
+                         {challenge.message && (
+                             <div className="relative mt-3 ml-4">
+                                 <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-0 h-0 border-y-8 border-y-transparent border-r-8 border-r-muted"></div>
+                                 <div className="bg-muted p-2 rounded-md flex items-center gap-2">
+                                     <MessageSquare className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                    <p className="text-sm text-muted-foreground italic">"{challenge.message}"</p>
+                                 </div>
+                             </div>
+                         )}
+                        <div className="mt-3">
+                            {user?.uid === challenge.createdBy.uid ? (
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button size="sm" variant="destructive" className="w-full">
+                                            Delete Battle
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This will permanently delete your open battle and refund the amount to your wallet.
+                                        </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleDelete(challenge)}>Yes, Delete</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            ) : (
+                                <Button size="sm" className="w-full" onClick={() => handleAccept(challenge)}>
+                                    Accept Battle
                                 </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    This will permanently delete your open battle and refund the amount to your wallet.
-                                </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDelete(challenge)}>Yes, Delete</AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                    ) : (
-                        <Button size="sm" className="w-full" onClick={() => handleAccept(challenge)}>
-                            Accept Battle
-                        </Button>
-                    )}
-                </div>
-            </CardContent>
-            </Card>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+            </motion.div>
         ))}
-        </div>
+        </motion.div>
     );
 }
