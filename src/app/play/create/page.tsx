@@ -46,7 +46,7 @@ export default function CreateChallengePage() {
     if (appUser.status === 'suspended') {
       toast({
         title: 'Account Suspended',
-        description: 'Your account is suspended. You cannot create challenges.',
+        description: 'Your account is suspended. You cannot create battles.',
         variant: 'destructive',
       });
       return;
@@ -54,8 +54,8 @@ export default function CreateChallengePage() {
     
     if (myChallenges.length >= 3) {
       toast({
-        title: 'Challenge Limit Reached',
-        description: 'You can only have 3 active challenges at a time.',
+        title: 'Battle Limit Reached',
+        description: 'You can only have 3 active open battles at a time.',
         variant: 'destructive',
       });
       return;
@@ -67,7 +67,7 @@ export default function CreateChallengePage() {
     if (!amount || isNaN(numericAmount) || numericAmount < 50) {
       toast({
         title: 'Invalid Amount',
-        description: 'Minimum challenge amount is ₹50.',
+        description: 'Minimum battle amount is ₹50.',
         variant: 'destructive',
       });
       return;
@@ -76,7 +76,7 @@ export default function CreateChallengePage() {
     if (totalBalance < numericAmount) {
       toast({
         title: 'Insufficient Balance',
-        description: `You need ₹${numericAmount} to create this challenge, but you only have ₹${totalBalance.toFixed(2)}.`,
+        description: `You need ₹${numericAmount} to create this battle, but you only have ₹${totalBalance.toFixed(2)}.`,
         variant: 'destructive',
       });
       return;
@@ -98,19 +98,19 @@ export default function CreateChallengePage() {
         });
 
         toast({
-            title: 'Challenge Created!',
-            description: `Your challenge for ₹${numericAmount} has been set.`,
+            title: 'Battle Created!',
+            description: `Your open battle for ₹${numericAmount} has been set.`,
         });
         setAmount('');
         setMessage('');
         router.push('/play');
     } catch(error: any) {
         try {
-            await updateUserWallet(user.uid, numericAmount, 'balance', 'refund', 'Challenge Creation Failed');
+            await updateUserWallet(user.uid, numericAmount, 'balance', 'refund', 'Battle Creation Failed');
         } catch (refundError: any) {
              toast({
                 title: 'Critical Error!',
-                description: `Failed to create challenge AND failed to refund your balance. Please contact support immediately. Error: ${refundError.message}`,
+                description: `Failed to create battle AND failed to refund your balance. Please contact support immediately. Error: ${refundError.message}`,
                 variant: 'destructive',
                 duration: 10000,
             });
@@ -119,7 +119,7 @@ export default function CreateChallengePage() {
         }
 
         toast({
-            title: 'Error Creating Challenge',
+            title: 'Error Creating Battle',
             description: `Something went wrong: ${error.message}. Your balance has been refunded.`,
             variant: 'destructive',
         });
@@ -146,8 +146,8 @@ export default function CreateChallengePage() {
         </Link>
         <Card className="max-w-md mx-auto">
             <CardHeader>
-                <CardTitle className="text-center text-xl font-semibold text-red-600 animate-shine">Create a New Challenge</CardTitle>
-                <CardDescription className="text-center">Set an amount and challenge the community!</CardDescription>
+                <CardTitle className="text-center text-xl font-semibold text-red-600 animate-shine">Create a New Battle</CardTitle>
+                <CardDescription className="text-center">Set an amount and create an open battle for the community!</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="space-y-4">
@@ -164,7 +164,7 @@ export default function CreateChallengePage() {
                     />
                     </div>
                     <div>
-                        <Label htmlFor="message">Challenge Message (Optional)</Label>
+                        <Label htmlFor="message">Custom Message (Optional)</Label>
                         <Input 
                             id="message"
                             type="text" 
@@ -177,7 +177,7 @@ export default function CreateChallengePage() {
                         />
                     </div>
                     <Button className="w-full bg-primary text-primary-foreground font-bold text-lg py-6" onClick={handleSetChallenge} disabled={isSubmitting}>
-                        {isSubmitting ? <Loader className="animate-spin" /> : 'Set Challenge'}
+                        {isSubmitting ? <Loader className="animate-spin" /> : 'Set Battle'}
                     </Button>
                 </div>
             </CardContent>

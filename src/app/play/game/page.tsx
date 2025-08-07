@@ -1,4 +1,3 @@
-
 'use client';
 
 import Header from '@/components/header';
@@ -111,7 +110,7 @@ function GamePageComponent() {
                 // Special case: Player 2 cancels before room code is set
                 if (result === 'CANCEL' && user.uid === game.player2?.uid && !game.roomCode) {
                     await cancelAcceptedChallenge(game.id, user.uid);
-                    toast({ title: 'Challenge Canceled', description: 'Your acceptance has been canceled and the challenge is open again.' });
+                    toast({ title: 'Battle Canceled', description: 'Your acceptance has been canceled and the battle is open again.' });
                     router.push('/play');
                     return;
                 }

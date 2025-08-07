@@ -1,4 +1,3 @@
-
 'use client'
 
 import React, { useState, useEffect } from 'react';
@@ -45,7 +44,7 @@ export default function PlayPage() {
                       🏆 Open Battles 🏆
                     </h2>
                     <Link href="/play/create" className="w-full sm:w-auto">
-                        <Button variant="outline" size="sm" className="w-full">Create New</Button>
+                        <Button variant="outline" size="sm" className="w-full">Create Open Battle</Button>
                     </Link>
                 </div>
                 <ChallengeList />

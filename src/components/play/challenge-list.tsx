@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -37,7 +36,7 @@ export default function ChallengeList() {
 
     const handleAccept = async (challenge: Game) => {
         if (!user || !appUser) {
-            toast({ title: 'Login Required', description: 'You must be logged in to accept a challenge.', variant: 'destructive' });
+            toast({ title: 'Login Required', description: 'You must be logged in to accept a battle.', variant: 'destructive' });
             router.push('/login');
             return;
         }
@@ -51,20 +50,20 @@ export default function ChallengeList() {
         if (appUser.status === 'suspended') {
             toast({
                 title: 'Account Suspended',
-                description: 'Your account is suspended. You cannot accept challenges.',
+                description: 'Your account is suspended. You cannot accept open battles.',
                 variant: 'destructive',
             });
             return;
         }
 
         if (user.uid === challenge.createdBy.uid) {
-            toast({ title: 'Cannot Accept Own Challenge', description: 'You cannot accept your own challenge.', variant: 'destructive' });
+            toast({ title: 'Cannot Accept Own Battle', description: 'You cannot accept your own open battle.', variant: 'destructive' });
             return;
         }
 
         const totalBalance = (appUser.wallet?.balance || 0) + (appUser.wallet?.winnings || 0);
         if (totalBalance < challenge.amount) {
-            toast({ title: 'Insufficient Balance', description: 'You do not have enough balance to accept this challenge.', variant: 'destructive' });
+            toast({ title: 'Insufficient Balance', description: 'You do not have enough balance to accept this battle.', variant: 'destructive' });
             return;
         }
         
@@ -78,31 +77,31 @@ export default function ChallengeList() {
                 isKycVerified: appUser.kycStatus === 'Verified',
             });
 
-            toast({ title: 'Challenge Accepted!', description: `You are now in a battle for ₹${challenge.amount}.` });
+            toast({ title: 'Battle Accepted!', description: `You are now in a battle for ₹${challenge.amount}.` });
             router.push(`/play/game?id=${challenge.id}`);
         } catch (error: any) {
-            await updateUserWallet(user.uid, challenge.amount, 'balance', 'refund', 'Accept Challenge Failed');
+            await updateUserWallet(user.uid, challenge.amount, 'balance', 'refund', 'Accept Battle Failed');
             toast({ title: 'Failed to Accept', description: error.message, variant: 'destructive' });
         }
     };
     
     const handleDelete = async (challenge: Game) => {
         if (!user || user.uid !== challenge.createdBy.uid) {
-             toast({ title: 'Not Authorized', description: 'You can only delete your own challenges.', variant: 'destructive' });
+             toast({ title: 'Not Authorized', description: 'You can only delete your own open battles.', variant: 'destructive' });
             return;
         }
         try {
             await deleteChallenge(challenge.id);
-             toast({ title: 'Challenge Deleted', description: 'Your challenge has been successfully removed.' });
+             toast({ title: 'Battle Deleted', description: 'Your open battle has been successfully removed.' });
         } catch (error: any) {
-             toast({ title: 'Error', description: `Failed to delete challenge: ${error.message}`, variant: 'destructive' });
+             toast({ title: 'Error', description: `Failed to delete open battle: ${error.message}`, variant: 'destructive' });
         }
     }
     
     if (challenges.length === 0) {
         return (
             <div className="text-center text-muted-foreground py-4">
-                <p>No open challenges right now.</p>
+                <p>No open battles right now.</p>
                 <p className="text-xs">Why not create one?</p>
             </div>
         )
@@ -124,7 +123,7 @@ export default function ChallengeList() {
                                 <span className="font-semibold">{challenge.createdBy.displayName}</span>
                                 {challenge.createdBy.isKycVerified && <ShieldCheck className="h-4 w-4 text-blue-500" />}
                              </div>
-                             <p className="text-xs text-muted-foreground">has set a challenge</p>
+                             <p className="text-xs text-muted-foreground">has created an open battle</p>
                         </div>
                     </div>
                     <div className="text-right">
@@ -145,14 +144,14 @@ export default function ChallengeList() {
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
                                 <Button size="sm" variant="destructive" className="w-full">
-                                    Delete Challenge
+                                    Delete Battle
                                 </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                                 <AlertDialogHeader>
                                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                    This will permanently delete your challenge and refund the amount to your wallet.
+                                    This will permanently delete your open battle and refund the amount to your wallet.
                                 </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
@@ -163,7 +162,7 @@ export default function ChallengeList() {
                         </AlertDialog>
                     ) : (
                         <Button size="sm" className="w-full" onClick={() => handleAccept(challenge)}>
-                            Accept Challenge
+                            Accept Battle
                         </Button>
                     )}
                 </div>
