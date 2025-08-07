@@ -1,6 +1,6 @@
 
 
-import { doc, getDoc, updateDoc, increment, collection, onSnapshot, writeBatch, serverTimestamp, runTransaction, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, increment, collection, onSnapshot, writeBatch, serverTimestamp, runTransaction, query, where, getDocs, DocumentReference, Transaction } from 'firebase/firestore';
 import { db } from './config';
 import { TransactionType } from './transactions';
 
@@ -86,6 +86,29 @@ export const updateUserKycDetails = async (uid: string, details: KycDetails) => 
 };
 
 
+const createTransactionInBatch = (
+    transaction: Transaction,
+    userRef: DocumentReference,
+    userData: AppUser,
+    amount: number,
+    transactionType: TransactionType,
+    notes?: string,
+    relatedId?: string
+) => {
+    const transactionRef = doc(collection(db, 'transactions'));
+    transaction.set(transactionRef, {
+        userId: userRef.id,
+        userName: userData.displayName || 'N/A',
+        amount: Math.abs(amount),
+        type: transactionType,
+        status: 'completed', // Default to completed for direct updates
+        notes: notes || null,
+        relatedId: relatedId || null,
+        createdAt: serverTimestamp(),
+    });
+};
+
+
 export const updateUserWallet = async (uid: string, amount: number, walletType: 'balance' | 'winnings' | 'agent', transactionType: TransactionType, notes?: string, relatedId?: string) => {
     // Special case for revenue, which is not a real transaction for a user wallet
     if (transactionType === 'revenue') {
@@ -158,21 +181,13 @@ export const updateUserWallet = async (uid: string, amount: number, walletType: 
             transaction.update(userRef, { 'lifetimeStats.totalWithdrawals': increment(Math.abs(amount)) });
         } else if (transactionType === 'winnings') {
             transaction.update(userRef, { 'lifetimeStats.totalWinnings': increment(amount) });
+        } else if (transactionType === 'Referral Earning') {
+            transaction.update(userRef, { 'referralStats.totalEarnings': increment(amount) });
         }
 
 
         // Create a transaction log
-        const transactionRef = doc(collection(db, 'transactions'));
-        transaction.set(transactionRef, {
-            userId: uid,
-            userName: userData.displayName || 'N/A',
-            amount: Math.abs(amount),
-            type: transactionType,
-            status: 'completed', // Default to completed for direct updates
-            notes: notes || null,
-            relatedId: relatedId || null,
-            createdAt: serverTimestamp(),
-        });
+        createTransactionInBatch(transaction, userRef, userData, amount, transactionType, notes, relatedId);
     });
 }
 

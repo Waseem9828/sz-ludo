@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import Header from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ChevronLeft, AlertCircle, Plus, Minus, Loader, Gamepad2, Trophy, Users } from "lucide-react";
+import { ChevronLeft, AlertCircle, Plus, Minus, Loader, Gamepad2, Trophy, Users, TrendingUp, TrendingDown } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from 'next/navigation';
@@ -24,7 +24,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { createWithdrawalRequest } from '@/lib/firebase/withdrawals';
-import { Transaction, listenForUserTransactions } from '@/lib/firebase/transactions';
+import { Transaction, TransactionType, listenForUserTransactions } from '@/lib/firebase/transactions';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -143,8 +143,8 @@ export default function WalletPage() {
         }
     };
 
-    const getTypeBadgeVariant = (type: Transaction['type']) => {
-        return type === 'deposit' || type === 'winnings' || type === 'Admin Credit' ? 'default' : 'secondary';
+    const isCredit = (type: TransactionType) => {
+        return ['deposit', 'winnings', 'Admin Credit', 'refund', 'Referral Earning'].includes(type);
     }
 
 
@@ -327,10 +327,11 @@ export default function WalletPage() {
                                 {transactions.map(tx => (
                                     <TableRow key={tx.id}>
                                         <TableCell className="text-xs">{new Date(tx.createdAt?.toDate()).toLocaleString()}</TableCell>
-                                        <TableCell className={`font-bold ${tx.type === 'deposit' || tx.type === 'winnings' || tx.type === 'Admin Credit' ? 'text-green-600' : 'text-red-600'}`}>
+                                        <TableCell className={`font-bold flex items-center gap-1 ${isCredit(tx.type) ? 'text-green-600' : 'text-red-600'}`}>
+                                            {isCredit(tx.type) ? <TrendingUp size={14}/> : <TrendingDown size={14}/>}
                                             ₹{tx.amount.toFixed(2)}
                                         </TableCell>
-                                        <TableCell><Badge variant={getTypeBadgeVariant(tx.type)}>{tx.type.replace(/_/g, ' ')}</Badge></TableCell>
+                                        <TableCell><Badge variant="secondary">{tx.type.replace(/_/g, ' ')}</Badge></TableCell>
                                         <TableCell><Badge variant={getStatusBadgeVariant(tx.status)}>{tx.status}</Badge></TableCell>
                                     </TableRow>
                                 ))}
