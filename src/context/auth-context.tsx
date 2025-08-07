@@ -2,9 +2,9 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthStateChanged, User, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, updateProfile } from 'firebase/auth';
+import { onAuthStateChanged, User, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, updateProfile, fetchSignInMethodsForEmail } from 'firebase/auth';
 import { auth, db, googleAuthProvider } from '@/lib/firebase/config';
-import { doc, setDoc, getDoc, onSnapshot, updateDoc, increment } from 'firebase/firestore';
+import { doc, setDoc, getDoc, onSnapshot, updateDoc, increment, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { SplashScreen } from '@/components/ui/splash-screen';
 import type { AppUser } from '@/lib/firebase/users';
 
@@ -60,6 +60,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
   
   const signUp = async (email:string, password:string, name:string, phone:string, referralCode?: string) => {
+      // Check if email is already in use by Firebase Auth
+      const methods = await fetchSignInMethodsForEmail(auth, email);
+      if (methods.length > 0) {
+        throw new Error('This email address is already in use.');
+      }
+      
+      // Check if phone number is already in use in Firestore
+      const usersRef = collection(db, "users");
+      const phoneQuery = query(usersRef, where("phone", "==", phone), limit(1));
+      const phoneQuerySnapshot = await getDocs(phoneQuery);
+
+      if (!phoneQuerySnapshot.empty) {
+        throw new Error("This phone number is already registered.");
+      }
+      
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       await updateProfile(user, { displayName: name });

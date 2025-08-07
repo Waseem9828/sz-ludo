@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { ChevronLeft, Edit, Wallet, ShieldCheck, User, Gamepad2, TrendingUp, TrendingDown, Check, X, Ban, VenetianMask, Plus, Minus, AlertTriangle } from 'lucide-react';
+import { ChevronLeft, Edit, Wallet, ShieldCheck, User, Gamepad2, TrendingUp, TrendingDown, Check, X, Ban, VenetianMask, Plus, Minus, AlertTriangle, FileText } from 'lucide-react';
 import Link from 'next/link';
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
@@ -240,6 +240,14 @@ export default function UserProfilePage() {
         }
     }
 
+    const handleGenerateReport = () => {
+        // This is a placeholder for the future PDF generation logic
+        toast({
+            title: "Feature Coming Soon",
+            description: "PDF report generation is not yet implemented.",
+        });
+    };
+
 
     const getInitials = (name?: string | null) => {
         return name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U';
@@ -326,6 +334,9 @@ export default function UserProfilePage() {
                             )}
                             <WalletAdjustmentDialog user={user} onUpdate={setUser} />
                             <PenaltyDialog user={user} onUpdate={setUser} />
+                             <Button variant="secondary" onClick={handleGenerateReport}>
+                                <FileText className="mr-2 h-4 w-4" /> Generate Report
+                            </Button>
                         </CardContent>
                     </Card>
                 </div>

@@ -171,8 +171,8 @@ function LoginPageContent() {
                                 <Input id="signup-email" type="email" placeholder="you@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={loadingAction !== null}/>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="signup-phone">Phone Number</Label>
-                                <Input id="signup-phone" type="tel" placeholder="123-456-7890" required value={phone} onChange={(e) => setPhone(e.target.value)} disabled={loadingAction !== null}/>
+                                <Label htmlFor="signup-phone">Enter WhatsApp Number</Label>
+                                <Input id="signup-phone" type="tel" placeholder="e.g. 9123456789" required value={phone} onChange={(e) => setPhone(e.target.value)} disabled={loadingAction !== null}/>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="signup-password">Password</Label>
@@ -203,5 +203,3 @@ export default function LoginPage() {
     </Suspense>
   )
 }
-
-    
