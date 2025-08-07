@@ -10,28 +10,6 @@ import { useRouter } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
 import { motion } from 'framer-motion';
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
-  visible: {
-    y: 0,
-    opacity: 1,
-    transition: {
-      type: "spring",
-      stiffness: 100,
-    },
-  },
-};
-
 export default function BattleList() {
   const [battles, setBattles] = useState<Game[]>([]);
   const router = useRouter();
@@ -55,17 +33,18 @@ export default function BattleList() {
   }
 
   return (
-    <motion.div 
-        className="space-y-3"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-    >
+    <div className="space-y-3">
       {battles.map((battle) => {
         if (!battle.player1 || !battle.player2) return null;
         
         return (
-            <motion.div key={battle.id} variants={itemVariants}>
+            <motion.div 
+                key={battle.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+            >
                 <Card 
                     className="bg-card shadow-sm hover:bg-accent/50 transition-colors cursor-pointer"
                     onClick={() => handleBattleClick(battle.id)}
@@ -102,6 +81,6 @@ export default function BattleList() {
             </motion.div>
         )
     })}
-    </motion.div>
+    </div>
   );
 }

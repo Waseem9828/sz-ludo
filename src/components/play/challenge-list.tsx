@@ -24,29 +24,6 @@ import {
 import { MessageSquare, ShieldCheck } from "lucide-react";
 import { motion } from 'framer-motion';
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
-  visible: {
-    y: 0,
-    opacity: 1,
-    transition: {
-      type: "spring",
-      stiffness: 100,
-    },
-  },
-};
-
-
 export default function ChallengeList() {
     const [challenges, setChallenges] = useState<Game[]>([]);
     const { user, appUser } = useAuth();
@@ -133,14 +110,15 @@ export default function ChallengeList() {
     }
 
     return (
-        <motion.div 
-            className="space-y-4"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-        >
+        <div className="space-y-4">
         {challenges.map((challenge) => (
-            <motion.div key={challenge.id} variants={itemVariants}>
+            <motion.div 
+                key={challenge.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+            >
                 <Card className="bg-card shadow-sm">
                     <CardContent className="p-3">
                         <div className="flex items-center justify-between">
@@ -201,6 +179,6 @@ export default function ChallengeList() {
                 </Card>
             </motion.div>
         ))}
-        </motion.div>
+        </div>
     );
 }
