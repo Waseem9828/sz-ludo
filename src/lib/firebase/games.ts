@@ -220,7 +220,10 @@ export const listenForGames = (
     status?: Game['status'],
     onError?: (error: Error) => void
 ) => {
-    const queryConstraints: QueryConstraint[] = [where("type", "==", "user"), orderBy('createdAt', 'desc')];
+    // Firestore does not allow combining a filter on one field (`status`) with an `orderBy` on another (`createdAt`)
+    // unless a composite index is created. A more robust solution that avoids complex indexing is to
+    // filter by the main criteria and sort the results on the client side.
+    const queryConstraints: QueryConstraint[] = [where("type", "==", "user")];
     if (status) {
         queryConstraints.push(where("status", "==", status));
     }
@@ -232,6 +235,10 @@ export const listenForGames = (
         querySnapshot.forEach((doc) => {
             games.push({ id: doc.id, ...doc.data() } as Game);
         });
+        
+        // Sort the games by creation date descending on the client-side
+        games.sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
+
         callback(games);
     }, (error) => {
         console.error("Error listening for games: ", error);
@@ -333,6 +340,7 @@ export const listenForGamesHistory = (
 
     return unsubscribe;
 };
+
 
 
 
