@@ -1,12 +1,12 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Header from "@/components/header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { listenForTournaments, Tournament, joinTournament } from "@/lib/firebase/tournaments";
+import { listenForTournaments, Tournament, joinTournament, PrizeDistribution } from "@/lib/firebase/tournaments";
 import { Loader, Users, Trophy } from 'lucide-react';
 import { format, formatDistanceToNowStrict } from 'date-fns';
 import { Progress } from '@/components/ui/progress';
@@ -24,6 +24,75 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+
+
+const PrizeDistributionDialog = ({ tournament }: { tournament: Tournament }) => {
+    const calculatedPrizeData = useMemo(() => {
+        if (!tournament) return [];
+        
+        const prizePoolAfterCommission = tournament.prizePool * (1 - (tournament.adminCommission / 100));
+
+        return tournament.prizeDistribution.map(dist => {
+            const totalAmountForRange = prizePoolAfterCommission * (dist.percentage / 100);
+            
+            let rank = `${dist.rankStart}`;
+            if (dist.rankEnd > dist.rankStart) {
+                rank = `${dist.rankStart} - ${dist.rankEnd}`;
+            }
+
+            const totalWinnersInRange = Math.max(0, dist.rankEnd - dist.rankStart + 1);
+            const amountPerPlayer = totalWinnersInRange > 0 ? totalAmountForRange / totalWinnersInRange : 0;
+
+            return {
+                rank,
+                percentage: `${dist.percentage}%`,
+                amountPerPlayer: `₹${amountPerPlayer.toFixed(2)}`,
+            };
+        });
+    }, [tournament]);
+
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button variant="outline" className="w-full">View Prizes</Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                        <Trophy className="h-6 w-6 text-yellow-500" />
+                        Prize Distribution for "{tournament.title}"
+                    </DialogTitle>
+                </DialogHeader>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Rank</TableHead>
+                            <TableHead>Percentage</TableHead>
+                            <TableHead className="text-right">Amount/Player</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {calculatedPrizeData.map((row, index) => (
+                             <TableRow key={index}>
+                                <TableCell className="font-medium">{row.rank}</TableCell>
+                                <TableCell>{row.percentage}</TableCell>
+                                <TableCell className="text-right">{row.amountPerPlayer}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </DialogContent>
+        </Dialog>
+    )
+}
 
 const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
     const [timeLeft, setTimeLeft] = useState('');
@@ -97,9 +166,9 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
                     <Progress value={playerProgress} />
                 </div>
             </CardContent>
-            <CardFooter className="p-4 bg-muted/50">
+            <CardFooter className="p-4 bg-muted/50 grid grid-cols-2 gap-2">
                  {isUserJoined ? (
-                    <Button className="w-full font-bold" disabled>✅ Joined</Button>
+                    <Button className="w-full font-bold col-span-2" disabled>✅ Joined</Button>
                 ) : (
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
@@ -121,6 +190,9 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
                         </AlertDialogContent>
                     </AlertDialog>
                 )}
+                 <div className={isUserJoined ? 'col-span-2' : ''}>
+                    <PrizeDistributionDialog tournament={tournament} />
+                 </div>
             </CardFooter>
         </Card>
     );
