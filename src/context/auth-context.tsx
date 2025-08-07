@@ -18,6 +18,8 @@ interface AuthContextType {
   logout: () => Promise<void>;
 }
 
+const defaultAvatar = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi_h6LUuqTTKYsn5TfUZwkI6Aib6Y0tOzQzcoZKstURqxyl-PJXW1DKTkF2cPPNNUbP3iuDNsOBVOYx7p-ZwrodI5w9fyqEwoabj8rU0mLzSbT5GCFUKpfCc4s_LrtHcWFDvvRstCghAfQi5Zfv2fipdZG8h4dU4vGt-eFRn-gS3QTg6_JJKhv0Yysr_ZY/s1600/82126.png";
+
 const AuthContext = createContext<AuthContextType>({
   user: null,
   appUser: null,
@@ -77,7 +79,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      await updateProfile(user, { displayName: name });
+      await updateProfile(user, { displayName: name, photoURL: defaultAvatar });
       
       const userRef = doc(db, "users", user.uid);
       const newAppUser: AppUser = {
@@ -85,7 +87,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           email: user.email,
           displayName: name,
           phone: phone,
-          photoURL: user.photoURL,
+          photoURL: defaultAvatar,
           wallet: {
               balance: 0,
               winnings: 0,
@@ -136,7 +138,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         uid: user.uid,
         email: user.email,
         displayName: user.displayName,
-        photoURL: user.photoURL,
+        photoURL: user.photoURL || defaultAvatar,
         wallet: { balance: 0, winnings: 0 },
         kycStatus: 'Pending',
         gameStats: { played: 0, won: 0, lost: 0 },

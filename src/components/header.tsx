@@ -49,6 +49,8 @@ import {
 } from '@/lib/firebase/notifications';
 import { Badge } from "./ui/badge";
 
+const defaultAvatar = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi_h6LUuqTTKYsn5TfUZwkI6Aib6Y0tOzQzcoZKstURqxyl-PJXW1DKTkF2cPPNNUbP3iuDNsOBVOYx7p-ZwrodI5w9fyqEwoabj8rU0mLzSbT5GCFUKpfCc4s_LrtHcWFDvvRstCghAfQi5Zfv2fipdZG8h4dU4vGt-eFRn-gS3QTg6_JJKhv0Yysr_ZY/s1600/82126.png";
+
 export default function Header() {
   const { user, appUser, logout } = useAuth();
   const { notifications, unreadCount } = useUserNotifications(user?.uid);
@@ -125,7 +127,7 @@ export default function Header() {
                     <div className="flex items-center gap-3">
                       <Avatar className="h-12 w-12">
                         <AvatarImage
-                          src={user.photoURL || "https://placehold.co/48x48.png"}
+                          src={user.photoURL || defaultAvatar}
                           alt={user.displayName || "User"}
                           data-ai-hint="avatar person"
                         />

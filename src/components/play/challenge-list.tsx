@@ -26,6 +26,9 @@ import { motion } from 'framer-motion';
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 
+const defaultAvatar = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi_h6LUuqTTKYsn5TfUZwkI6Aib6Y0tOzQzcoZKstURqxyl-PJXW1DKTkF2cPPNNUbP3iuDNsOBVOYx7p-ZwrodI5w9fyqEwoabj8rU0mLzSbT5GCFUKpfCc4s_LrtHcWFDvvRstCghAfQi5Zfv2fipdZG8h4dU4vGt-eFRn-gS3QTg6_JJKhv0Yysr_ZY/s1600/82126.png";
+
+
 export default function ChallengeList() {
     const [challenges, setChallenges] = useState<Game[]>([]);
     const { user, appUser } = useAuth();
@@ -134,7 +137,7 @@ export default function ChallengeList() {
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <Avatar className="h-10 w-10">
-                                    <AvatarImage src={challenge.createdBy.photoURL || undefined} alt={challenge.createdBy.displayName || 'User'} />
+                                    <AvatarImage src={challenge.createdBy.photoURL || defaultAvatar} alt={challenge.createdBy.displayName || 'User'} />
                                     <AvatarFallback>{challenge.createdBy.displayName?.charAt(0)}</AvatarFallback>
                                 </Avatar>
                                 <div>

@@ -31,6 +31,8 @@ const MetricCard = ({ icon, label, value }: { icon: React.ReactNode, label: stri
     </Card>
 );
 
+const defaultAvatar = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi_h6LUuqTTKYsn5TfUZwkI6Aib6Y0tOzQzcoZKstURqxyl-PJXW1DKTkF2cPPNNUbP3iuDNsOBVOYx7p-ZwrodI5w9fyqEwoabj8rU0mLzSbT5GCFUKpfCc4s_LrtHcWFDvvRstCghAfQi5Zfv2fipdZG8h4dU4vGt-eFRn-gS3QTg6_JJKhv0Yysr_ZY/s1600/82126.png";
+
 export default function ProfilePage() {
     const { toast } = useToast();
     const router = useRouter();
@@ -117,7 +119,7 @@ export default function ProfilePage() {
                     <CardContent className="space-y-6">
                         <div className="flex justify-center relative w-24 h-24 mx-auto">
                             <Avatar className="w-24 h-24 border-4 border-white shadow-md">
-                                <AvatarImage src={user.photoURL || `https://placehold.co/96x96.png`} alt={username} data-ai-hint="avatar person" />
+                                <AvatarImage src={user.photoURL || defaultAvatar} alt={username} data-ai-hint="avatar person" />
                                 <AvatarFallback>{getInitials(username)}</AvatarFallback>
                             </Avatar>
                              <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-1">

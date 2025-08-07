@@ -18,6 +18,8 @@ import { AppUser, listenForAllUsers } from '@/lib/firebase/users';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 
+const defaultAvatar = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi_h6LUuqTTKYsn5TfUZwkI6Aib6Y0tOzQzcoZKstURqxyl-PJXW1DKTkF2cPPNNUbP3iuDNsOBVOYx7p-ZwrodI5w9fyqEwoabj8rU0mLzSbT5GCFUKpfCc4s_LrtHcWFDvvRstCghAfQi5Zfv2fipdZG8h4dU4vGt-eFRn-gS3QTg6_JJKhv0Yysr_ZY/s1600/82126.png";
+
 export default function UsersPage() {
     const [users, setUsers] = useState<AppUser[]>([]);
     const [loading, setLoading] = useState(true);
@@ -102,7 +104,7 @@ export default function UsersPage() {
                 <TableCell>
                     <div className="flex items-center gap-3">
                         <Avatar>
-                            <AvatarImage src={user.photoURL || 'https://placehold.co/40x40.png'} alt={user.displayName || 'user'} data-ai-hint="avatar person"/>
+                            <AvatarImage src={user.photoURL || defaultAvatar} alt={user.displayName || 'user'} data-ai-hint="avatar person"/>
                             <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
                         </Avatar>
                         <div>

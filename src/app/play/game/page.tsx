@@ -1,3 +1,4 @@
+
 'use client';
 
 import Header from '@/components/header';
@@ -26,6 +27,9 @@ const penalties = [
     { amount: '₹50', reason: 'No update after 30 minut' },
     { amount: '₹25', reason: 'Abusing' },
 ];
+
+const defaultAvatar = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi_h6LUuqTTKYsn5TfUZwkI6Aib6Y0tOzQzcoZKstURqxyl-PJXW1DKTkF2cPPNNUbP3iuDNsOBVOYx7p-ZwrodI5w9fyqEwoabj8rU0mLzSbT5GCFUKpfCc4s_LrtHcWFDvvRstCghAfQi5Zfv2fipdZG8h4dU4vGt-eFRn-gS3QTg6_JJKhv0Yysr_ZY/s1600/82126.png";
+
 
 function GamePageComponent() {
     const router = useRouter();
@@ -294,7 +298,7 @@ function GamePageComponent() {
                     <CardContent className="p-4 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <Avatar className="h-10 w-10">
-                                <AvatarImage src={appUser.photoURL || `https://placehold.co/40x40.png`} alt={appUser.displayName || 'You'} data-ai-hint="avatar person" />
+                                <AvatarImage src={appUser.photoURL || defaultAvatar} alt={appUser.displayName || 'You'} data-ai-hint="avatar person" />
                                 <AvatarFallback>{appUser.displayName?.charAt(0)}</AvatarFallback>
                             </Avatar>
                             <span className="font-semibold">{appUser.displayName}</span>
@@ -306,7 +310,7 @@ function GamePageComponent() {
                         <div className="flex items-center gap-2">
                              <span className="font-semibold">{opponent?.displayName}</span>
                             <Avatar className="h-10 w-10">
-                                <AvatarImage src={opponent?.photoURL || 'https://placehold.co/40x40.png'} alt={opponent?.displayName || 'Opponent'} data-ai-hint="avatar person" />
+                                <AvatarImage src={opponent?.photoURL || defaultAvatar} alt={opponent?.displayName || 'Opponent'} data-ai-hint="avatar person" />
                                 <AvatarFallback>{opponent?.displayName?.charAt(0)}</AvatarFallback>
                             </Avatar>
                         </div>

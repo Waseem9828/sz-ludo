@@ -10,6 +10,8 @@ import { useRouter } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
 import { motion } from 'framer-motion';
 
+const defaultAvatar = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi_h6LUuqTTKYsn5TfUZwkI6Aib6Y0tOzQzcoZKstURqxyl-PJXW1DKTkF2cPPNNUbP3iuDNsOBVOYx7p-ZwrodI5w9fyqEwoabj8rU0mLzSbT5GCFUKpfCc4s_LrtHcWFDvvRstCghAfQi5Zfv2fipdZG8h4dU4vGt-eFRn-gS3QTg6_JJKhv0Yysr_ZY/s1600/82126.png";
+
 export default function BattleList() {
   const [battles, setBattles] = useState<Game[]>([]);
   const router = useRouter();
@@ -52,7 +54,7 @@ export default function BattleList() {
                     <CardContent className="p-3 flex items-center justify-between">
                         <div className="flex items-center gap-2 basis-2/5 overflow-hidden">
                         <Avatar className="h-8 w-8 flex-shrink-0">
-                            <AvatarImage src={battle.player1.photoURL || undefined} alt={battle.player1.displayName || 'P1'} />
+                            <AvatarImage src={battle.player1.photoURL || defaultAvatar} alt={battle.player1.displayName || 'P1'} />
                             <AvatarFallback>{battle.player1.displayName?.charAt(0)}</AvatarFallback>
                         </Avatar>
                          <div className="flex items-center gap-1">
@@ -72,7 +74,7 @@ export default function BattleList() {
                             {battle.player2.isKycVerified && <ShieldCheck className="h-4 w-4 text-blue-500 flex-shrink-0" />}
                         </div>
                         <Avatar className="h-8 w-8 flex-shrink-0">
-                            <AvatarImage src={battle.player2.photoURL || undefined} alt={battle.player2.displayName || 'P2'} />
+                            <AvatarImage src={battle.player2.photoURL || defaultAvatar} alt={battle.player2.displayName || 'P2'} />
                             <AvatarFallback>{battle.player2.displayName?.charAt(0)}</AvatarFallback>
                         </Avatar>
                         </div>
