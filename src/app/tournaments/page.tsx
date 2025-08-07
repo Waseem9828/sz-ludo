@@ -40,7 +40,6 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
         return () => clearInterval(interval);
     }, [tournament.startTime, tournament.status]);
 
-    const playerProgress = (tournament.players.length / tournament.playerCap) * 100;
     const isUserJoined = user ? tournament.players.includes(user.uid) : false;
     const isJoinable = tournament.status === 'upcoming' && tournament.players.length < tournament.playerCap;
 
@@ -68,14 +67,14 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
             const totalWinnersInRange = Math.max(0, dist.rankEnd - dist.rankStart + 1);
             const amountPerPlayer = totalWinnersInRange > 0 ? totalAmountForRange / totalWinnersInRange : 0;
             return {
-                rank: dist.rankStart === dist.rankEnd ? `${dist.rankStart}` : `${dist.rankStart} - ${dist.rankEnd}`,
+                rank: dist.rankStart === dist.rankEnd ? `${dist.rankStart}` : `${dist.rankStart}-${dist.rankEnd}`,
                 amount: `₹${amountPerPlayer.toFixed(2)}`,
             };
         }).slice(0, 10); // Show top 10 ranks
     }, [tournament]);
     
     return (
-        <Card className="overflow-hidden shadow-lg hover:shadow-primary/20 hover:shadow-xl transition-shadow duration-300 group flex flex-col">
+        <Card className="overflow-hidden shadow-lg hover:shadow-primary/20 hover:shadow-xl transition-shadow duration-300 group flex flex-col bg-card">
             <CardHeader>
                 <div className="flex justify-between items-start">
                     <div>
@@ -101,21 +100,16 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
                     </div>
                 </div>
 
-                <div className="space-y-2">
-                    <div className="flex justify-between items-center text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1"><Users className="h-4 w-4" /><span>Players</span></div>
-                        <span>{tournament.players.length} / {tournament.playerCap}</span>
-                    </div>
-                    <Progress value={playerProgress} />
-                </div>
-
                 <div>
                     <h4 className="text-sm font-semibold mb-2 text-center text-red-600">Top Prizes</h4>
-                    <div className="bg-muted/50 rounded-lg p-3 space-y-1 text-xs">
+                     <div className="bg-muted/50 rounded-lg p-3 space-y-1 text-xs">
                         {calculatedPrizeData.map((prize, index) => (
                              <div key={index} className="flex justify-between items-center">
-                                <span className="text-muted-foreground">Rank {prize.rank}:</span>
-                                <span className="font-bold">{prize.amount}</span>
+                                <span className="text-muted-foreground font-medium">Rank {prize.rank}:</span>
+                                <div className="flex items-center gap-2">
+                                     <span className="font-mono text-muted-foreground">-</span>
+                                     <span className="font-bold text-foreground w-16 text-right">{prize.amount}</span>
+                                </div>
                              </div>
                         ))}
                     </div>
