@@ -59,25 +59,18 @@ export const listenForAllTransactions = (
     options?: {
         limitCount?: number;
         statuses?: TransactionStatus[];
-        startDate?: Date;
     }
 ) => {
-     const constraints: QueryConstraint[] = [
-        orderBy("createdAt", "desc"),
-     ];
-
-     if (options?.limitCount) {
-        constraints.push(limit(options.limitCount));
-     }
+     const constraints: QueryConstraint[] = [];
 
      if (options?.statuses && options.statuses.length > 0) {
-        // Firestore limitation: You cannot have an inequality filter on a different field than your orderBy when using 'in'
-        // So we will filter by status on the client-side for the chart
         constraints.push(where("status", "in", options.statuses));
      }
 
-     if (options?.startDate) {
-        constraints.push(where("createdAt", ">=", Timestamp.fromDate(options.startDate)));
+     constraints.push(orderBy("createdAt", "desc"));
+
+     if (options?.limitCount) {
+        constraints.push(limit(options.limitCount));
      }
      
      const q = query(collection(db, TRANSACTIONS_COLLECTION), ...constraints);
