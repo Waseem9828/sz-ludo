@@ -1,4 +1,5 @@
 
+
 import {
     collection,
     addDoc,
@@ -43,7 +44,6 @@ const TOURNAMENTS_COLLECTION = 'tournaments';
 
 // Admin: Create a new tournament
 export const createTournament = async (data: Omit<Tournament, 'id' | 'players' | 'status' | 'createdAt' | 'prizePool' | 'startTime'> & { startTime: Date }) => {
-    // The prize pool is now calculated dynamically based on players, so we can initialize it to 0.
     const prizePool = 0;
 
     return await addDoc(collection(db, TOURNAMENTS_COLLECTION), {
@@ -61,12 +61,15 @@ export const joinTournament = async (tournamentId: string, userId: string) => {
     const tournamentRef = doc(db, TOURNAMENTS_COLLECTION, tournamentId);
     const userRef = doc(db, 'users', userId);
 
-    await runTransaction(db, async (transaction) => {
+    return await runTransaction(db, async (transaction) => {
         const tSnap = await transaction.get(tournamentRef);
         const uSnap = await transaction.get(userRef);
 
-        if (!tSnap.exists() || !uSnap.exists()) {
-            throw new Error("Tournament or user not found.");
+        if (!tSnap.exists()) {
+            throw new Error("Tournament not found.");
+        }
+        if (!uSnap.exists()) {
+            throw new Error("User not found.");
         }
 
         const tournament = tSnap.data() as Tournament;

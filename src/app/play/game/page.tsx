@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ChevronLeft, Info, Upload, Loader, Send, Copy, Clock, Hash } from 'lucide-react';
+import { ChevronLeft, Info, Upload, Loader, Send, Copy, Clock, Hash, AlertTriangle, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ResultDialog } from '@/components/play/result-dialog';
 import { useAuth } from '@/context/auth-context';
-import { Game, listenForGameUpdates, updateGameStatus, submitGameResult, updateGameRoomCode, cancelAcceptedChallenge } from '@/lib/firebase/games';
+import { Game, listenForGameUpdates, submitPlayerResult, updateGameRoomCode } from '@/lib/firebase/games';
 import { SplashScreen } from '@/components/ui/splash-screen';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { add, format } from 'date-fns';
@@ -24,12 +24,11 @@ import { add, format } from 'date-fns';
 const penalties = [
     { amount: '₹100', reason: 'Fraud / Fake Screenshot' },
     { amount: '₹50', reason: 'Wrong Update' },
-    { amount: '₹50', reason: 'No update after 30 minut' },
+    { amount: '₹50', reason: 'No update after 2 hours' },
     { amount: '₹25', reason: 'Abusing' },
 ];
 
 const defaultAvatar = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi_h6LUuqTTKYsn5TfUZwkI6Aib6Y0tOzQzcoZKstURqxyl-PJXW1DKTkF2cPPNNUbP3iuDNsOBVOYx7p-ZwrodI5w9fyqEwoabj8rU0mLzSbT5GCFUKpfCc4s_LrtHcWFDvvRstCghAfQi5Zfv2fipdZG8h4dU4vGt-eFRn-gS3QTg6_JJKhv0Yysr_ZY/s1600/82126.png";
-
 
 function GamePageComponent() {
     const router = useRouter();
@@ -41,7 +40,6 @@ function GamePageComponent() {
     const [game, setGame] = useState<Game | null>(null);
     const [loading, setLoading] = useState(true);
     const [roomCode, setRoomCode] = useState('');
-    const [selectedResult, setSelectedResult] = useState<string | null>(null);
     const [screenshot, setScreenshot] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -61,7 +59,6 @@ function GamePageComponent() {
 
         const unsubscribe = listenForGameUpdates(gameId, (gameData) => {
             if (gameData) {
-                // Check if user is part of the game
                 const isPlayer = gameData.player1.uid === user.uid || gameData.player2?.uid === user.uid;
                 if (!isPlayer) {
                     toast({ title: 'Error', description: 'You are not part of this game.', variant: 'destructive' });
@@ -83,7 +80,7 @@ function GamePageComponent() {
     const gameDetails = useMemo(() => {
         if (!game || !game.createdAt) return null;
         const createdAtDate = game.createdAt.toDate();
-        const updateDeadlineDate = add(createdAtDate, { minutes: 30 });
+        const updateDeadlineDate = add(createdAtDate, { hours: 2 });
         return {
             id: game.id,
             createdAt: format(createdAtDate, 'PPpp'),
@@ -103,77 +100,35 @@ function GamePageComponent() {
             setIsSubmitting(false);
         }
     };
-
-    const handleResultClick = async (result: 'WON' | 'LOST' | 'CANCEL') => {
-        if (!game || !user) return;
-        setSelectedResult(result);
-
-        if (result === 'LOST' || result === 'CANCEL') {
-            setIsSubmitting(true);
-            try {
-                // Special case: Player 2 cancels before room code is set
-                if (result === 'CANCEL' && user.uid === game.player2?.uid && !game.roomCode) {
-                    await cancelAcceptedChallenge(game.id, user.uid);
-                    toast({ title: 'Battle Canceled', description: 'Your acceptance has been canceled and the battle is open again.' });
-                    router.push('/play');
-                    return;
-                }
-
-                const status = result === 'LOST' ? 'completed' : 'cancelled';
-                // If I lost, the other player won
-                const winnerId = result === 'LOST' ? (game.player1.uid === user.uid ? game.player2?.uid : game.player1.uid) : null;
-                
-                await updateGameStatus(game.id, status, winnerId || undefined);
-
-                if (result === 'LOST') {
-                    setResultDialogProps({
-                        variant: 'lost',
-                        title: 'Better Luck Next Time!',
-                        description: 'You have declared that you lost the game.',
-                    });
-                    setIsResultDialogOpen(true);
-                } else {
-                     toast({ title: 'Game Cancelled', description: 'Your cancellation request has been submitted.' });
-                     router.push('/play');
-                }
-
-            } catch (err: any) {
-                toast({ title: 'Error', description: err.message, variant: 'destructive' });
-            } finally {
-                setIsSubmitting(false);
-            }
-        }
-    };
     
-    const handleSubmitWin = async () => {
-        if (!game || !user || !screenshot) {
-            toast({ title: `Screenshot Required`, description: `Please upload a screenshot to declare you won.`, variant: 'destructive'});
-            return;
+    const handleResultSubmit = async (result: 'WON' | 'LOST' | 'CANCEL') => {
+        if (!game || !user) return;
+        
+        let screenshotFile: File | undefined = undefined;
+        if (result === 'WON') {
+            if (!screenshot) {
+                toast({ title: `Screenshot Required`, description: `Please upload a screenshot to declare you won.`, variant: 'destructive'});
+                return;
+            }
+            screenshotFile = screenshot;
         }
         
         setIsSubmitting(true);
         try {
-            await submitGameResult(game.id, user.uid, screenshot);
-            setResultDialogProps({
-                variant: 'won',
-                title: 'Congratulations!',
-                description: `You won ₹${game.amount}! Your result is under review.`,
-            });
-            setIsResultDialogOpen(true);
-
-             // Reset state
-            setSelectedResult(null);
+            await submitPlayerResult(game.id, user.uid, result, screenshotFile);
+            toast({title: 'Result Submitted', description: 'Waiting for opponent to submit their result.'});
+            
+            // Reset local state after submission
             setScreenshot(null);
-            if(fileInputRef.current) {
-                fileInputRef.current.value = '';
-            }
+            if (fileInputRef.current) fileInputRef.current.value = '';
 
         } catch (err: any) {
             toast({ title: 'Submission Failed', description: err.message, variant: 'destructive' });
         } finally {
             setIsSubmitting(false);
         }
-    }
+    };
+
 
     const handleCopyRoomCode = () => {
         if (!game?.roomCode) return;
@@ -187,9 +142,10 @@ function GamePageComponent() {
 
     const opponent = game.player1.uid === appUser.uid ? game.player2 : game.player1;
     const isHost = game.createdBy.uid === appUser.uid;
+    const myResult = game.player1.uid === appUser.uid ? game.player1_result : game.player2_result;
+    const opponentResult = game.player1.uid === appUser.uid ? game.player2_result : game.player1_result;
 
     const renderRoomCodeSection = () => {
-        // Case 1: Room code exists, show it to both players
         if (game.roomCode) {
             return (
                  <Card>
@@ -218,7 +174,6 @@ function GamePageComponent() {
             );
         }
 
-        // Case 2: No room code, current user is the host -> show input
         if (!game.roomCode && isHost) {
             return (
                  <Card>
@@ -244,7 +199,6 @@ function GamePageComponent() {
             );
         }
 
-        // Case 3: No room code, current user is the opponent -> show waiting message
         if (!game.roomCode && !isHost) {
              return (
                  <Card>
@@ -267,17 +221,57 @@ function GamePageComponent() {
         return null;
     }
 
+    const renderResultSection = () => {
+        if (myResult) {
+            return (
+                <Card>
+                    <CardHeader className="py-3 bg-muted rounded-t-lg">
+                        <CardTitle className="text-center text-md font-semibold text-green-600">Result Submitted</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6 text-center space-y-2">
+                        <CheckCircle className="h-10 w-10 mx-auto text-green-500"/>
+                        <p>You submitted: <span className="font-bold">{myResult}</span></p>
+                        <p className="text-muted-foreground text-sm">Waiting for opponent to submit their result...</p>
+                    </CardContent>
+                </Card>
+            )
+        }
+        
+        return (
+            <Card>
+                <CardHeader className="py-3 bg-muted rounded-t-lg">
+                    <CardTitle className="text-center text-md font-semibold text-red-600 animate-shine">Game Result</CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 space-y-3">
+                    <p className="text-center text-sm text-muted-foreground">After your game is complete, select the outcome and submit your result.</p>
+                    
+                    <div className="p-4 border-2 border-dashed rounded-lg space-y-4">
+                        <Label htmlFor="screenshot" className="text-center block font-semibold text-primary">Upload Winning Screenshot (Required if you WON)</Label>
+                        <Input
+                            id="screenshot"
+                            type="file"
+                            accept="image/*"
+                            ref={fileInputRef}
+                            onChange={(e) => setScreenshot(e.target.files ? e.target.files[0] : null)}
+                            className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                            disabled={isSubmitting}
+                        />
+                        {screenshot && <p className="text-sm text-center text-muted-foreground">Selected: {screenshot.name}</p>}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                        <Button onClick={() => handleResultSubmit('WON')} disabled={isSubmitting || !screenshot} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3">I WON</Button>
+                        <Button onClick={() => handleResultSubmit('LOST')} disabled={isSubmitting} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3">I LOST</Button>
+                        <Button onClick={() => handleResultSubmit('CANCEL')} disabled={isSubmitting} variant="outline" className="w-full font-bold py-3 md:col-span-1">CANCEL</Button>
+                    </div>
+                </CardContent>
+            </Card>
+        );
+    }
+
 
     return (
         <>
-        <ResultDialog
-            isOpen={isResultDialogOpen}
-            setIsOpen={setIsResultDialogOpen}
-            variant={resultDialogProps.variant}
-            title={resultDialogProps.title}
-            description={resultDialogProps.description}
-            onClose={() => router.push('/play')}
-        />
         <div className="flex flex-col min-h-screen bg-background font-body">
             <Header />
             <main className="flex-grow container mx-auto px-4 py-6 space-y-6">
@@ -327,64 +321,30 @@ function GamePageComponent() {
                             <span className="font-mono text-xs">{gameDetails.id}</span>
                         </div>
                         <div className="flex items-center justify-between">
-                            <span className="text-muted-foreground flex items-center gap-2"><Clock />Created At</span>
-                            <span className="font-medium">{gameDetails.createdAt}</span>
+                            <span className="text-muted-foreground flex items-center gap-2"><Clock />Last Updated</span>
+                            <span className="font-medium">{format(game.lastUpdatedAt.toDate(), 'PPpp')}</span>
                         </div>
                         <div className="flex items-center justify-between">
-                            <span className="text-muted-foreground flex items-center gap-2"><Clock />Update Deadline</span>
+                            <span className="text-muted-foreground flex items-center gap-2"><AlertTriangle />Update Deadline</span>
                             <span className="font-medium">{gameDetails.updateDeadline}</span>
                         </div>
                     </CardContent>
                 </Card>
 
                 {game.status === 'ongoing' && renderRoomCodeSection()}
-
-
-                {game.status === 'ongoing' && (
-                     <Card>
-                         <CardHeader className="py-3 bg-muted rounded-t-lg">
-                            <CardTitle className="text-center text-md font-semibold text-red-600 animate-shine">Game Result</CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-4 space-y-3">
-                            <p className="text-center text-sm text-muted-foreground">After completion of your game, select the status of the game and post your screenshot below</p>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                                 <Button onClick={() => handleResultClick('WON')} disabled={isSubmitting} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3">I WON</Button>
-                                 <Button onClick={() => handleResultClick('LOST')} disabled={isSubmitting} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3">I LOST</Button>
-                                 <Button onClick={() => handleResultClick('CANCEL')} disabled={isSubmitting} variant="outline" className="w-full font-bold py-3 md:col-span-1">CANCEL</Button>
-                            </div>
-
-                           {selectedResult === 'WON' && (
-                                <div className="p-4 border-2 border-dashed rounded-lg space-y-4">
-                                   <Label htmlFor="screenshot" className="text-center block font-semibold text-primary">Upload Winning Screenshot</Label>
-                                    <Input
-                                        id="screenshot"
-                                        type="file"
-                                        accept="image/*"
-                                        ref={fileInputRef}
-                                        onChange={(e) => setScreenshot(e.target.files ? e.target.files[0] : null)}
-                                        className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
-                                        disabled={isSubmitting}
-                                    />
-                                    {screenshot && <p className="text-sm text-center text-muted-foreground">Selected: {screenshot.name}</p>}
-                                    <Button onClick={handleSubmitWin} className="w-full" disabled={!screenshot || isSubmitting}>
-                                        {isSubmitting ? <Loader className="animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                                        Submit Result
-                                    </Button>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                )}
+                {game.status === 'ongoing' && renderResultSection()}
                 
-                 {game.status !== 'ongoing' && game.status !== 'challenge' && (
+                {game.status !== 'ongoing' && game.status !== 'challenge' && (
                     <Card>
                         <CardHeader>
                              <CardTitle className="text-center text-lg font-semibold text-red-600 animate-shine">Game Over</CardTitle>
                         </CardHeader>
-                        <CardContent className="text-center">
-                            <p className="text-muted-foreground">This game is <span className="font-bold">{game.status.replace('_', ' ')}</span>.</p>
-                             <p className="text-sm mt-2">The result is under review by the admin.</p>
+                        <CardContent className="text-center space-y-3">
+                            <p className="text-muted-foreground">This game is <span className="font-bold capitalize">{game.status.replace('_', ' ')}</span>.</p>
+                            {game.status === 'under_review' && <p className="text-sm mt-2">The result is under review by the admin.</p>}
+                            {game.status === 'disputed' && <p className="text-sm mt-2 text-destructive">The result is disputed. Admin will investigate.</p>}
+                            {game.status === 'completed' && <p className="text-sm mt-2">This battle is complete. Winner: {game.winner === game.player1.uid ? game.player1.displayName : game.player2?.displayName}</p>}
+                            {game.status === 'cancelled' && <p className="text-sm mt-2">This battle was cancelled.</p>}
                              <Link href="/play">
                                 <Button variant="outline" className="mt-4">Back to Lobby</Button>
                              </Link>

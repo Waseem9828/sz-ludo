@@ -106,9 +106,9 @@ export default function KycPage() {
                             KYC Verification
                         </CardTitle>
                         <CardDescription className="text-center">
-                            {appUser?.kycStatus === 'Verified' && 'Your KYC is verified. You can update your details below.'}
-                            {appUser?.kycStatus === 'Pending' && 'Your KYC is under review. You can still update your details.'}
-                            {appUser?.kycStatus === 'Rejected' && 'Your previous KYC was rejected. Please re-submit.'}
+                            {appUser?.kycStatus === 'Verified' && 'Your KYC is verified. You can update your bank details if needed.'}
+                            {appUser?.kycStatus === 'Pending' && 'Your KYC is under review. Please wait for approval.'}
+                            {appUser?.kycStatus === 'Rejected' && 'Your previous KYC submission was rejected. Please correct and re-submit your details.'}
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -169,7 +169,7 @@ export default function KycPage() {
                                                 <FormItem>
                                                     <FormLabel>Bank Account Number</FormLabel>
                                                     <FormControl>
-                                                        <Input placeholder="Enter your bank account number" {...field} disabled={isSubmitting} />
+                                                        <Input placeholder="Enter your bank account number" {...field} disabled={isSubmitting || isKycSubmitted} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -182,7 +182,7 @@ export default function KycPage() {
                                                 <FormItem>
                                                     <FormLabel>IFSC Code</FormLabel>
                                                     <FormControl>
-                                                        <Input placeholder="Enter your bank's IFSC code" {...field} disabled={isSubmitting} />
+                                                        <Input placeholder="Enter your bank's IFSC code" {...field} disabled={isSubmitting || isKycSubmitted} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -195,7 +195,7 @@ export default function KycPage() {
                                                 <FormItem>
                                                     <FormLabel>Bank Name</FormLabel>
                                                     <FormControl>
-                                                        <Input placeholder="Enter your bank's name" {...field} disabled={isSubmitting} />
+                                                        <Input placeholder="Enter your bank's name" {...field} disabled={isSubmitting || isKycSubmitted} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -208,7 +208,7 @@ export default function KycPage() {
                                                 <FormItem>
                                                     <FormLabel>UPI ID</FormLabel>
                                                     <FormControl>
-                                                        <Input placeholder="Enter your UPI ID for withdrawals" {...field} disabled={isSubmitting}/>
+                                                        <Input placeholder="Enter your UPI ID for withdrawals" {...field} disabled={isSubmitting || isKycSubmitted} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -225,9 +225,9 @@ export default function KycPage() {
                                     </AlertDescription>
                                 </Alert>
 
-                                <Button type="submit" className="w-full font-bold text-lg py-6" disabled={isSubmitting}>
-                                    {isSubmitting && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-                                    {isKycSubmitted ? 'Update Details' : 'Submit for Verification'}
+                                <Button type="submit" className="w-full font-bold text-lg py-6" disabled={isSubmitting || isKycSubmitted}>
+                                    {isSubmitting ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : 
+                                     isKycSubmitted ? 'Details Submitted for Review' : 'Submit for Verification'}
                                 </Button>
                             </form>
                         </Form>
