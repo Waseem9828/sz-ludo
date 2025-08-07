@@ -220,9 +220,6 @@ export const listenForGames = (
     status?: Game['status'],
     onError?: (error: Error) => void
 ) => {
-    // Firestore does not allow combining a filter on one field (`status`) with an `orderBy` on another (`createdAt`)
-    // unless a composite index is created. A more robust solution that avoids complex indexing is to
-    // filter by the main criteria and sort the results on the client side.
     const queryConstraints: QueryConstraint[] = [where("type", "==", "user")];
     if (status) {
         queryConstraints.push(where("status", "==", status));
