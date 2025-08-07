@@ -23,6 +23,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import { MessageSquare, ShieldCheck } from "lucide-react";
 import { motion } from 'framer-motion';
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "@/lib/firebase/config";
 
 export default function ChallengeList() {
     const [challenges, setChallenges] = useState<Game[]>([]);
@@ -43,13 +45,16 @@ export default function ChallengeList() {
             return;
         }
         
-        const ongoingGamesSnapshot = await getDocs(query(collection(db, 'games'), where('status', '==', 'ongoing')));
-        const userIsBusy = ongoingGamesSnapshot.docs.some(doc => {
-            const game = doc.data() as Game;
-            return game.player1.uid === user.uid || game.player2?.uid === user.uid;
-        });
+        // Check if user is already in an ongoing game
+        const gamesRef = collection(db, 'games');
+        const q = query(
+            gamesRef,
+            where('status', '==', 'ongoing'),
+            where('playerUids', 'array-contains', user.uid)
+        );
+        const ongoingGamesSnapshot = await getDocs(q);
 
-        if (userIsBusy) {
+        if (!ongoingGamesSnapshot.empty) {
             toast({ title: 'Battle Limit Reached', description: 'You can only be in one ongoing battle at a time.', variant: 'destructive' });
             return;
         }

@@ -39,6 +39,7 @@ export interface Game {
     createdBy: PlayerInfo;
     player1: PlayerInfo;
     player2?: PlayerInfo;
+    playerUids: string[];
     roomCode?: string;
     createdAt: any;
     winner?: string; // winner uid
@@ -53,6 +54,7 @@ export const createChallenge = async (data: { amount: number; createdBy: PlayerI
     return await addDoc(collection(db, GAMES_COLLECTION), {
         ...data,
         player1: data.createdBy,
+        playerUids: [data.createdBy.uid],
         status: 'challenge',
         type: 'user',
         createdAt: serverTimestamp(),
@@ -85,8 +87,15 @@ export const deleteChallenge = async (gameId: string) => {
 // Accept a challenge
 export const acceptChallenge = async (gameId: string, player2: PlayerInfo) => {
     const gameRef = doc(db, GAMES_COLLECTION, gameId);
+    const gameSnap = await getDoc(gameRef);
+    if (!gameSnap.exists()) {
+        throw new Error("Game not found");
+    }
+    const gameData = gameSnap.data() as Game;
+
     return await updateDoc(gameRef, {
         player2: player2,
+        playerUids: [...gameData.playerUids, player2.uid],
         status: 'ongoing',
     });
 };
@@ -113,6 +122,7 @@ export const cancelAcceptedChallenge = async (gameId: string, player2Id: string)
         // 2. Update the game document to revert it to a challenge
         transaction.update(gameRef, {
             status: 'challenge',
+            playerUids: [gameData.player1.uid],
             player2: deleteField() // Remove player2 field
         });
     });
@@ -254,33 +264,19 @@ export const listenForUserGames = (
     callback: (games: Game[]) => void,
     onError?: (error: Error) => void
 ) => {
-    const gamesRef = collection(db, GAMES_COLLECTION);
-    const q1 = query(gamesRef, where("player1.uid", "==", userId), orderBy("createdAt", "desc"), limit(limitCount));
-    const q2 = query(gamesRef, where("player2.uid", "==", userId), orderBy("createdAt", "desc"), limit(limitCount));
+    const gamesRef = collection(db, 'games');
+    const q = query(gamesRef, where("playerUids", "array-contains", userId), orderBy("createdAt", "desc"), limit(limitCount));
 
-    const unsubscribe1 = onSnapshot(q1, (snap1) => {
-        const unsubscribe2 = onSnapshot(q2, (snap2) => {
-            const gamesMap = new Map<string, Game>();
-            snap1.docs.forEach(doc => gamesMap.set(doc.id, { id: doc.id, ...doc.data() } as Game));
-            snap2.docs.forEach(doc => gamesMap.set(doc.id, { id: doc.id, ...doc.data() } as Game));
-            
-            const allGames = Array.from(gamesMap.values());
-            allGames.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
-            
-            callback(allGames.slice(0, limitCount));
-        }, (err) => {
-            console.error("Error in user games listener (p2): ", err);
-            if (onError) onError(err);
-        });
-
-        // Detach the second listener when the first one detaches
-        return () => unsubscribe2();
+    const unsubscribe = onSnapshot(q, (snap) => {
+        const games: Game[] = [];
+        snap.docs.forEach(doc => games.push({ id: doc.id, ...doc.data() } as Game));
+        callback(games);
     }, (err) => {
-        console.error("Error in user games listener (p1): ", err);
+        console.error("Error in user games listener: ", err);
         if (onError) onError(err);
     });
 
-    return unsubscribe1;
+    return unsubscribe;
 };
 
 // Listen for completed games (for revenue calculation)
