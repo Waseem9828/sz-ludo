@@ -175,5 +175,4 @@ export default function ReferPage() {
             </main>
         </div>
     );
-
-    
+}
