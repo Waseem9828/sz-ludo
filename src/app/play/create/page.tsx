@@ -92,7 +92,7 @@ export default function CreateChallengePage() {
                 uid: user.uid,
                 displayName: appUser.displayName || '',
                 photoURL: appUser.photoURL || '',
-                isKycVerified: appUser.isKycVerified || false,
+                isKycVerified: appUser.kycStatus === 'Verified',
             },
             message: message || `Play a game for ₹${numericAmount}!`,
         });

@@ -43,8 +43,13 @@ export default function ChallengeList() {
             return;
         }
         
-        const ongoingGamesCount = await listenForGames((games) => games.filter(g => g.player1.uid === user.uid || g.player2?.uid === user.uid).length, 'ongoing');
-        if (ongoingGamesCount > 0) {
+        const ongoingGamesSnapshot = await getDocs(query(collection(db, 'games'), where('status', '==', 'ongoing')));
+        const userIsBusy = ongoingGamesSnapshot.docs.some(doc => {
+            const game = doc.data() as Game;
+            return game.player1.uid === user.uid || game.player2?.uid === user.uid;
+        });
+
+        if (userIsBusy) {
             toast({ title: 'Battle Limit Reached', description: 'You can only be in one ongoing battle at a time.', variant: 'destructive' });
             return;
         }
