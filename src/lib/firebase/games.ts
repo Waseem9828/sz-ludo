@@ -340,8 +340,3 @@ export const listenForGamesHistory = (
 
     return unsubscribe;
 };
-
-
-
-
-
