@@ -47,6 +47,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [appUser, setAppUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [splashTimerDone, setSplashTimerDone] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [installable, setInstallable] = useState(false);
 
@@ -57,7 +59,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setInstallable(true);
     };
     window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
+
+    const timer = setTimeout(() => {
+        setSplashTimerDone(true);
+    }, 20000); // 20 second minimum splash time
+
+    return () => {
+        window.removeEventListener('beforeinstallprompt', handler);
+        clearTimeout(timer);
+    };
   }, []);
 
   const installPwa = async () => {
@@ -78,6 +88,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       setUser(user);
+      setAuthChecked(true);
       if (user) {
         const userRef = doc(db, 'users', user.uid);
         const unsubscribeFirestore = onSnapshot(userRef, (doc) => {
@@ -88,20 +99,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 }
                 setAppUser({ ...data, isKycVerified: data.kycStatus === 'Verified' });
             }
-            setLoading(false);
         }, (error) => {
             console.error("Firestore onSnapshot error:", error);
-            setLoading(false);
         });
         return () => unsubscribeFirestore();
       } else {
         setAppUser(null);
-        setLoading(false);
       }
     });
 
     return () => unsubscribeAuth();
   }, []);
+
+  useEffect(() => {
+    if(authChecked) {
+        setLoading(false);
+    }
+  }, [authChecked]);
   
   const signUp = async (email:string, password:string, name:string, phone:string, referralCode?: string) => {
       const methods = await fetchSignInMethodsForEmail(auth, email);
@@ -217,13 +231,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setAppUser(null);
     await signOut(auth);
   };
+  
+  const showSplash = loading || !splashTimerDone;
 
-  if (loading) {
+  if (showSplash) {
     return <SplashScreen />;
   }
 
   return (
-    <AuthContext.Provider value={{ user, appUser, loading, installable, installPwa, signUp, signIn, signInWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, appUser, loading: false, installable, installPwa, signUp, signIn, signInWithGoogle, logout }}>
       {children}
     </AuthContext.Provider>
   );
