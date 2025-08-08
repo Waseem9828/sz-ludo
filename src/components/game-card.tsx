@@ -46,7 +46,7 @@ export default function GameCard({ title, description, images, link, aiHint }: H
         )}
       </div>
       <CardContent className="p-4 bg-card text-center">
-        <h3 className="text-xl font-bold font-headline text-red-600 animate-shine">{title}</h3>
+        <h3 className="text-xl font-bold font-headline text-red-600">{title}</h3>
         <p className="text-sm text-muted-foreground mb-3">{description}</p>
         <Link href={link}>
           <Button className="w-full font-bold">Play Now</Button>
