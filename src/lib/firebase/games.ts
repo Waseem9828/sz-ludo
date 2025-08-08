@@ -80,6 +80,7 @@ export const deleteChallenge = async (gameId: string) => {
         
         const gameData = gameSnap.data() as Game;
         
+        // This transaction will create its own separate transaction log for the refund.
         await updateUserWallet(gameData.createdBy.uid, gameData.amount, 'balance', 'refund', `Challenge Deleted: ${gameId}`);
         
         transaction.delete(gameRef);
@@ -149,18 +150,19 @@ export const submitPlayerResult = async (gameId: string, userId: string, result:
         if (!gameSnap.exists()) throw new Error("Game not found");
 
         const gameData = gameSnap.data() as Game;
+        if (!gameData.player2) throw new Error("Opponent has not joined yet.");
+        
         const player1Id = gameData.player1.uid;
-        const player2Id = gameData.player2!.uid;
+        const player2Id = gameData.player2.uid;
         const isPlayer1 = userId === player1Id;
 
-        const updateData: Partial<Game> = { lastUpdatedAt: serverTimestamp() };
-
-        // Determine which player's result is being submitted
-        if (isPlayer1) {
-            updateData.player1_result = result;
-        } else {
-            updateData.player2_result = result;
-        }
+        const myResultField = isPlayer1 ? 'player1_result' : 'player2_result';
+        const opponentResultField = isPlayer1 ? 'player2_result' : 'player1_result';
+        
+        const updateData: any = { 
+            lastUpdatedAt: serverTimestamp(),
+            [myResultField]: result,
+        };
 
         // Upload screenshot if player won
         if (result === 'WON' && screenshotFile) {
@@ -168,66 +170,46 @@ export const submitPlayerResult = async (gameId: string, userId: string, result:
             const uploadResult = await uploadBytes(screenshotRef, screenshotFile);
             updateData.screenshotUrl = await getDownloadURL(uploadResult.ref);
         }
-
+        
         transaction.update(gameRef, updateData);
-
-        // Check if both players have submitted their results to process the outcome
-        const opponentResult = isPlayer1 ? gameData.player2_result : gameData.player1_result;
+        
+        const opponentResult = gameData[opponentResultField];
+        
+        // --- Process Outcome if both results are in ---
         if (opponentResult) {
-            processGameOutcome(transaction, gameRef, gameData, result, opponentResult, isPlayer1);
+            const p1Result = isPlayer1 ? result : opponentResult;
+            const p2Result = isPlayer1 ? opponentResult : result;
+
+            // Case 1: Agreement (Win/Loss)
+            if ((p1Result === 'WON' && p2Result === 'LOST') || (p1Result === 'LOST' && p2Result === 'WON')) {
+                const winnerId = p1Result === 'WON' ? player1Id : player2Id;
+                const loserId = p1Result === 'WON' ? player2Id : player1Id;
+                
+                transaction.update(gameRef, { status: 'under_review', winner: winnerId });
+                transaction.update(doc(db, 'users', winnerId), { 'gameStats.played': increment(1), 'gameStats.won': increment(1) });
+                transaction.update(doc(db, 'users', loserId), { 'gameStats.played': increment(1), 'gameStats.lost': increment(1) });
+            }
+            // Case 2: Dispute (Both Won)
+            else if (p1Result === 'WON' && p2Result === 'WON') {
+                transaction.update(gameRef, { status: 'disputed' });
+            }
+            // Case 3: Cancellation Agreement or one cancels/one loses
+            else if (p1Result === 'CANCEL' || p2Result === 'CANCEL') {
+                transaction.update(gameRef, { status: 'cancelled' });
+                // We will handle refunds in a separate, more robust function or transaction later.
+                // For now, just updating status.
+                 await updateUserWallet(player1Id, gameData.amount, 'balance', 'refund', `Game Cancelled: ${gameData.id}`);
+                 await updateUserWallet(player2Id, gameData.amount, 'balance', 'refund', `Game Cancelled: ${gameData.id}`);
+            }
         }
     });
-};
-
-// Process game outcome after both players have submitted results
-const processGameOutcome = (
-    transaction: any,
-    gameRef: any,
-    gameData: Game,
-    myResult: Game['player1_result'],
-    opponentResult: Game['player2_result'],
-    amIPlayer1: boolean
-) => {
-    const p1Result = amIPlayer1 ? myResult : opponentResult;
-    const p2Result = amIPlayer1 ? opponentResult : myResult;
-    const player1Id = gameData.player1.uid;
-    const player2Id = gameData.player2!.uid;
-
-    // --- Case 1: Agreement (Win/Loss) ---
-    if ((p1Result === 'WON' && p2Result === 'LOST') || (p1Result === 'LOST' && p2Result === 'WON')) {
-        const winnerId = p1Result === 'WON' ? player1Id : player2Id;
-        const loserId = p1Result === 'WON' ? player2Id : player1Id;
-        
-        transaction.update(gameRef, { status: 'under_review', winner: winnerId });
-        transaction.update(doc(db, 'users', winnerId), { 'gameStats.played': increment(1), 'gameStats.won': increment(1) });
-        transaction.update(doc(db, 'users', loserId), { 'gameStats.played': increment(1), 'gameStats.lost': increment(1) });
-    }
-    // --- Case 2: Dispute (Both Won) ---
-    else if (p1Result === 'WON' && p2Result === 'WON') {
-        transaction.update(gameRef, { status: 'disputed' });
-    }
-    // --- Case 3: Cancellation Agreement ---
-    else if ((p1Result === 'CANCEL' && p2Result === 'CANCEL') || 
-             (p1Result === 'CANCEL' && p2Result === 'LOST') ||
-             (p1Result === 'LOST' && p2Result === 'CANCEL')) {
-        transaction.update(gameRef, { status: 'cancelled' });
-        // Refund both players in a separate call as it's a complex operation
-        updateUserWallet(player1Id, gameData.amount, 'balance', 'refund', `Game Cancelled: ${gameData.id}`);
-        updateUserWallet(player2Id, gameData.amount, 'balance', 'refund', `Game Cancelled: ${gameData.id}`);
-    }
-    // --- Case 4: One cancels, one wins (Disputed) ---
-    else if ((p1Result === 'CANCEL' && p2Result === 'WON') || (p1Result === 'WON' && p2Result === 'CANCEL')) {
-        transaction.update(gameRef, { status: 'disputed' });
-    } else {
-        // Other combinations might be left as ongoing or marked as disputed
-    }
 };
 
 
 // Old updateGameStatus function, might still be used by admin
 export const updateGameStatus = async (gameId: string, status: Game['status'], winnerId?: string) => {
     const gameRef = doc(db, GAMES_COLLECTION, gameId);
-    const updateData: { status: Game['status'], winner?: string } = { status };
+    const updateData: { status: Game['status'], winner?: string, lastUpdatedAt: any } = { status, lastUpdatedAt: serverTimestamp() };
     if (winnerId) {
         updateData.winner = winnerId;
     }
@@ -276,7 +258,7 @@ export const listenForGames = (
         queryConstraints.push(where("status", "==", status));
     }
     
-    const q = query(collection(db, GAMES_COLLECTION), ...queryConstraints);
+    const q = query(collection(db, GAMES_COLLECTION), ...queryConstraints, orderBy("createdAt", "desc"));
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const games: Game[] = [];
@@ -284,8 +266,6 @@ export const listenForGames = (
             games.push({ id: doc.id, ...doc.data() } as Game);
         });
         
-        games.sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
-
         callback(games);
     }, (error) => {
         console.error("Error listening for games: ", error);
@@ -343,7 +323,8 @@ export const listenForGamesHistory = (
 ) => {
     const q = query(
         collection(db, GAMES_COLLECTION),
-        where("status", "in", ["completed", "cancelled", "disputed"])
+        where("status", "in", ["completed", "cancelled", "disputed"]),
+        orderBy("createdAt", "desc")
     );
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -352,12 +333,6 @@ export const listenForGamesHistory = (
             games.push({ id: doc.id, ...doc.data() } as Game);
         });
         
-        games.sort((a, b) => {
-            const dateA = a.createdAt?.toDate() || new Date(0);
-            const dateB = b.createdAt?.toDate() || new Date(0);
-            return dateB.getTime() - dateA.getTime();
-        });
-
         callback(games);
     }, (error) => {
         console.error("Error listening for game history: ", error);
@@ -411,3 +386,32 @@ export const applyPenaltyForNoUpdate = async () => {
     await batch.commit();
     console.log(`Penalty applied to ${penaltyCount} players in ${snapshot.size} battles.`);
 };
+
+// Admin: Delete old game records
+export const deleteOldGameRecords = async (): Promise<number> => {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const timestamp = Timestamp.fromDate(thirtyDaysAgo);
+
+    const gamesRef = collection(db, 'games');
+    const q = query(
+        gamesRef,
+        where('status', 'in', ['completed', 'cancelled', 'disputed']),
+        where('createdAt', '<=', timestamp)
+    );
+
+    const snapshot = await getDocs(q);
+    
+    if (snapshot.empty) {
+        return 0;
+    }
+
+    const batch = writeBatch(db);
+    snapshot.docs.forEach(doc => {
+        batch.delete(doc.ref);
+    });
+
+    await batch.commit();
+
+    return snapshot.size;
+}

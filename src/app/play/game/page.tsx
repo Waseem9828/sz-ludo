@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Header from '@/components/header';
@@ -14,7 +15,6 @@ import { Suspense, useState, useRef, useEffect, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ResultDialog } from '@/components/play/result-dialog';
 import { useAuth } from '@/context/auth-context';
 import { Game, listenForGameUpdates, submitPlayerResult, updateGameRoomCode } from '@/lib/firebase/games';
 import { SplashScreen } from '@/components/ui/splash-screen';
@@ -44,13 +44,6 @@ function GamePageComponent() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     
-    const [isResultDialogOpen, setIsResultDialogOpen] = useState(false);
-    const [resultDialogProps, setResultDialogProps] = useState({
-        variant: 'won' as 'won' | 'lost',
-        title: '',
-        description: '',
-    });
-
     useEffect(() => {
         if (!gameId || !user) {
             if (!loading) router.push('/play');
@@ -143,8 +136,7 @@ function GamePageComponent() {
     const opponent = game.player1.uid === appUser.uid ? game.player2 : game.player1;
     const isHost = game.createdBy.uid === appUser.uid;
     const myResult = game.player1.uid === appUser.uid ? game.player1_result : game.player2_result;
-    const opponentResult = game.player1.uid === appUser.uid ? game.player2_result : game.player1_result;
-
+    
     const renderRoomCodeSection = () => {
         if (game.roomCode) {
             return (
@@ -331,8 +323,8 @@ function GamePageComponent() {
                     </CardContent>
                 </Card>
 
-                {game.status === 'ongoing' && renderRoomCodeSection()}
-                {game.status === 'ongoing' && renderResultSection()}
+                {game.status === 'ongoing' && game.roomCode && renderResultSection()}
+                {game.status === 'ongoing' && !game.roomCode && renderRoomCodeSection()}
                 
                 {game.status !== 'ongoing' && game.status !== 'challenge' && (
                     <Card>
