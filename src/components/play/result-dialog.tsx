@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -11,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { PartyPopper, Frown } from 'lucide-react';
 import Confetti from './confetti';
+import Link from 'next/link';
 
 interface ResultDialogProps {
   isOpen: boolean;
@@ -18,6 +20,8 @@ interface ResultDialogProps {
   variant: 'won' | 'lost';
   title: string;
   description: string;
+  points: number;
+  showTournamentPrompt: boolean;
   onClose?: () => void;
 }
 
@@ -27,6 +31,8 @@ export function ResultDialog({
   variant,
   title,
   description,
+  points,
+  showTournamentPrompt,
   onClose,
 }: ResultDialogProps) {
 
@@ -53,8 +59,15 @@ export function ResultDialog({
             {description}
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter className="sm:justify-center">
-          <Button onClick={handleClose}>
+        <DialogFooter className="sm:justify-center flex-col sm:flex-row gap-2">
+          {showTournamentPrompt && (
+            <Link href="/tournaments" className='w-full sm:w-auto'>
+              <Button onClick={handleClose} className='w-full'>
+                Join a Tournament
+              </Button>
+            </Link>
+          )}
+          <Button onClick={handleClose} variant="outline" className='w-full sm:w-auto'>
             Close
           </Button>
         </DialogFooter>

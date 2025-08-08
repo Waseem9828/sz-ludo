@@ -173,16 +173,16 @@ export const joinTournament = async (tournamentId: string, userId: string) => {
 };
 
 export const updateTournamentPoints = async (userId: string, points: number) => {
-    const now = Timestamp.now();
     const tournamentsRef = collection(db, TOURNAMENTS_COLLECTION);
     const q = query(tournamentsRef, where('status', '==', 'live'), where('players', 'array-contains', userId));
 
     const snapshot = await getDocs(q);
     if (snapshot.empty) {
-        return; // User is not in any live tournament
+        return false; // User is not in any live tournament
     }
 
     const batch = writeBatch(db);
+    let updated = false;
     for (const doc of snapshot.docs) {
         const tournament = doc.data() as Tournament;
         const playerIndex = tournament.leaderboard.findIndex(p => p.uid === userId);
@@ -191,9 +191,13 @@ export const updateTournamentPoints = async (userId: string, points: number) => 
             const newLeaderboard = [...tournament.leaderboard];
             newLeaderboard[playerIndex].points += points;
             batch.update(doc.ref, { leaderboard: newLeaderboard });
+            updated = true;
         }
     }
-    await batch.commit();
+    if (updated) {
+        await batch.commit();
+    }
+    return updated; // Return true if points were updated for at least one tournament
 }
 
 
@@ -261,4 +265,16 @@ export const listenForTournament = (
         }
     }, onError);
     return unsubscribe;
+};
+
+// Check if a user has joined any live tournament
+export const hasJoinedLiveTournament = async (userId: string): Promise<boolean> => {
+    const tournamentsRef = collection(db, TOURNAMENTS_COLLECTION);
+    const q = query(
+        tournamentsRef,
+        where('status', '==', 'live'),
+        where('players', 'array-contains', userId)
+    );
+    const snapshot = await getDocs(q);
+    return !snapshot.empty;
 };

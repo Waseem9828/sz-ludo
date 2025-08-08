@@ -49,6 +49,7 @@ export interface Game {
     createdAt: any;
     lastUpdatedAt: any;
     winner?: string; // winner uid
+    loser?: string; // loser uid
     screenshotUrl?: string;
     message?: string;
 }
@@ -186,9 +187,13 @@ export const submitPlayerResult = async (gameId: string, userId: string, result:
                 const winnerId = p1Result === 'WON' ? player1Id : player2Id;
                 const loserId = p1Result === 'WON' ? player2Id : player1Id;
                 
-                transaction.update(gameRef, { status: 'under_review', winner: winnerId });
+                transaction.update(gameRef, { status: 'under_review', winner: winnerId, loser: loserId });
                 transaction.update(doc(db, 'users', winnerId), { 'gameStats.played': increment(1), 'gameStats.won': increment(1) });
                 transaction.update(doc(db, 'users', loserId), { 'gameStats.played': increment(1), 'gameStats.lost': increment(1) });
+                
+                // Update tournament points for both players
+                await updateTournamentPoints(winnerId, gameData.amount);
+                await updateTournamentPoints(loserId, gameData.amount);
             }
             // Case 2: Dispute (Both Won)
             else if (p1Result === 'WON' && p2Result === 'WON') {
@@ -218,19 +223,20 @@ export const updateGameStatus = async (gameId: string, status: Game['status'], w
         }
         const gameData = gameSnap.data() as Game;
 
-        const updateData: { status: Game['status'], winner?: string, lastUpdatedAt: any } = { status, lastUpdatedAt: serverTimestamp() };
+        const updateData: { status: Game['status'], winner?: string, loser?: string, lastUpdatedAt: any } = { status, lastUpdatedAt: serverTimestamp() };
         if (winnerId) {
             updateData.winner = winnerId;
+            updateData.loser = gameData.playerUids.find(uid => uid !== winnerId);
         }
         
         transaction.update(gameRef, updateData);
 
-        // If game is completed, update tournament points
+        // If game is completed, update tournament points (already handled in submitPlayerResult, but keep as fallback)
         if (status === 'completed' && winnerId) {
             const loserId = gameData.playerUids.find(uid => uid !== winnerId);
-            await updateTournamentPoints(winnerId, 10); // +10 points for win
+            await updateTournamentPoints(winnerId, gameData.amount); 
             if (loserId) {
-                await updateTournamentPoints(loserId, 5); // +5 points for loss
+                await updateTournamentPoints(loserId, gameData.amount);
             }
         }
     });

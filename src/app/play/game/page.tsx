@@ -11,7 +11,7 @@ import { ChevronLeft, Info, Upload, Loader, Send, Copy, Clock, Hash, AlertTriang
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Suspense, useState, useRef, useEffect, useMemo } from 'react';
+import { Suspense, useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,6 +20,8 @@ import { Game, listenForGameUpdates, submitPlayerResult, updateGameRoomCode } fr
 import { SplashScreen } from '@/components/ui/splash-screen';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { add, format } from 'date-fns';
+import { ResultDialog } from '@/components/play/result-dialog';
+import { hasJoinedLiveTournament } from '@/lib/firebase/tournaments';
 
 const penalties = [
     { amount: '₹100', reason: 'Fraud / Fake Screenshot' },
@@ -43,6 +45,40 @@ function GamePageComponent() {
     const [screenshot, setScreenshot] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // State for the result dialog
+    const [isResultDialogOpen, setIsResultDialogOpen] = useState(false);
+    const [resultDialogData, setResultDialogData] = useState({ variant: 'won', title: '', description: '', points: 0, showTournamentPrompt: false });
+
+    const [hasJoinedTournament, setHasJoinedTournament] = useState(false);
+
+    useEffect(() => {
+        if (user?.uid) {
+            hasJoinedLiveTournament(user.uid).then(setHasJoinedTournament);
+        }
+    }, [user?.uid]);
+    
+    const showResultDialog = useCallback((variant: 'won' | 'lost', points: number) => {
+        const isWinner = variant === 'won';
+        if (hasJoinedTournament) {
+            setResultDialogData({
+                variant,
+                title: isWinner ? 'Congratulations, You Won!' : 'Better Luck Next Time!',
+                description: `You've earned ${points} points for this game. Keep playing to climb the tournament leaderboard!`,
+                points: points,
+                showTournamentPrompt: false,
+            });
+        } else {
+             setResultDialogData({
+                variant,
+                title: isWinner ? 'Congratulations, You Won!' : 'Better Luck Next Time!',
+                description: `You just missed out on ${points} tournament points! Join a tournament to start ranking up.`,
+                points: points,
+                showTournamentPrompt: true,
+            });
+        }
+        setIsResultDialogOpen(true);
+    }, [hasJoinedTournament]);
     
     useEffect(() => {
         if (!gameId || !user) {
@@ -57,6 +93,17 @@ function GamePageComponent() {
                     toast({ title: 'Error', description: 'You are not part of this game.', variant: 'destructive' });
                     router.push('/play');
                 } else {
+                    // Check if the game status has just changed to show the dialog
+                    const oldStatus = game?.status;
+                    const newStatus = gameData.status;
+                    
+                    if (oldStatus === 'under_review' && (newStatus === 'completed' || newStatus === 'cancelled' || newStatus === 'disputed')) {
+                        if (gameData.winner === user.uid) {
+                           showResultDialog('won', gameData.amount);
+                        } else if (gameData.loser === user.uid) {
+                           showResultDialog('lost', gameData.amount);
+                        }
+                    }
                     setGame(gameData);
                 }
             } else {
@@ -68,7 +115,7 @@ function GamePageComponent() {
 
         return () => unsubscribe();
 
-    }, [gameId, router, toast, user, loading]);
+    }, [gameId, router, toast, user, loading, game?.status, showResultDialog]);
 
     const gameDetails = useMemo(() => {
         if (!game || !game.createdAt) return null;
@@ -264,6 +311,12 @@ function GamePageComponent() {
 
     return (
         <>
+        <ResultDialog 
+            isOpen={isResultDialogOpen}
+            setIsOpen={setIsResultDialogOpen}
+            onClose={() => router.push('/play')}
+            {...resultDialogData}
+        />
         <div className="flex flex-col min-h-screen bg-background font-body">
             <Header />
             <main className="flex-grow container mx-auto px-4 py-6 space-y-6">
@@ -326,8 +379,7 @@ function GamePageComponent() {
                     </CardContent>
                 </Card>
 
-                {game.status === 'ongoing' && game.roomCode && renderResultSection()}
-                {game.status === 'ongoing' && !game.roomCode && renderRoomCodeSection()}
+                {game.status === 'ongoing' && renderResultSection()}
                 
                 {game.status !== 'ongoing' && game.status !== 'challenge' && (
                     <Card>
