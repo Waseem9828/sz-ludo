@@ -5,7 +5,7 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 348 83% 97%;
     --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
@@ -164,9 +164,9 @@
   .animate-shine {
     background-image: linear-gradient(
       90deg,
-      transparent 0%,
-      rgba(255, 255, 255, 0.4) 50%,
-      transparent 100%
+      hsl(var(--primary)),
+      #ffffff,
+      hsl(var(--primary))
     );
     background-size: 200% 100%;
     animation: shine 5s linear infinite;
@@ -195,5 +195,20 @@
     );
     background-size: 200% 100%;
     animation: shine 5s linear infinite;
+  }
+
+  @keyframes glowPulse {
+    0% {
+      box-shadow: 0 4px 20px hsla(var(--primary), 0.15);
+    }
+    50% {
+      box-shadow: 0 10px 30px hsla(var(--primary), 0.25);
+    }
+    100% {
+      box-shadow: 0 4px 20px hsla(var(--primary), 0.15);
+    }
+  }
+  .animate-glowPulse {
+    animation: glowPulse 3s ease-in-out infinite;
   }
 }
