@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 
-const Dice = ({ rotation, position, size = 60 }: { rotation: number[], position: { top: string, left: string }, size?: number }) => (
+const Dice = ({ rotation, position, size = 60, src }: { rotation: number[], position: { top: string, left: string }, size?: number, src: string }) => (
     <motion.div
         className="absolute"
         style={{ top: position.top, left: position.left }}
@@ -18,7 +18,7 @@ const Dice = ({ rotation, position, size = 60 }: { rotation: number[], position:
             transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', repeatType: 'mirror' }}
         >
             <Image
-                src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhoK-LpU_pXajSUbNq9sYfO8jSln-vL8sB7y_8PnaQ9UvjGDF3-rR9d3jG8Y0y0nU-jP5_x_O3nC-ZJ3H1J6d2_A9J0b-Z0A_Z0C_Z0D_Z0E_Z0F_Z0G/s1600/dice.png"
+                src={src}
                 alt="Ludo Dice"
                 width={size}
                 height={size}
@@ -104,10 +104,10 @@ export const SplashScreen = () => {
     }, []);
 
     const dicePositions = [
-        { top: '15%', left: '10%', rotation: [-10, 15, -5], size: 60 },
-        { top: '70%', left: '20%', rotation: [10, -5, 15], size: 40 },
-        { top: '25%', left: '80%', rotation: [5, -15, 10], size: 50 },
-        { top: '80%', left: '75%', rotation: [-15, 5, -10], size: 60 },
+        { src: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEja_Ww-z0b9QKTD6qd0mrqCPmptjNeN8o0iaWMTE7tWY29oT5gT2Cxi_Kq_wEfzeydx-vUcBsNnBNGRiQBYnla13ll4BICq8Z8XHL19ByRa0FQ_TfVS6ko0MAaKWKUeCXWRG0MPK7bLXjx3jg-CEZJ5aSNb6_P4EMN6NWcYTwx5j0K2beLUpekvB3sAswk/s1600/84232.png', top: '15%', left: '10%', rotation: [-10, 15, -5], size: 60 },
+        { src: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjne4OyDxkaEhphfld5Hx79cX_4CsUMBHe6dxxxDmPgma0B2RrLXsuON0Z2HWDlZfn2Sa4tMQ0rGX4EOVG9I5CZl_t7mJoUQE_3VzWD_HfdPmkis2oNJd0ABwdhdOBQXXPZkjPgyMIq2BxtlZI8U54YlD5ljsM6zeUYYmAebH-jcg_FAjCl3bd_013TczA/s1600/84235.png', top: '70%', left: '20%', rotation: [10, -5, 15], size: 40 },
+        { src: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgelIA3i3cMKeco-tOTR0KjD6ETsiixo6tXgO7aLnXIOOiIwg5WAyG8HmX7eV7FuvDwOvc8q4hfqT3PsohZhzTsWqIn1xssieACQ30-l9IHY-vTsrGsvln5ofWNX0en6dBAa4l3Yh0QGw52bcofzD9GraNaGXojX-u64oiQRjOFeJCTUt9AAjmDSH8bxNA/s1600/84253.png', top: '25%', left: '80%', rotation: [5, -15, 10], size: 50 },
+        { src: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhUsfa96yYBwO6uaWPed0sYeF3qBV93rANBKTuoHRKMFpNv-v1en3qWPyj9C6JTgBveNCSqiJSngPXB_7daB-PJtUQOyTWmMFoOpLSd9cO-m2Zq6mgEAUPLh0Z6YEVr8n0sewD1_UX_lOHoFnUpHP9UBoolTwY1d01vpgFnCNg8vMBg9oFN85ll-VO9isw/s1600/84252.png', top: '80%', left: '75%', rotation: [-15, 5, -10], size: 60 },
     ];
 
     return (
@@ -132,16 +132,15 @@ export const SplashScreen = () => {
                     >
                          {/* Dice Animations */}
                         <AnimatePresence>
-                            {dicePositions.map((dice, index) => (
-                                 <motion.div
-                                    key={index}
-                                    initial={{ opacity: 0, scale: 0 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ duration: 0.5, delay: 0.2, ease: 'easeOut' }}
-                                >
-                                    <Dice position={{ top: dice.top, left: dice.left }} rotation={dice.rotation} size={dice.size} />
-                                 </motion.div>
-                            ))}
+                             <motion.div
+                                initial={{ opacity: 0, scale: 0 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ duration: 0.5, delay: 0.2, ease: 'easeOut' }}
+                            >
+                                {dicePositions.map((dice, index) => (
+                                     <Dice key={index} position={{ top: dice.top, left: dice.left }} rotation={dice.rotation} size={dice.size} src={dice.src} />
+                                ))}
+                             </motion.div>
                         </AnimatePresence>
                         
                         <div className="animate-bounce-float">
