@@ -96,10 +96,10 @@ const TypewriterText = ({ text, delay = 0 }: { text: string; delay?: number }) =
 
 export const SplashScreen = () => {
     const dicePositions = [
-        { top: '15%', left: '10%', rotation: [-10, 15, -5] },
+        { top: '15%', left: '10%', rotation: [-10, 15, -5], size: 60 },
         { top: '70%', left: '20%', rotation: [10, -5, 15], size: 40 },
         { top: '25%', left: '80%', rotation: [5, -15, 10], size: 50 },
-        { top: '80%', left: '75%', rotation: [-15, 5, -10] },
+        { top: '80%', left: '75%', rotation: [-15, 5, -10], size: 60 },
     ];
 
     return (
@@ -118,7 +118,7 @@ export const SplashScreen = () => {
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ duration: 0.5, delay: 0.2 + index * 0.1, ease: 'easeOut' }}
                         >
-                            <Dice {...dice} />
+                            <Dice position={{ top: dice.top, left: dice.left }} rotation={dice.rotation} size={dice.size} />
                          </motion.div>
                     ))}
                 </AnimatePresence>
