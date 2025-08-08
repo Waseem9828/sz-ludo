@@ -16,3 +16,21 @@ runConfig:
   # Increase this value if you'd like to automatically spin up
   # more instances in response to increased traffic.
   maxInstances: 1
+
+# This section enables automated deployments from a GitHub repository.
+# It configures a post-build step that uses the Firebase CLI to deploy
+# the app to Firebase Hosting, utilizing the service account associated
+# with the App Hosting backend for authentication.
+postbuild:
+  # The command to execute after the build is complete.
+  # This command deploys the built application to Firebase Hosting.
+  # The --only hosting flag ensures that only hosting content is deployed.
+  # The --project $PROJECT_ID variable uses the environment variable
+  # for the project ID, making the command portable across projects.
+  # The --service-account $APP_HOSTING_SERVICE_ACCOUNT variable uses
+  # the environment variable for the service account email, which provides
+  # the necessary authentication for deployment.
+  command: >
+    firebase deploy --only hosting
+    --project "$PROJECT_ID"
+    --service-account "$APP_HOSTING_SERVICE_ACCOUNT"
