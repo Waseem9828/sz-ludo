@@ -3,9 +3,104 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow read/write access to authenticated users
-    match /{document=**} {
-      allow read, write: if request.auth != null;
+
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if a user has a specific role
+    function hasRole(role) {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
+    }
+
+    // Helper function to check if user is an admin (any role)
+    function isAdmin() {
+      let userRole = get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+      return userRole == 'superadmin' || userRole == 'finance' || userRole == 'support';
+    }
+    
+    // USERS collection
+    match /users/{userId} {
+      // Any authenticated user can create their own user document during signup
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      // Users can read and update their own data. Admins can read any user's data.
+      allow read, update: if (isAuthenticated() && request.auth.uid == userId) || isAdmin();
+    }
+    
+    // GAMES collection
+    match /games/{gameId} {
+      // Any authenticated user can read the list of challenges/games and create a new challenge
+      allow list, create: if isAuthenticated();
+      // Only players in the game can read it after it starts. Admins can read any game.
+      allow read: if (isAuthenticated() && resource.data.playerUids[0] == request.auth.uid) 
+                      || (isAuthenticated() && resource.data.playerUids[1] == request.auth.uid) 
+                      || isAdmin();
+      // Only players involved can update the game (accept, submit result, etc.)
+      // Or if an admin is updating it.
+      allow update: if (isAuthenticated() && request.auth.uid in resource.data.playerUids) || isAdmin();
+      // Only the creator can delete their own challenge
+      allow delete: if isAuthenticated() && request.auth.uid == resource.data.createdBy.uid;
+    }
+    
+    // SETTINGS collection
+    match /settings/{docId} {
+      // Anyone can read app settings
+      allow get: if true;
+      // Only superadmin can change settings
+      allow create, update, delete: if hasRole('superadmin');
+    }
+
+    // DEPOSITS collection
+    match /deposits/{depositId} {
+        // Users can create their own deposit requests
+        allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+        // Only the user who made the request or an admin can read it
+        allow read: if (isAuthenticated() && get(/databases/$(database)/documents/deposits/$(depositId)).data.userId == request.auth.uid) || isAdmin();
+        // Only admins can update the status
+        allow update: if hasRole('superadmin') || hasRole('finance');
+    }
+
+    // WITHDRAWALS collection
+    match /withdrawals/{withdrawalId} {
+        // Users can create their own withdrawal requests
+        allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+        // Only the user who made the request or an admin can read it.
+        allow read: if (isAuthenticated() && get(/databases/$(database)/documents/withdrawals/$(withdrawalId)).data.userId == request.auth.uid) || isAdmin();
+        // Only finance agents or superadmins can approve/reject
+        allow update: if hasRole('superadmin') || hasRole('finance');
+    }
+
+    // TRANSACTIONS collection
+    match /transactions/{transactionId} {
+        // Transactions are created via backend functions/transactions, not directly by clients
+        allow create: if false; 
+        // A user can only read their own transactions. Admins can read any.
+        allow list, get: if (isAuthenticated() && resource.data.userId == request.auth.uid) || isAdmin();
+        // Transactions should not be updatable from the client side
+        allow update, delete: if false;
+    }
+
+    // NOTIFICATIONS collection
+    match /notifications/{notificationId} {
+        // Any authenticated user can read notifications
+        allow list, get: if isAuthenticated();
+        // Only admins can create or update them
+        allow create, update: if hasRole('superadmin') || hasRole('support');
+    }
+    
+    // User-specific notification status subcollection
+    match /users/{userId}/userNotifications/{notificationId} {
+        // A user can only read/write their own notification statuses
+        allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // TOURNAMENTS collection
+    match /tournaments/{tournamentId} {
+        // Any authenticated user can read the list of tournaments
+        allow list, get: if isAuthenticated();
+        // Only superadmin can create or update tournaments
+        allow create, update: if hasRole('superadmin');
     }
   }
 }
