@@ -29,6 +29,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Game, listenForUserGames } from '@/lib/firebase/games';
+import Image from 'next/image';
 
 const quickWithdrawAmounts = [300, 1000, 5000, 10000];
 
@@ -155,7 +156,10 @@ export default function WalletPage() {
                 <Card>
                     <CardHeader className="text-center">
                         <CardDescription>Total Balance</CardDescription>
-                        <CardTitle className="text-4xl font-bold">₹{totalBalance.toFixed(2)}</CardTitle>
+                        <CardTitle className="text-4xl font-bold flex items-center justify-center gap-2">
+                             <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={36} height={36} data-ai-hint="gold coin"/>
+                            ₹{totalBalance.toFixed(2)}
+                        </CardTitle>
                     </CardHeader>
                 </Card>
 
@@ -180,7 +184,10 @@ export default function WalletPage() {
                             <CardDescription className="text-center">Available for Gameplay</CardDescription>
                         </CardHeader>
                         <CardContent className="text-center space-y-4">
-                            <p className="text-3xl font-bold">₹{(appUser.wallet?.balance || 0).toFixed(2)}</p>
+                            <p className="text-3xl font-bold flex items-center justify-center gap-2">
+                                <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={32} height={32} data-ai-hint="gold coin"/>
+                                ₹{(appUser.wallet?.balance || 0).toFixed(2)}
+                            </p>
                             <Link href="/wallet/add-cash">
                                 <Button className="w-full bg-primary hover:bg-primary/90 font-bold text-lg py-6">
                                     <Plus className="mr-2"/>
@@ -196,7 +203,10 @@ export default function WalletPage() {
                             <CardDescription className="text-center">Withdrawable Balance</CardDescription>
                         </CardHeader>
                         <CardContent className="text-center space-y-4">
-                            <p className="text-3xl font-bold">₹{(appUser.wallet?.winnings || 0).toFixed(2)}</p>
+                            <p className="text-3xl font-bold flex items-center justify-center gap-2">
+                                <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={32} height={32} data-ai-hint="gold coin"/>
+                                ₹{(appUser.wallet?.winnings || 0).toFixed(2)}
+                            </p>
                             <Dialog open={isWithdrawDialogOpen} onOpenChange={setIsWithdrawDialogOpen}>
                                 <DialogTrigger asChild>
                                      <Button className="w-full bg-green-600 hover:bg-green-700 text-white font-bold text-lg py-6" disabled={isKycPending || (appUser.wallet?.winnings || 0) < 300}>

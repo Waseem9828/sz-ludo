@@ -18,12 +18,13 @@ import { updateProfile } from 'firebase/auth';
 import { SplashScreen } from '@/components/ui/splash-screen';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 
-const MetricCard = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: string | number }) => (
+const MetricCard = ({ icon, label, value, imageIcon }: { icon?: React.ReactNode, label: string, value: string | number, imageIcon?: string }) => (
     <Card className="bg-secondary/50">
         <CardContent className="p-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                {icon}
+                {imageIcon ? <Image src={imageIcon} alt={label} width={16} height={16} data-ai-hint="coin money" /> : icon}
                 <span>{label}</span>
             </div>
             <p className="text-lg font-bold mt-1">{value}</p>
@@ -197,7 +198,11 @@ export default function ProfilePage() {
                     <CardContent>
                         <div className="grid grid-cols-2 gap-4">
                             <MetricCard icon={<BarChart2 className="h-4 w-4" />} label="Games Played" value={appUser.gameStats?.played || 0} />
-                            <MetricCard icon={<Trophy className="h-4 w-4" />} label="Chips Won" value={`₹${(appUser.lifetimeStats?.totalWinnings || 0).toFixed(2)}`} />
+                            <MetricCard 
+                                imageIcon="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" 
+                                label="Chips Won" 
+                                value={`₹${(appUser.lifetimeStats?.totalWinnings || 0).toFixed(2)}`} 
+                            />
                             <MetricCard icon={<Gift className="h-4 w-4" />} label="Referal Earning" value={`₹${(appUser.referralStats?.totalEarnings || 0).toFixed(2)}`} />
                             <MetricCard icon={<ArrowUp className="h-4 w-4" />} label="Penalty" value="₹0" />
                         </div>
