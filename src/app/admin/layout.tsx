@@ -98,7 +98,7 @@ export default function AdminLayout({
                 <SidebarTrigger />
                 <h2 className="text-xl font-semibold text-primary">{pageTitle}</h2>
              </header>
-            <main className="p-6">
+            <main className="p-2 md:p-6">
                 {children}
             </main>
         </SidebarInset>

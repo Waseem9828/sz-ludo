@@ -101,81 +101,83 @@ export default function DepositsPage() {
             <CardDescription>Review and process user deposit requests.</CardDescription>
         </CardHeader>
         <CardContent>
-            <Table>
-            <TableHeader>
-                <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>UTR / Transaction ID</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {requests.map((request) => (
-                <TableRow key={request.id}>
-                    <TableCell>
-                        <Link href={`/admin/users/${request.userId}`} className="font-medium hover:underline">
-                         {request.userName}
-                        </Link>
-                    </TableCell>
-                    <TableCell>₹{request.amount}</TableCell>
-                    <TableCell>{request.utr}</TableCell>
-                    <TableCell>{new Date(request.createdAt?.toDate()).toLocaleString()}</TableCell>
-                    <TableCell>
-                        <Badge variant={getStatusBadgeVariant(request.status)}>{request.status}</Badge>
-                    </TableCell>
-                    <TableCell className="space-x-2">
-                    {request.status === 'pending' && (
-                        <Dialog>
-                            <DialogTrigger asChild>
-                            <Button variant="outline" size="sm">Review</Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-md">
-                            <DialogHeader>
-                                <DialogTitle>Review Deposit</DialogTitle>
-                                <DialogDescription>
-                                    Verify the payment details and screenshot before approval.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="mt-4 space-y-4">
-                               <div className="text-sm">
-                                   <p><span className="font-semibold">User:</span> {request.userName}</p>
-                                   <p><span className="font-semibold">Amount:</span> ₹{request.amount}</p>
-                                   <p><span className="font-semibold">UTR:</span> {request.utr}</p>
-                                   <p><span className="font-semibold">Paid to UPI:</span> {request.upiId}</p>
-                               </div>
-                                <div>
-                                    <h3 className="font-semibold mb-2 text-center">Submitted Screenshot</h3>
-                                    <div className="p-2 border rounded-md bg-muted">
-                                    <a href={request.screenshotUrl} target="_blank" rel="noopener noreferrer">
-                                        <Image src={request.screenshotUrl} alt="Deposit Screenshot" width={400} height={800} className="rounded-md mx-auto aspect-[9/16] object-contain" data-ai-hint="payment screenshot" />
-                                    </a>
+            <div className="w-full overflow-x-auto">
+                <Table>
+                <TableHeader>
+                    <TableRow>
+                    <TableHead>User</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>UTR</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {requests.map((request) => (
+                    <TableRow key={request.id}>
+                        <TableCell>
+                            <Link href={`/admin/users/${request.userId}`} className="font-medium hover:underline whitespace-nowrap">
+                            {request.userName}
+                            </Link>
+                        </TableCell>
+                        <TableCell>₹{request.amount}</TableCell>
+                        <TableCell>{request.utr}</TableCell>
+                        <TableCell className="whitespace-nowrap">{new Date(request.createdAt?.toDate()).toLocaleString()}</TableCell>
+                        <TableCell>
+                            <Badge variant={getStatusBadgeVariant(request.status)}>{request.status}</Badge>
+                        </TableCell>
+                        <TableCell className="space-x-2">
+                        {request.status === 'pending' && (
+                            <Dialog>
+                                <DialogTrigger asChild>
+                                <Button variant="outline" size="sm">Review</Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-md">
+                                <DialogHeader>
+                                    <DialogTitle>Review Deposit</DialogTitle>
+                                    <DialogDescription>
+                                        Verify the payment details and screenshot before approval.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="mt-4 space-y-4">
+                                <div className="text-sm">
+                                    <p><span className="font-semibold">User:</span> {request.userName}</p>
+                                    <p><span className="font-semibold">Amount:</span> ₹{request.amount}</p>
+                                    <p><span className="font-semibold">UTR:</span> {request.utr}</p>
+                                    <p><span className="font-semibold">Paid to UPI:</span> {request.upiId}</p>
+                                </div>
+                                    <div>
+                                        <h3 className="font-semibold mb-2 text-center">Submitted Screenshot</h3>
+                                        <div className="p-2 border rounded-md bg-muted">
+                                        <a href={request.screenshotUrl} target="_blank" rel="noopener noreferrer">
+                                            <Image src={request.screenshotUrl} alt="Deposit Screenshot" width={400} height={800} className="rounded-md mx-auto aspect-[9/16] object-contain" data-ai-hint="payment screenshot" />
+                                        </a>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div className="flex justify-end gap-2 mt-6">
-                                    <DialogClose asChild>
-                                        <Button variant="destructive" onClick={() => handleReject(request)}>Reject</Button>
-                                    </DialogClose>
-                                    <DialogClose asChild>
-                                        <Button onClick={() => handleApprove(request)}>Approve</Button>
-                                    </DialogClose>
-                            </div>
-                            </DialogContent>
-                        </Dialog>
-                    )}
-                    </TableCell>
-                </TableRow>
-                ))}
-                {requests.length === 0 && (
-                    <TableRow>
-                        <TableCell colSpan={6} className="text-center text-muted-foreground">No deposit requests found.</TableCell>
+                                <div className="flex justify-end gap-2 mt-6">
+                                        <DialogClose asChild>
+                                            <Button variant="destructive" onClick={() => handleReject(request)}>Reject</Button>
+                                        </DialogClose>
+                                        <DialogClose asChild>
+                                            <Button onClick={() => handleApprove(request)}>Approve</Button>
+                                        </DialogClose>
+                                </div>
+                                </DialogContent>
+                            </Dialog>
+                        )}
+                        </TableCell>
                     </TableRow>
-                )}
-            </TableBody>
-            </Table>
+                    ))}
+                    {requests.length === 0 && (
+                        <TableRow>
+                            <TableCell colSpan={6} className="text-center text-muted-foreground">No deposit requests found.</TableCell>
+                        </TableRow>
+                    )}
+                </TableBody>
+                </Table>
+            </div>
         </CardContent>
         </Card>
     );

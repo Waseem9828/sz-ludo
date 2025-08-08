@@ -71,37 +71,39 @@ export default function MatchesPage() {
         <CardDescription>A log of all completed, cancelled, or disputed matches.</CardDescription>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Players</TableHead>
-              <TableHead>Bet Amount</TableHead>
-              <TableHead>Winner</TableHead>
-              <TableHead>Room Code</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-             {matches.length === 0 && (
+        <div className="w-full overflow-x-auto">
+            <Table>
+            <TableHeader>
                 <TableRow>
-                    <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
-                        No historical matches found.
+                <TableHead>Players</TableHead>
+                <TableHead>Bet Amount</TableHead>
+                <TableHead>Winner</TableHead>
+                <TableHead>Room Code</TableHead>
+                <TableHead>Status</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {matches.length === 0 && (
+                    <TableRow>
+                        <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+                            No historical matches found.
+                        </TableCell>
+                    </TableRow>
+                )}
+                {matches.map((match) => (
+                <TableRow key={match.id}>
+                    <TableCell className="whitespace-nowrap">{match.player1?.displayName} vs {match.player2?.displayName || 'N/A'}</TableCell>
+                    <TableCell>₹{match.amount}</TableCell>
+                    <TableCell className="whitespace-nowrap">{getWinnerDisplayName(match)}</TableCell>
+                    <TableCell>{match.roomCode}</TableCell>
+                    <TableCell>
+                        <Badge variant={getStatusBadgeVariant(match.status)}>{match.status.replace('_', ' ')}</Badge>
                     </TableCell>
                 </TableRow>
-            )}
-            {matches.map((match) => (
-              <TableRow key={match.id}>
-                <TableCell>{match.player1?.displayName} vs {match.player2?.displayName || 'N/A'}</TableCell>
-                <TableCell>₹{match.amount}</TableCell>
-                <TableCell>{getWinnerDisplayName(match)}</TableCell>
-                <TableCell>{match.roomCode}</TableCell>
-                <TableCell>
-                    <Badge variant={getStatusBadgeVariant(match.status)}>{match.status.replace('_', ' ')}</Badge>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                ))}
+            </TableBody>
+            </Table>
+        </div>
       </CardContent>
     </Card>
   );

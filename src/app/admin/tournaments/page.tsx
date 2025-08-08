@@ -81,7 +81,7 @@ export default function TournamentsPage() {
 
     return (
         <Card>
-            <CardHeader className="flex flex-row justify-between items-center">
+            <CardHeader className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
                 <div>
                     <CardTitle>Tournaments</CardTitle>
                     <CardDescription>Manage all tournaments.</CardDescription>
@@ -93,69 +93,70 @@ export default function TournamentsPage() {
                 </Link>
             </CardHeader>
             <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Title</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Entry Fee</TableHead>
-                            <TableHead>Players</TableHead>
-                            <TableHead>Prize Pool</TableHead>
-                            <TableHead>Starts At</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {tournaments.length === 0 ? (
+                <div className="w-full overflow-x-auto">
+                    <Table>
+                        <TableHeader>
                             <TableRow>
-                                <TableCell colSpan={7} className="text-center text-muted-foreground py-10">
-                                    No tournaments found.
-                                </TableCell>
+                                <TableHead>Title</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Entry Fee</TableHead>
+                                <TableHead>Players</TableHead>
+                                <TableHead>Prize Pool</TableHead>
+                                <TableHead>Starts At</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
-                        ) : (
-                            tournaments.map((t) => (
-                                <TableRow key={t.id} >
-                                    <TableCell className="font-medium hover:underline cursor-pointer" onClick={() => router.push(`/admin/tournaments/${t.id}`)}>{t.title}</TableCell>
-                                    <TableCell><Badge variant={getStatusVariant(t.status)}>{t.status}</Badge></TableCell>
-                                    <TableCell>₹{t.entryFee}</TableCell>
-                                    <TableCell>{t.players.length} / {t.playerCap}</TableCell>
-                                    <TableCell>₹{t.prizePool.toFixed(2)}</TableCell>
-                                    <TableCell>{format(t.startTime.toDate(), 'PPpp')}</TableCell>
-                                    <TableCell className="text-right space-x-2">
-                                         <Button variant="outline" size="icon" asChild>
-                                             <Link href={`/admin/tournaments/edit/${t.id}`} onClick={(e) => e.stopPropagation()}>
-                                                <Edit className="h-4 w-4" />
-                                            </Link>
-                                        </Button>
-                                        <AlertDialog>
-                                            <AlertDialogTrigger asChild>
-                                                 <Button variant="destructive" size="icon" onClick={(e) => e.stopPropagation()}>
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </AlertDialogTrigger>
-                                            <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-                                                <AlertDialogHeader>
-                                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                                    <AlertDialogDescription>
-                                                        This action cannot be undone. This will permanently delete the "{t.title}" tournament and refund all entry fees to participants.
-                                                    </AlertDialogDescription>
-                                                </AlertDialogHeader>
-                                                <AlertDialogFooter>
-                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => handleDelete(t.id, t.title)}>
-                                                        Yes, delete tournament
-                                                    </AlertDialogAction>
-                                                </AlertDialogFooter>
-                                            </AlertDialogContent>
-                                        </AlertDialog>
+                        </TableHeader>
+                        <TableBody>
+                            {tournaments.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={7} className="text-center text-muted-foreground py-10">
+                                        No tournaments found.
                                     </TableCell>
                                 </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
+                            ) : (
+                                tournaments.map((t) => (
+                                    <TableRow key={t.id} >
+                                        <TableCell className="font-medium hover:underline cursor-pointer whitespace-nowrap" onClick={() => router.push(`/admin/tournaments/${t.id}`)}>{t.title}</TableCell>
+                                        <TableCell><Badge variant={getStatusVariant(t.status)}>{t.status}</Badge></TableCell>
+                                        <TableCell>₹{t.entryFee}</TableCell>
+                                        <TableCell>{t.players.length} / {t.playerCap}</TableCell>
+                                        <TableCell>₹{t.prizePool.toFixed(2)}</TableCell>
+                                        <TableCell className="whitespace-nowrap">{format(t.startTime.toDate(), 'PPpp')}</TableCell>
+                                        <TableCell className="text-right space-x-2">
+                                            <Button variant="outline" size="icon" asChild>
+                                                <Link href={`/admin/tournaments/edit/${t.id}`} onClick={(e) => e.stopPropagation()}>
+                                                    <Edit className="h-4 w-4" />
+                                                </Link>
+                                            </Button>
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button variant="destructive" size="icon" onClick={(e) => e.stopPropagation()}>
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            This action cannot be undone. This will permanently delete the "{t.title}" tournament and refund all entry fees to participants.
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => handleDelete(t.id, t.title)}>
+                                                            Yes, delete tournament
+                                                        </AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
             </CardContent>
         </Card>
     );
 }
-

@@ -126,34 +126,36 @@ export default function NotificationsPage() {
               <Loader className="h-16 w-16 animate-spin" />
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Read Count</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {notifications.map((notif) => (
-                  <TableRow key={notif.id}>
-                    <TableCell className="font-medium">{notif.title}</TableCell>
-                    <TableCell>
-                      {new Date(notif.createdAt?.toDate()).toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-right flex items-center justify-end gap-1">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      {notif.readCount || 0}
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {notifications.length === 0 && (
-                   <TableRow>
-                        <TableCell colSpan={3} className="text-center text-muted-foreground">No notifications sent yet.</TableCell>
+            <div className="w-full overflow-x-auto">
+                <Table>
+                <TableHeader>
+                    <TableRow>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead className="text-right">Read Count</TableHead>
                     </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                    {notifications.map((notif) => (
+                    <TableRow key={notif.id}>
+                        <TableCell className="font-medium whitespace-nowrap">{notif.title}</TableCell>
+                        <TableCell className="whitespace-nowrap">
+                        {new Date(notif.createdAt?.toDate()).toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right flex items-center justify-end gap-1">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        {notif.readCount || 0}
+                        </TableCell>
+                    </TableRow>
+                    ))}
+                    {notifications.length === 0 && (
+                    <TableRow>
+                            <TableCell colSpan={3} className="text-center text-muted-foreground">No notifications sent yet.</TableCell>
+                        </TableRow>
+                    )}
+                </TableBody>
+                </Table>
+            </div>
           )}
         </CardContent>
       </Card>

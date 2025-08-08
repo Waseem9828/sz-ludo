@@ -16,6 +16,7 @@ import Link from 'next/link';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import Image from 'next/image';
 import { useAuth } from '@/context/auth-context';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 type WithdrawalWithUser = Withdrawal & {
     user?: AppUser;
@@ -143,10 +144,10 @@ export default function WithdrawalsPage() {
         <CardTitle>Manage Withdrawals</CardTitle>
         <CardDescription>Review and process user withdrawal requests.</CardDescription>
         {adminUser?.role === 'finance' && (
-            <Alert variant="default" className="mt-4 bg-blue-50 border-blue-200">
-                <User className="h-4 w-4 text-blue-700" />
+            <Alert className="mt-4 bg-blue-50 border-blue-200 text-blue-700">
+                <User className="h-4 w-4 !text-blue-700" />
                 <CardTitle className="text-blue-800">Your Agent Wallet</CardTitle>
-                <AlertDescription className="text-blue-700">
+                <AlertDescription>
                     Your current balance for paying out withdrawals is 
                     <span className="font-bold text-lg"> ₹{(adminUser.agentWallet?.balance || 0).toFixed(2)}</span>.
                     You cannot approve withdrawals exceeding this amount.
@@ -155,113 +156,115 @@ export default function WithdrawalsPage() {
         )}
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>User</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>UPI ID</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>KYC</TableHead>
-              <TableHead>Lifetime (Dep/With)</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {withdrawals.map((withdrawal) => {
-                const upiLink = `upi://pay?pa=${withdrawal.upiId}&pn=${encodeURIComponent(withdrawal.userName)}&am=${withdrawal.amount}&cu=INR`;
-                const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiLink)}`;
-                const canApprove = adminUser?.role === 'finance' 
-                    ? (adminUser.agentWallet?.balance || 0) >= withdrawal.amount
-                    : true; // superadmin can always approve in theory
-
-                return (
-              <TableRow key={withdrawal.id}>
-                 <TableCell>
-                    <Link href={`/admin/users/${withdrawal.userId}`}>
-                        <div className="flex items-center gap-3 hover:underline">
-                            <Avatar>
-                                <AvatarImage src={withdrawal.userAvatar} alt={withdrawal.userName} data-ai-hint="avatar person" />
-                                <AvatarFallback>{getInitials(withdrawal.userName)}</AvatarFallback>
-                            </Avatar>
-                            <div className="font-medium">{withdrawal.userName}</div>
-                        </div>
-                    </Link>
-                </TableCell>
-                <TableCell>₹{withdrawal.amount}</TableCell>
-                <TableCell>{withdrawal.upiId}</TableCell>
-                <TableCell>{new Date(withdrawal.createdAt?.toDate()).toLocaleDateString()}</TableCell>
-                <TableCell>
-                    <Badge variant={getKycBadgeVariant(withdrawal.user?.kycStatus)}>{withdrawal.user?.kycStatus || 'N/A'}</Badge>
-                </TableCell>
-                <TableCell>
-                    <div className="space-y-1 text-xs">
-                        <div className="flex items-center gap-1 text-green-600">
-                           <TrendingUp size={14}/>
-                           <span>₹{withdrawal.user?.lifetimeStats?.totalDeposits || 0}</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-red-600 animate-shine">
-                           <TrendingDown size={14}/>
-                           <span>₹{withdrawal.user?.lifetimeStats?.totalWithdrawals || 0}</span>
-                        </div>
-                     </div>
-                </TableCell>
-                <TableCell>
-                    <Badge variant={getStatusBadgeVariant(withdrawal.status)}>{withdrawal.status}</Badge>
-                    {withdrawal.status === 'approved' && withdrawal.processedByAdminName && (
-                        <p className="text-xs text-muted-foreground mt-1">by {withdrawal.processedByAdminName}</p>
-                    )}
-                </TableCell>
-                <TableCell className="space-x-2">
-                  {withdrawal.status === 'pending' && (
-                     <Dialog>
-                        <DialogTrigger asChild>
-                            <Button variant="outline" size="sm" disabled={withdrawal.user?.kycStatus !== 'Verified' || !canApprove}>
-                                {withdrawal.user?.kycStatus !== 'Verified' ? 'KYC Pending' : !canApprove ? 'Insuff. Funds' : 'Review & Pay'}
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-md">
-                           <DialogHeader>
-                                <DialogTitle>Step 1: Pay Manually</DialogTitle>
-                                <DialogDescription>
-                                    Scan the QR code with your UPI app to pay the user. After successful payment, click "Approve".
-                                </DialogDescription>
-                           </DialogHeader>
-                           <div className="mt-4 space-y-4 text-center">
-                                <div className="p-4 border rounded-lg bg-white inline-block">
-                                     <Image src={qrCodeUrl} alt="UPI QR Code" width={250} height={250} data-ai-hint="qr code" />
-                                </div>
-                               <div className="text-sm">
-                                   <p><span className="font-semibold">User:</span> {withdrawal.userName}</p>
-                                   <p><span className="font-semibold">UPI ID:</span> {withdrawal.upiId}</p>
-                                   <p className="text-2xl font-bold">Pay: ₹{withdrawal.amount}</p>
-                               </div>
-                            </div>
-                           <div className="mt-6 space-y-2">
-                                <p className="text-center font-semibold text-lg">Step 2: Confirm Transaction</p>
-                                <div className="flex justify-end gap-2">
-                                    <DialogClose asChild>
-                                        <Button variant="destructive" onClick={() => handleReject(withdrawal)}>Reject</Button>
-                                    </DialogClose>
-                                    <DialogClose asChild>
-                                        <Button onClick={() => handleApprove(withdrawal)}>Approve</Button>
-                                    </DialogClose>
-                                </div>
-                           </div>
-                        </DialogContent>
-                     </Dialog>
-                  )}
-                </TableCell>
-              </TableRow>
-            )})}
-            {withdrawals.length === 0 && (
+        <div className="w-full overflow-x-auto">
+            <Table>
+            <TableHeader>
                 <TableRow>
-                    <TableCell colSpan={8} className="text-center text-muted-foreground">No withdrawal requests found.</TableCell>
+                <TableHead>User</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>UPI ID</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>KYC</TableHead>
+                <TableHead>Lifetime (Dep/With)</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Actions</TableHead>
                 </TableRow>
-            )}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+                {withdrawals.map((withdrawal) => {
+                    const upiLink = `upi://pay?pa=${withdrawal.upiId}&pn=${encodeURIComponent(withdrawal.userName)}&am=${withdrawal.amount}&cu=INR`;
+                    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiLink)}`;
+                    const canApprove = adminUser?.role === 'finance' 
+                        ? (adminUser.agentWallet?.balance || 0) >= withdrawal.amount
+                        : true; // superadmin can always approve in theory
+
+                    return (
+                <TableRow key={withdrawal.id}>
+                    <TableCell>
+                        <Link href={`/admin/users/${withdrawal.userId}`}>
+                            <div className="flex items-center gap-3 hover:underline whitespace-nowrap">
+                                <Avatar>
+                                    <AvatarImage src={withdrawal.userAvatar} alt={withdrawal.userName} data-ai-hint="avatar person" />
+                                    <AvatarFallback>{getInitials(withdrawal.userName)}</AvatarFallback>
+                                </Avatar>
+                                <div className="font-medium">{withdrawal.userName}</div>
+                            </div>
+                        </Link>
+                    </TableCell>
+                    <TableCell>₹{withdrawal.amount}</TableCell>
+                    <TableCell className="whitespace-nowrap">{withdrawal.upiId}</TableCell>
+                    <TableCell className="whitespace-nowrap">{new Date(withdrawal.createdAt?.toDate()).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                        <Badge variant={getKycBadgeVariant(withdrawal.user?.kycStatus)}>{withdrawal.user?.kycStatus || 'N/A'}</Badge>
+                    </TableCell>
+                    <TableCell>
+                        <div className="space-y-1 text-xs whitespace-nowrap">
+                            <div className="flex items-center gap-1 text-green-600">
+                            <TrendingUp size={14}/>
+                            <span>₹{withdrawal.user?.lifetimeStats?.totalDeposits || 0}</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-red-600 animate-shine">
+                            <TrendingDown size={14}/>
+                            <span>₹{withdrawal.user?.lifetimeStats?.totalWithdrawals || 0}</span>
+                            </div>
+                        </div>
+                    </TableCell>
+                    <TableCell>
+                        <Badge variant={getStatusBadgeVariant(withdrawal.status)}>{withdrawal.status}</Badge>
+                        {withdrawal.status === 'approved' && withdrawal.processedByAdminName && (
+                            <p className="text-xs text-muted-foreground mt-1 whitespace-nowrap">by {withdrawal.processedByAdminName}</p>
+                        )}
+                    </TableCell>
+                    <TableCell className="space-x-2">
+                    {withdrawal.status === 'pending' && (
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button variant="outline" size="sm" disabled={withdrawal.user?.kycStatus !== 'Verified' || !canApprove}>
+                                    {withdrawal.user?.kycStatus !== 'Verified' ? 'KYC Pending' : !canApprove ? 'Insuff. Funds' : 'Review & Pay'}
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-md">
+                            <DialogHeader>
+                                    <DialogTitle>Step 1: Pay Manually</DialogTitle>
+                                    <DialogDescription>
+                                        Scan the QR code with your UPI app to pay the user. After successful payment, click "Approve".
+                                    </DialogDescription>
+                            </DialogHeader>
+                            <div className="mt-4 space-y-4 text-center">
+                                    <div className="p-4 border rounded-lg bg-white inline-block">
+                                        <Image src={qrCodeUrl} alt="UPI QR Code" width={250} height={250} data-ai-hint="qr code" />
+                                    </div>
+                                <div className="text-sm">
+                                    <p><span className="font-semibold">User:</span> {withdrawal.userName}</p>
+                                    <p><span className="font-semibold">UPI ID:</span> {withdrawal.upiId}</p>
+                                    <p className="text-2xl font-bold">Pay: ₹{withdrawal.amount}</p>
+                                </div>
+                                </div>
+                            <div className="mt-6 space-y-2">
+                                    <p className="text-center font-semibold text-lg">Step 2: Confirm Transaction</p>
+                                    <div className="flex justify-end gap-2">
+                                        <DialogClose asChild>
+                                            <Button variant="destructive" onClick={() => handleReject(withdrawal)}>Reject</Button>
+                                        </DialogClose>
+                                        <DialogClose asChild>
+                                            <Button onClick={() => handleApprove(withdrawal)}>Approve</Button>
+                                        </DialogClose>
+                                    </div>
+                            </div>
+                            </DialogContent>
+                        </Dialog>
+                    )}
+                    </TableCell>
+                </TableRow>
+                )})}
+                {withdrawals.length === 0 && (
+                    <TableRow>
+                        <TableCell colSpan={8} className="text-center text-muted-foreground">No withdrawal requests found.</TableCell>
+                    </TableRow>
+                )}
+            </TableBody>
+            </Table>
+        </div>
       </CardContent>
     </Card>
   );

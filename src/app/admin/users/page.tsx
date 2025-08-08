@@ -86,82 +86,82 @@ export default function UsersPage() {
         <CardDescription>A detailed overview of all users and their activities.</CardDescription>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>User</TableHead>
-              <TableHead>Wallet (Dep / Win)</TableHead>
-              <TableHead>Lifetime (Dep / With)</TableHead>
-              <TableHead>Game Stats (P / W / L)</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>KYC Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {users.map((user) => (
-              <TableRow key={user.uid} className="cursor-pointer" onClick={() => router.push(`/admin/users/${user.uid}`)}>
-                <TableCell>
-                    <div className="flex items-center gap-3">
-                        <Avatar>
-                            <AvatarImage src={user.photoURL || defaultAvatar} alt={user.displayName || 'user'} data-ai-hint="avatar person"/>
-                            <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                            <div className="font-medium">{user.displayName}</div>
-                            <div className="text-muted-foreground text-xs">{user.email}</div>
+        <div className="w-full overflow-x-auto">
+            <Table>
+            <TableHeader>
+                <TableRow>
+                <TableHead>User</TableHead>
+                <TableHead>Wallet (Dep / Win)</TableHead>
+                <TableHead>Lifetime (Dep / With)</TableHead>
+                <TableHead>Game Stats (P / W / L)</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>KYC Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {users.map((user) => (
+                <TableRow key={user.uid} className="cursor-pointer" onClick={() => router.push(`/admin/users/${user.uid}`)}>
+                    <TableCell>
+                        <div className="flex items-center gap-3 whitespace-nowrap">
+                            <Avatar>
+                                <AvatarImage src={user.photoURL || defaultAvatar} alt={user.displayName || 'user'} data-ai-hint="avatar person"/>
+                                <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                                <div className="font-medium">{user.displayName}</div>
+                                <div className="text-muted-foreground text-xs">{user.email}</div>
+                            </div>
                         </div>
-                    </div>
-                </TableCell>
-                <TableCell>
-                    <div className="flex items-center gap-1">
-                        <Wallet className="text-muted-foreground" size={16}/>
-                        <span>₹{user.wallet?.balance || 0} / ₹{user.wallet?.winnings || 0}</span>
-                    </div>
-                </TableCell>
-                <TableCell>
-                     <div className="space-y-1">
-                        <div className="flex items-center gap-1 text-green-600">
-                           <TrendingUp size={16}/>
-                           <span>₹{user.lifetimeStats?.totalDeposits || 0}</span>
+                    </TableCell>
+                    <TableCell>
+                        <div className="flex items-center gap-1 whitespace-nowrap">
+                            <Wallet className="text-muted-foreground" size={16}/>
+                            <span>₹{user.wallet?.balance || 0} / ₹{user.wallet?.winnings || 0}</span>
                         </div>
-                        <div className="flex items-center gap-1 text-red-600">
-                           <TrendingDown size={16}/>
-                           <span>₹{user.lifetimeStats?.totalWithdrawals || 0}</span>
+                    </TableCell>
+                    <TableCell>
+                        <div className="space-y-1">
+                            <div className="flex items-center gap-1 text-green-600 whitespace-nowrap">
+                            <TrendingUp size={16}/>
+                            <span>₹{user.lifetimeStats?.totalDeposits || 0}</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-red-600 whitespace-nowrap">
+                            <TrendingDown size={16}/>
+                            <span>₹{user.lifetimeStats?.totalWithdrawals || 0}</span>
+                            </div>
                         </div>
-                     </div>
-                </TableCell>
-                 <TableCell>
-                    <div className="flex items-center gap-1">
-                        <Gamepad2 className="text-muted-foreground" size={16} />
-                        <span>{user.gameStats?.played || 0} / {user.gameStats?.won || 0} / {user.gameStats?.lost || 0}</span>
-                    </div>
-                </TableCell>
-                <TableCell>
-                    <Badge variant={getStatusBadgeVariant(user.status || 'active') as any}>{user.status || 'active'}</Badge>
-                </TableCell>
-                <TableCell>
-                    <Badge variant={getKycBadgeVariant(user.kycStatus || 'Pending') as any}>{user.kycStatus || 'Pending'}</Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                            <Button variant="ghost" size="icon">
-                                <MoreVertical className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                            <DropdownMenuItem onClick={() => router.push(`/admin/users/${user.uid}`)}><User className="mr-2 h-4 w-4"/>View Profile</DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                    </TableCell>
+                    <TableCell>
+                        <div className="flex items-center gap-1 whitespace-nowrap">
+                            <Gamepad2 className="text-muted-foreground" size={16} />
+                            <span>{user.gameStats?.played || 0} / {user.gameStats?.won || 0} / {user.gameStats?.lost || 0}</span>
+                        </div>
+                    </TableCell>
+                    <TableCell>
+                        <Badge variant={getStatusBadgeVariant(user.status || 'active') as any}>{user.status || 'active'}</Badge>
+                    </TableCell>
+                    <TableCell>
+                        <Badge variant={getKycBadgeVariant(user.kycStatus || 'Pending') as any}>{user.kycStatus || 'Pending'}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                <Button variant="ghost" size="icon">
+                                    <MoreVertical className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                                <DropdownMenuItem onClick={() => router.push(`/admin/users/${user.uid}`)}><User className="mr-2 h-4 w-4"/>View Profile</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </TableCell>
+                </TableRow>
+                ))}
+            </TableBody>
+            </Table>
+        </div>
       </CardContent>
     </Card>
   );
 }
-
-    

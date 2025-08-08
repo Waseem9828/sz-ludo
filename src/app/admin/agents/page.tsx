@@ -116,52 +116,54 @@ export default function AgentsPage() {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Agent Name</TableHead>
-                            <TableHead>Current Balance</TableHead>
-                            <TableHead>Total In (Funded)</TableHead>
-                            <TableHead>Total Out (Paid)</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {agents.map((agent) => (
-                            <TableRow key={agent.uid}>
-                                <TableCell className="font-medium">{agent.displayName}</TableCell>
-                                <TableCell>
-                                    <div className="flex items-center gap-2 font-bold text-lg">
-                                        <Wallet className="h-5 w-5 text-muted-foreground" />
-                                        <span>₹{(agent.agentWallet?.balance || 0).toFixed(2)}</span>
-                                    </div>
-                                </TableCell>
-                                <TableCell>
-                                    <div className="flex items-center gap-2 text-green-600">
-                                        <TrendingUp className="h-5 w-5" />
-                                        <span>₹{(agent.agentWallet?.totalIn || 0).toFixed(2)}</span>
-                                    </div>
-                                </TableCell>
-                                <TableCell>
-                                    <div className="flex items-center gap-2 text-red-600">
-                                        <TrendingDown className="h-5 w-5" />
-                                        <span>₹{(agent.agentWallet?.totalOut || 0).toFixed(2)}</span>
-                                    </div>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    <AddFundsDialog agent={agent} onUpdate={fetchAgents} />
-                                </TableCell>
+                <div className="w-full overflow-x-auto">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Agent Name</TableHead>
+                                <TableHead>Balance</TableHead>
+                                <TableHead>Total In</TableHead>
+                                <TableHead>Total Out</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
-                        ))}
-                        {agents.length === 0 && (
-                             <TableRow>
-                                <TableCell colSpan={5} className="text-center text-muted-foreground">
-                                    No finance agents found. You can assign the 'finance' role to users in Firestore.
-                                </TableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
+                        </TableHeader>
+                        <TableBody>
+                            {agents.map((agent) => (
+                                <TableRow key={agent.uid}>
+                                    <TableCell className="font-medium whitespace-nowrap">{agent.displayName}</TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-2 font-bold text-lg whitespace-nowrap">
+                                            <Wallet className="h-5 w-5 text-muted-foreground" />
+                                            <span>₹{(agent.agentWallet?.balance || 0).toFixed(2)}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-2 text-green-600 whitespace-nowrap">
+                                            <TrendingUp className="h-5 w-5" />
+                                            <span>₹{(agent.agentWallet?.totalIn || 0).toFixed(2)}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-2 text-red-600 whitespace-nowrap">
+                                            <TrendingDown className="h-5 w-5" />
+                                            <span>₹{(agent.agentWallet?.totalOut || 0).toFixed(2)}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <AddFundsDialog agent={agent} onUpdate={fetchAgents} />
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                            {agents.length === 0 && (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="text-center text-muted-foreground">
+                                        No finance agents found. You can assign the 'finance' role to users in Firestore.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
             </CardContent>
         </Card>
     );
