@@ -19,7 +19,6 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
-import { SplashScreen } from '@/components/ui/splash-screen';
 
 const prizeDistributionSchema = z.object({
   rankStart: z.coerce.number().min(1, 'Rank must be at least 1'),
@@ -104,7 +103,11 @@ export default function EditTournamentPage() {
   }
 
   if (loading) {
-      return <SplashScreen />;
+      return (
+        <div className="flex justify-center items-center h-full">
+            <Loader className="h-16 w-16 animate-spin" />
+        </div>
+      );
   }
 
   return (
