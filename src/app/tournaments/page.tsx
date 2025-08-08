@@ -11,6 +11,7 @@ import { format, formatDistanceToNowStrict } from 'date-fns';
 import { SplashScreen } from '@/components/ui/splash-screen';
 import { useAuth } from '@/context/auth-context';
 import Image from 'next/image';
+import { Card } from "@/components/ui/card";
 import {
   AlertDialog,
   AlertDialogAction,
