@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { SplashScreen } from '@/components/ui/splash-screen';
 import { Tournament, listenForTournament } from '@/lib/firebase/tournaments';
-import { AppUser, getUser } from '@/lib/firebase/users';
+import { AppUser } from '@/lib/firebase/users';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,7 +15,8 @@ import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
-import { ChevronLeft, Users, Trophy, Percent, Calendar, UserPlus } from 'lucide-react';
+import { ChevronLeft, Users, Trophy, Percent, Calendar, UserPlus, Star } from 'lucide-react';
+import Image from 'next/image';
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
     <div className="flex items-center p-4 bg-muted rounded-lg">
@@ -34,7 +35,6 @@ export default function TournamentDetailPage() {
     const { toast } = useToast();
 
     const [tournament, setTournament] = useState<Tournament | null>(null);
-    const [players, setPlayers] = useState<AppUser[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -43,33 +43,16 @@ export default function TournamentDetailPage() {
         const unsubscribe = listenForTournament(id, (data) => {
             if (data) {
                 setTournament(data);
-                if(data.players.length > 0) {
-                    fetchPlayers(data.players);
-                } else {
-                    setLoading(false);
-                }
             } else {
                 toast({ title: "Error", description: "Tournament not found.", variant: 'destructive' });
                 router.push('/admin/tournaments');
-                setLoading(false);
             }
+            setLoading(false);
         }, (error) => {
             console.error("Error fetching tournament:", error);
             toast({ title: "Error", description: "Failed to fetch tournament data.", variant: 'destructive' });
             setLoading(false);
         });
-
-        const fetchPlayers = async (playerIds: string[]) => {
-            try {
-                const playerPromises = playerIds.map(uid => getUser(uid));
-                const playerData = (await Promise.all(playerPromises)).filter(p => p !== null) as AppUser[];
-                setPlayers(playerData);
-            } catch (error) {
-                 toast({ title: "Error", description: "Failed to fetch player data.", variant: 'destructive' });
-            } finally {
-                setLoading(false);
-            }
-        }
 
         return () => unsubscribe();
     }, [id, router, toast]);
@@ -115,6 +98,8 @@ export default function TournamentDetailPage() {
     
     const playerProgress = (tournament.players.length / tournament.playerCap) * 100;
     const getInitials = (name?: string | null) => name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U';
+    
+    const leaderboard = tournament.leaderboard?.sort((a, b) => b.points - a.points) || [];
 
     return (
         <div className="space-y-6">
@@ -159,24 +144,40 @@ export default function TournamentDetailPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <Card className="lg:col-span-1">
                     <CardHeader>
-                        <CardTitle>Players ({players.length})</CardTitle>
+                        <CardTitle>Leaderboard ({leaderboard.length})</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="max-h-96 overflow-y-auto space-y-2">
-                            {players.length > 0 ? players.map(player => (
-                                <div key={player.uid} className="flex items-center gap-3 p-2 rounded-md bg-muted/50">
-                                    <Avatar>
-                                        <AvatarImage src={player.photoURL || undefined} alt={player.displayName || ''} data-ai-hint="avatar person" />
-                                        <AvatarFallback>{getInitials(player.displayName)}</AvatarFallback>
-                                    </Avatar>
-                                    <div>
-                                        <p className="font-semibold">{player.displayName}</p>
-                                        <p className="text-xs text-muted-foreground">{player.uid}</p>
-                                    </div>
-                                </div>
-                            )) : (
-                                <p className="text-muted-foreground text-center py-4">No players have joined yet.</p>
-                            )}
+                        <div className="w-full overflow-x-auto">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Rank</TableHead>
+                                        <TableHead>Player</TableHead>
+                                        <TableHead className="text-right">Points</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {leaderboard.length > 0 ? leaderboard.map((player, index) => (
+                                        <TableRow key={player.uid}>
+                                            <TableCell>{index + 1}</TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-2">
+                                                    <Avatar className="h-8 w-8">
+                                                        <AvatarImage src={player.photoURL || undefined} alt={player.displayName || ''} data-ai-hint="avatar person" />
+                                                        <AvatarFallback>{getInitials(player.displayName)}</AvatarFallback>
+                                                    </Avatar>
+                                                    <span className="font-medium whitespace-nowrap">{player.displayName}</span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-right font-bold">{player.points}</TableCell>
+                                        </TableRow>
+                                    )) : (
+                                        <TableRow>
+                                            <TableCell colSpan={3} className="text-muted-foreground text-center py-4">No players have joined yet.</TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
                         </div>
                     </CardContent>
                 </Card>

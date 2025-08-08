@@ -1,4 +1,5 @@
 
+
 import {
     collection,
     addDoc,
@@ -16,18 +17,26 @@ import {
     increment,
     deleteDoc,
     getDoc,
-    writeBatch
+    writeBatch,
+    getDocs
 } from 'firebase/firestore';
 import { db } from './config';
 import type { AppUser } from './users';
 import { createTransaction } from './transactions';
-import { updateUserWallet } from './users';
+import { updateUserWallet, getUser } from './users';
 
 
 export interface PrizeDistribution {
   rankStart: number;
   rankEnd: number;
   percentage: number;
+}
+
+export interface LeaderboardPlayer {
+    uid: string;
+    displayName: string;
+    photoURL: string;
+    points: number;
 }
 
 export interface Tournament {
@@ -43,12 +52,13 @@ export interface Tournament {
   endTime: Timestamp;
   createdAt: Timestamp;
   prizePool: number;
+  leaderboard: LeaderboardPlayer[];
 }
 
 const TOURNAMENTS_COLLECTION = 'tournaments';
 
 // Admin: Create a new tournament
-export const createTournament = async (data: Omit<Tournament, 'id' | 'players' | 'status' | 'createdAt' | 'prizePool' | 'startTime' | 'endTime'> & { startTime: Date, endTime: Date }) => {
+export const createTournament = async (data: Omit<Tournament, 'id' | 'players' | 'status' | 'createdAt' | 'prizePool' | 'leaderboard' | 'startTime' | 'endTime'> & { startTime: Date, endTime: Date }) => {
     const prizePool = 0;
 
     return await addDoc(collection(db, TOURNAMENTS_COLLECTION), {
@@ -58,6 +68,7 @@ export const createTournament = async (data: Omit<Tournament, 'id' | 'players' |
         players: [],
         status: 'upcoming',
         prizePool: prizePool,
+        leaderboard: [],
         createdAt: serverTimestamp(),
     });
 };
@@ -132,10 +143,18 @@ export const joinTournament = async (tournamentId: string, userId: string) => {
             transaction.update(userRef, { 'wallet.balance': newBalance });
         }
 
-        // 2. Add user to the tournament's players list and update prize pool
+        // 2. Add user to the tournament's players list and update prize pool and leaderboard
+        const newLeaderboardPlayer: LeaderboardPlayer = {
+            uid: userId,
+            displayName: user.displayName || 'N/A',
+            photoURL: user.photoURL || '',
+            points: 0,
+        };
+
         transaction.update(tournamentRef, {
             players: arrayUnion(userId),
-            prizePool: increment(tournament.entryFee)
+            prizePool: increment(tournament.entryFee),
+            leaderboard: arrayUnion(newLeaderboardPlayer),
         });
 
         // 3. Create a transaction log
@@ -152,6 +171,30 @@ export const joinTournament = async (tournamentId: string, userId: string) => {
         });
     });
 };
+
+export const updateTournamentPoints = async (userId: string, points: number) => {
+    const now = Timestamp.now();
+    const tournamentsRef = collection(db, TOURNAMENTS_COLLECTION);
+    const q = query(tournamentsRef, where('status', '==', 'live'), where('players', 'array-contains', userId));
+
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) {
+        return; // User is not in any live tournament
+    }
+
+    const batch = writeBatch(db);
+    for (const doc of snapshot.docs) {
+        const tournament = doc.data() as Tournament;
+        const playerIndex = tournament.leaderboard.findIndex(p => p.uid === userId);
+
+        if (playerIndex !== -1) {
+            const newLeaderboard = [...tournament.leaderboard];
+            newLeaderboard[playerIndex].points += points;
+            batch.update(doc.ref, { leaderboard: newLeaderboard });
+        }
+    }
+    await batch.commit();
+}
 
 
 // Admin: Update tournament details

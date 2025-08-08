@@ -25,6 +25,7 @@ import {
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from './config';
 import { AppUser, updateUserWallet } from './users';
+import { updateTournamentPoints } from './tournaments';
 
 export interface PlayerInfo {
     uid: string;
@@ -209,11 +210,30 @@ export const submitPlayerResult = async (gameId: string, userId: string, result:
 // Old updateGameStatus function, might still be used by admin
 export const updateGameStatus = async (gameId: string, status: Game['status'], winnerId?: string) => {
     const gameRef = doc(db, GAMES_COLLECTION, gameId);
-    const updateData: { status: Game['status'], winner?: string, lastUpdatedAt: any } = { status, lastUpdatedAt: serverTimestamp() };
-    if (winnerId) {
-        updateData.winner = winnerId;
-    }
-    return await updateDoc(gameRef, updateData);
+    
+    return await runTransaction(db, async (transaction) => {
+        const gameSnap = await transaction.get(gameRef);
+        if (!gameSnap.exists()) {
+            throw new Error("Game not found to update status");
+        }
+        const gameData = gameSnap.data() as Game;
+
+        const updateData: { status: Game['status'], winner?: string, lastUpdatedAt: any } = { status, lastUpdatedAt: serverTimestamp() };
+        if (winnerId) {
+            updateData.winner = winnerId;
+        }
+        
+        transaction.update(gameRef, updateData);
+
+        // If game is completed, update tournament points
+        if (status === 'completed' && winnerId) {
+            const loserId = gameData.playerUids.find(uid => uid !== winnerId);
+            await updateTournamentPoints(winnerId, 10); // +10 points for win
+            if (loserId) {
+                await updateTournamentPoints(loserId, 5); // +5 points for loss
+            }
+        }
+    });
 }
 
 // Get a single game by ID
