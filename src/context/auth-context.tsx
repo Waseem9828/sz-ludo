@@ -8,10 +8,21 @@ import { doc, setDoc, getDoc, onSnapshot, updateDoc, increment, collection, quer
 import { SplashScreen } from '@/components/ui/splash-screen';
 import type { AppUser } from '@/lib/firebase/users';
 
+interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: Array<string>;
+  readonly userChoice: Promise<{
+    outcome: 'accepted' | 'dismissed',
+    platform: string,
+  }>;
+  prompt(): Promise<void>;
+}
+
 interface AuthContextType {
   user: User | null;
   appUser: AppUser | null;
   loading: boolean;
+  installable: boolean;
+  installPwa: () => void;
   signUp: (email:string, password:string, name:string, phone:string, referralCode?: string) => Promise<any>;
   signIn: (email:string, password:string) => Promise<any>;
   signInWithGoogle: (referralCode?: string) => Promise<any>;
@@ -24,6 +35,8 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   appUser: null,
   loading: true,
+  installable: false,
+  installPwa: () => {},
   signUp: async () => {},
   signIn: async () => {},
   signInWithGoogle: async () => {},
@@ -34,6 +47,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [appUser, setAppUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [installable, setInstallable] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
+      setInstallable(true);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const installPwa = async () => {
+    if (!deferredPrompt) {
+      return;
+    }
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      console.log('User accepted the A2HS prompt');
+    } else {
+      console.log('User dismissed the A2HS prompt');
+    }
+    setInstallable(false);
+    setDeferredPrompt(null);
+  };
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
@@ -81,46 +121,49 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const newUser = userCredential.user;
       await updateProfile(newUser, { displayName: name, photoURL: defaultAvatar });
       
-      const userRef = doc(db, "users", newUser.uid);
-      const newAppUser: AppUser = {
-          uid: newUser.uid,
-          email: newUser.email,
-          displayName: name,
-          phone: phone,
-          photoURL: defaultAvatar,
-          wallet: {
-              balance: 0,
-              winnings: 0,
-          },
-          kycStatus: 'Pending',
-          status: 'active',
-          gameStats: { played: 0, won: 0, lost: 0 },
-          lifetimeStats: { totalDeposits: 0, totalWithdrawals: 0, totalWinnings: 0 },
-          referralStats: { referredCount: 0, totalEarnings: 0 },
-      };
-      
-      if (referralCode && referralCode.startsWith('SZLUDO')) {
-          const referrerUid = referralCode.replace('SZLUDO', '');
-          const referrerRef = doc(db, 'users', referrerUid);
-          const referrerSnap = await getDoc(referrerRef);
-          if (referrerSnap.exists()) {
-              newAppUser.referralStats.referredBy = referrerUid;
-              await updateDoc(referrerRef, {
-                  'referralStats.referredCount': increment(1),
-                  'referrals': increment(1) // Assuming referrals is a simple count. Use arrayUnion if storing UIDs.
-              });
-          }
-      }
+      return await runTransaction(db, async (transaction) => {
+        const userRef = doc(db, "users", newUser.uid);
+        const newAppUser: AppUser = {
+            uid: newUser.uid,
+            email: newUser.email,
+            displayName: name,
+            phone: phone,
+            photoURL: defaultAvatar,
+            wallet: {
+                balance: 0,
+                winnings: 0,
+            },
+            kycStatus: 'Pending',
+            status: 'active',
+            gameStats: { played: 0, won: 0, lost: 0 },
+            lifetimeStats: { totalDeposits: 0, totalWithdrawals: 0, totalWinnings: 0 },
+            referralStats: { referredCount: 0, totalEarnings: 0 },
+        };
+        
+        if (referralCode && referralCode.startsWith('SZLUDO')) {
+            const referrerUid = referralCode.replace('SZLUDO', '');
+            if (referrerUid) {
+                 const referrerRef = doc(db, 'users', referrerUid);
+                 const referrerSnap = await transaction.get(referrerRef);
+                 if (referrerSnap.exists()) {
+                     newAppUser.referralStats.referredBy = referrerUid;
+                     transaction.update(referrerRef, {
+                         'referralStats.referredCount': increment(1),
+                     });
+                 }
+            }
+        }
 
-      if (email === 'admin@example.com') {
-          newAppUser.role = 'superadmin';
-          newAppUser.lifetimeStats.totalRevenue = 0;
-      }
-      
-      await setDoc(userRef, newAppUser);
-      setAppUser(newAppUser);
-      setUser(newUser);
-      return userCredential;
+        if (email === 'admin@example.com') {
+            newAppUser.role = 'superadmin';
+            newAppUser.lifetimeStats.totalRevenue = 0;
+        }
+        
+        transaction.set(userRef, newAppUser);
+        setAppUser(newAppUser);
+        setUser(newUser);
+        return userCredential;
+      });
   }
 
   const signIn = (email:string, password:string) => {
@@ -150,14 +193,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
             if (referralCode && referralCode.startsWith('SZLUDO')) {
                 const referrerUid = referralCode.replace('SZLUDO', '');
-                const referrerRef = doc(db, 'users', referrerUid);
-                const referrerSnap = await transaction.get(referrerRef);
-                if (referrerSnap.exists()) {
-                    newAppUser.referralStats.referredBy = referrerUid;
-                    transaction.update(referrerRef, {
-                        'referralStats.referredCount': increment(1),
-                        'referrals': increment(1)
-                    });
+                 if (referrerUid) {
+                    const referrerRef = doc(db, 'users', referrerUid);
+                    const referrerSnap = await transaction.get(referrerRef);
+                    if (referrerSnap.exists()) {
+                        newAppUser.referralStats.referredBy = referrerUid;
+                        transaction.update(referrerRef, {
+                            'referralStats.referredCount': increment(1),
+                        });
+                    }
                 }
             }
             transaction.set(userRef, newAppUser);
@@ -179,7 +223,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, appUser, loading, signUp, signIn, signInWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, appUser, loading, installable, installPwa, signUp, signIn, signInWithGoogle, logout }}>
       {children}
     </AuthContext.Provider>
   );

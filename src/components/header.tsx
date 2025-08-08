@@ -28,6 +28,7 @@ import {
   LayoutDashboard,
   CheckCheck,
   Swords,
+  Download
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -52,7 +53,7 @@ import { Badge } from "./ui/badge";
 const defaultAvatar = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi_h6LUuqTTKYsn5TfUZwkI6Aib6Y0tOzQzcoZKstURqxyl-PJXW1DKTkF2cPPNNUbP3iuDNsOBVOYx7p-ZwrodI5w9fyqEwoabj8rU0mLzSbT5GCFUKpfCc4s_LrtHcWFDvvRstCghAfQi5Zfv2fipdZG8h4dU4vGt-eFRn-gS3QTg6_JJKhv0Yysr_ZY/s1600/82126.png";
 
 export default function Header() {
-  const { user, appUser, logout } = useAuth();
+  const { user, appUser, logout, installable, installPwa } = useAuth();
   const { notifications, unreadCount } = useUserNotifications(user?.uid);
   const { toast } = useToast();
   const router = useRouter();
@@ -107,7 +108,7 @@ export default function Header() {
     { icon: LifeBuoy, label: "Support", href: "#" },
   ];
 
-  const isAdmin = user && user.email === 'admin@example.com';
+  const isAdmin = appUser?.role === 'superadmin';
   const totalBalance = appUser?.wallet ? appUser.wallet.balance + appUser.wallet.winnings : 0;
 
   return (
@@ -198,6 +199,12 @@ export default function Header() {
         </div>
         {user && (
           <div className="flex items-center gap-2">
+            {installable && (
+                <Button variant="default" size="sm" onClick={installPwa}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Download
+                </Button>
+            )}
             <Link href="/wallet">
               <Button variant="outline" className="h-9">
                   <Wallet className="h-4 w-4 mr-2"/>
