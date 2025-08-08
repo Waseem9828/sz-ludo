@@ -27,28 +27,14 @@ export default function Home() {
     }
     
     getSettings().then(appSettings => {
-      let activeSettings = { ...appSettings };
-      const today = new Date();
-      const month = today.getMonth(); // 0-indexed (0 for Jan, 7 for Aug)
-      const day = today.getDate();
-
-      // Automatically trigger Independence Day theme from Aug 1 to Aug 15, overriding admin settings
-      if (month === 7 && day >= 1 && day <= 15) {
-        activeSettings.festiveGreeting = {
-          enabled: true,
-          type: 'IndependenceDay',
-          message: 'Happy Independence Day!',
-        };
-      }
-
-      setSettings(activeSettings);
+      setSettings(appSettings);
 
       // Show background if any festive greeting is enabled
-      if (activeSettings.festiveGreeting?.enabled && activeSettings.festiveGreeting.type !== 'None') {
+      if (appSettings.festiveGreeting?.enabled && appSettings.festiveGreeting.type !== 'None') {
         setShowFestiveBackground(true);
 
         // Logic to show the popup dialog only once per 24 hours
-        const lastShownKey = `festiveGreetingLastShown_${activeSettings.festiveGreeting.type}`;
+        const lastShownKey = `festiveGreetingLastShown_${appSettings.festiveGreeting.type}`;
         const lastShown = localStorage.getItem(lastShownKey);
         const now = new Date().getTime();
         
