@@ -3,6 +3,7 @@
 
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect } from 'react';
 
 const Dice = ({ rotation, position, size = 60 }: { rotation: number[], position: { top: string, left: string }, size?: number }) => (
     <motion.div
@@ -95,6 +96,13 @@ const TypewriterText = ({ text, delay = 0 }: { text: string; delay?: number }) =
 
 
 export const SplashScreen = () => {
+    const [isReady, setIsReady] = useState(false);
+
+    useEffect(() => {
+        // This ensures the component is mounted on the client before starting the animation
+        setIsReady(true);
+    }, []);
+
     const dicePositions = [
         { top: '15%', left: '10%', rotation: [-10, 15, -5], size: 60 },
         { top: '70%', left: '20%', rotation: [10, -5, 15], size: 40 },
@@ -103,68 +111,64 @@ export const SplashScreen = () => {
     ];
 
     return (
-        <div className="relative flex flex-col justify-center items-center min-h-screen bg-gradient-to-br from-red-800 via-red-600 to-red-900 overflow-hidden">
-             <AnimatePresence>
-                {[...Array(20)].map((_, i) => <Particle key={i} i={i} />)}
-            </AnimatePresence>
-            
-            <div className="relative z-10 flex flex-col items-center justify-center">
-                 {/* Dice Animations */}
-                <AnimatePresence>
-                    {dicePositions.map((dice, index) => (
-                         <motion.div
-                            key={index}
-                            initial={{ opacity: 0, scale: 0 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.5, delay: 0.2 + index * 0.1, ease: 'easeOut' }}
-                        >
-                            <Dice position={{ top: dice.top, left: dice.left }} rotation={dice.rotation} size={dice.size} />
-                         </motion.div>
-                    ))}
-                </AnimatePresence>
-                
+        <AnimatePresence>
+            {isReady && (
                 <motion.div
-                     initial={{ opacity: 0, scale: 0.5 }}
-                     animate={{ opacity: 1, scale: 1 }}
-                     transition={{
-                         duration: 0.8,
-                         delay: 0.2,
-                         ease: [0, 0.71, 0.2, 1.01]
-                     }}
-                     className="animate-bounce-float"
-                >
-                    <Image
-                        src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg2oNx0s_EsUtQCxkYGCkEqHAcVCA4PAgVdyNX-mDF_KO228qsfmqMAOefbIFmb-yD98WpX7jVLor2AJzeDhfqG6wC8n7lWtxU9euuYIYhPWStqYgbGjkGp6gu1JrfKmXMwCn7I_KjLGu_GlGy3PMNmf9ljC8Yr__ZpsiGxHJRKbtH6MfTuG4ofViNRsAY/s1600/73555.png"
-                        alt="SZ LUDO Logo"
-                        width={120}
-                        height={120}
-                        className="drop-shadow-2xl"
-                        priority
-                    />
-                </motion.div>
-
-                <motion.h1 
-                    className="mt-4 text-4xl md:text-5xl font-black text-white drop-shadow-lg font-headline"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.6 }}
-                >
-                    SZ LUDO
-                </motion.h1>
-
-                <div className="mt-2">
-                     <TypewriterText text="Luck Meets Skill" delay={0.8} />
-                </div>
-                
-                <motion.p 
-                    className="mt-12 text-sm font-medium text-white/70 animate-glowPulse"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ duration: 0.5, delay: 1.5 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="relative flex flex-col justify-center items-center min-h-screen bg-gradient-to-br from-red-800 via-red-600 to-red-900 overflow-hidden"
                 >
-                    Loading...
-                </motion.p>
-            </div>
-        </div>
+                    <AnimatePresence>
+                        {[...Array(20)].map((_, i) => <Particle key={i} i={i} />)}
+                    </AnimatePresence>
+                    
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.8, ease: 'easeOut' }}
+                        className="relative z-10 flex flex-col items-center justify-center"
+                    >
+                         {/* Dice Animations */}
+                        <AnimatePresence>
+                            {dicePositions.map((dice, index) => (
+                                 <motion.div
+                                    key={index}
+                                    initial={{ opacity: 0, scale: 0 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ duration: 0.5, delay: 0.2, ease: 'easeOut' }}
+                                >
+                                    <Dice position={{ top: dice.top, left: dice.left }} rotation={dice.rotation} size={dice.size} />
+                                 </motion.div>
+                            ))}
+                        </AnimatePresence>
+                        
+                        <div className="animate-bounce-float">
+                            <Image
+                                src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg2oNx0s_EsUtQCxkYGCkEqHAcVCA4PAgVdyNX-mDF_KO228qsfmqMAOefbIFmb-yD98WpX7jVLor2AJzeDhfqG6wC8n7lWtxU9euuYIYhPWStqYgbGjkGp6gu1JrfKmXMwCn7I_KjLGu_GlGy3PMNmf9ljC8Yr__ZpsiGxHJRKbtH6MfTuG4ofViNRsAY/s1600/73555.png"
+                                alt="SZ LUDO Logo"
+                                width={120}
+                                height={120}
+                                className="drop-shadow-2xl"
+                                priority
+                            />
+                        </div>
+
+                        <h1 className="mt-4 text-4xl md:text-5xl font-black text-white drop-shadow-lg font-headline">
+                            SZ LUDO
+                        </h1>
+
+                        <div className="mt-2">
+                             <TypewriterText text="Luck Meets Skill" delay={0.3} />
+                        </div>
+                        
+                        <p className="mt-12 text-sm font-medium text-white/70 animate-glowPulse">
+                            Loading...
+                        </p>
+                    </motion.div>
+                </motion.div>
+            )}
+        </AnimatePresence>
     );
 };
