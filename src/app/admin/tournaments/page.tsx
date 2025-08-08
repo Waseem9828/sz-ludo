@@ -9,9 +9,20 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { listenForTournaments, Tournament } from '@/lib/firebase/tournaments';
-import { Loader, PlusCircle } from 'lucide-react';
+import { listenForTournaments, Tournament, deleteTournament } from '@/lib/firebase/tournaments';
+import { Loader, PlusCircle, Edit, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function TournamentsPage() {
     const [tournaments, setTournaments] = useState<Tournament[]>([]);
@@ -42,6 +53,23 @@ export default function TournamentsPage() {
             default: return 'default';
         }
     };
+    
+    const handleDelete = async (tournamentId: string, tournamentTitle: string) => {
+        try {
+            await deleteTournament(tournamentId);
+            toast({
+                title: "Tournament Deleted",
+                description: `"${tournamentTitle}" has been successfully deleted and entry fees have been refunded.`,
+            });
+        } catch (error: any) {
+             toast({
+                title: "Deletion Failed",
+                description: error.message,
+                variant: "destructive",
+            });
+        }
+    };
+
 
     if (loading) {
         return (
@@ -74,7 +102,7 @@ export default function TournamentsPage() {
                             <TableHead>Players</TableHead>
                             <TableHead>Prize Pool</TableHead>
                             <TableHead>Starts At</TableHead>
-                            <TableHead>Actions</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -86,19 +114,40 @@ export default function TournamentsPage() {
                             </TableRow>
                         ) : (
                             tournaments.map((t) => (
-                                <TableRow key={t.id} className="hover:bg-muted/50 cursor-pointer" onClick={() => router.push(`/admin/tournaments/${t.id}`)}>
-                                    <TableCell className="font-medium">{t.title}</TableCell>
+                                <TableRow key={t.id} >
+                                    <TableCell className="font-medium hover:underline cursor-pointer" onClick={() => router.push(`/admin/tournaments/${t.id}`)}>{t.title}</TableCell>
                                     <TableCell><Badge variant={getStatusVariant(t.status)}>{t.status}</Badge></TableCell>
                                     <TableCell>₹{t.entryFee}</TableCell>
                                     <TableCell>{t.players.length} / {t.playerCap}</TableCell>
                                     <TableCell>₹{t.prizePool.toFixed(2)}</TableCell>
                                     <TableCell>{format(t.startTime.toDate(), 'PPpp')}</TableCell>
-                                    <TableCell>
-                                        <Button variant="outline" size="sm" asChild>
-                                             <Link href={`/admin/tournaments/${t.id}`} onClick={(e) => e.stopPropagation()}>
-                                                View
+                                    <TableCell className="text-right space-x-2">
+                                         <Button variant="outline" size="icon" asChild>
+                                             <Link href={`/admin/tournaments/edit/${t.id}`} onClick={(e) => e.stopPropagation()}>
+                                                <Edit className="h-4 w-4" />
                                             </Link>
                                         </Button>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                 <Button variant="destructive" size="icon" onClick={(e) => e.stopPropagation()}>
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This action cannot be undone. This will permanently delete the "{t.title}" tournament and refund all entry fees to participants.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleDelete(t.id, t.title)}>
+                                                        Yes, delete tournament
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -109,3 +158,4 @@ export default function TournamentsPage() {
         </Card>
     );
 }
+

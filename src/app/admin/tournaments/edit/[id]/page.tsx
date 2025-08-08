@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -12,13 +12,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { createTournament } from '@/lib/firebase/tournaments';
+import { getTournament, updateTournament, Tournament } from '@/lib/firebase/tournaments';
 import { Calendar as CalendarIcon, ChevronLeft, Loader, PlusCircle, Trash2 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { SplashScreen } from '@/components/ui/splash-screen';
 
 const prizeDistributionSchema = z.object({
   rankStart: z.coerce.number().min(1, 'Rank must be at least 1'),
@@ -42,23 +43,39 @@ const tournamentSchema = z.object({
     path: ["endTime"],
 });
 
-export default function CreateTournamentPage() {
+export default function EditTournamentPage() {
   const router = useRouter();
+  const params = useParams();
+  const { id } = params;
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const form = useForm<z.infer<typeof tournamentSchema>>({
     resolver: zodResolver(tournamentSchema),
     defaultValues: {
-      title: '',
-      entryFee: 50,
-      playerCap: 1000,
-      adminCommission: 10,
-      startTime: undefined,
-      endTime: undefined,
-      prizeDistribution: [{ rankStart: 1, rankEnd: 1, percentage: 20 }],
+        prizeDistribution: [],
     },
   });
+
+  useEffect(() => {
+    if (typeof id !== 'string') return;
+    
+    getTournament(id).then(tournamentData => {
+        if (tournamentData) {
+            form.reset({
+                ...tournamentData,
+                startTime: tournamentData.startTime.toDate(),
+                endTime: tournamentData.endTime.toDate(),
+            });
+        } else {
+             toast({ title: "Error", description: "Tournament not found.", variant: "destructive" });
+             router.push('/admin/tournaments');
+        }
+        setLoading(false);
+    });
+
+  }, [id, form, router, toast]);
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -66,23 +83,28 @@ export default function CreateTournamentPage() {
   });
 
   async function onSubmit(values: z.infer<typeof tournamentSchema>) {
+    if (typeof id !== 'string') return;
     setIsSubmitting(true);
     try {
-      await createTournament(values);
+      await updateTournament(id, values);
       toast({
-        title: 'Tournament Created',
-        description: `${values.title} has been successfully created.`,
+        title: 'Tournament Updated',
+        description: `${values.title} has been successfully updated.`,
       });
       router.push('/admin/tournaments');
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: `Failed to create tournament: ${error.message}`,
+        description: `Failed to update tournament: ${error.message}`,
         variant: 'destructive',
       });
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  if (loading) {
+      return <SplashScreen />;
   }
 
   return (
@@ -94,8 +116,8 @@ export default function CreateTournamentPage() {
       </Link>
       <Card>
         <CardHeader>
-          <CardTitle>Create New Tournament</CardTitle>
-          <CardDescription>Fill out the details to create a new tournament.</CardDescription>
+          <CardTitle>Edit Tournament</CardTitle>
+          <CardDescription>Update the details for this tournament.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -230,7 +252,7 @@ export default function CreateTournamentPage() {
 
               <div>
                 <Label className='text-lg font-semibold'>Prize Distribution</Label>
-                <p className="text-sm text-muted-foreground">The total percentage of all ranks should ideally be 100%.</p>
+                 <p className="text-sm text-muted-foreground">The total percentage of all ranks should ideally be 100%.</p>
                 <div className="space-y-4 mt-2">
                   {fields.map((item, index) => (
                     <Card key={item.id} className="p-4 bg-muted/50">
@@ -290,7 +312,7 @@ export default function CreateTournamentPage() {
 
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <Loader className="mr-2 animate-spin" />}
-                Create Tournament
+                Save Changes
               </Button>
             </form>
           </Form>

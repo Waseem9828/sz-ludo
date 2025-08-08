@@ -1,5 +1,4 @@
 
-
 import {
     collection,
     addDoc,
@@ -14,11 +13,16 @@ import {
     QueryConstraint,
     runTransaction,
     arrayUnion,
-    increment
+    increment,
+    deleteDoc,
+    getDoc,
+    writeBatch
 } from 'firebase/firestore';
 import { db } from './config';
 import type { AppUser } from './users';
 import { createTransaction } from './transactions';
+import { updateUserWallet } from './users';
+
 
 export interface PrizeDistribution {
   rankStart: number;
@@ -36,6 +40,7 @@ export interface Tournament {
   players: string[]; // Array of user UIDs
   status: 'upcoming' | 'live' | 'completed' | 'cancelled';
   startTime: Timestamp;
+  endTime: Timestamp;
   createdAt: Timestamp;
   prizePool: number;
 }
@@ -43,18 +48,44 @@ export interface Tournament {
 const TOURNAMENTS_COLLECTION = 'tournaments';
 
 // Admin: Create a new tournament
-export const createTournament = async (data: Omit<Tournament, 'id' | 'players' | 'status' | 'createdAt' | 'prizePool' | 'startTime'> & { startTime: Date }) => {
+export const createTournament = async (data: Omit<Tournament, 'id' | 'players' | 'status' | 'createdAt' | 'prizePool' | 'startTime' | 'endTime'> & { startTime: Date, endTime: Date }) => {
     const prizePool = 0;
 
     return await addDoc(collection(db, TOURNAMENTS_COLLECTION), {
         ...data,
         startTime: Timestamp.fromDate(data.startTime),
+        endTime: Timestamp.fromDate(data.endTime),
         players: [],
         status: 'upcoming',
         prizePool: prizePool,
         createdAt: serverTimestamp(),
     });
 };
+
+// Admin: Delete a tournament
+export const deleteTournament = async (tournamentId: string) => {
+    const tournamentRef = doc(db, TOURNAMENTS_COLLECTION, tournamentId);
+    
+    await runTransaction(db, async (transaction) => {
+        const tSnap = await transaction.get(tournamentRef);
+        if (!tSnap.exists()) {
+            throw new Error("Tournament not found.");
+        }
+        const tournament = tSnap.data() as Tournament;
+
+        // Refund all players
+        if (tournament.players && tournament.players.length > 0) {
+            const refundPromises = tournament.players.map(playerId => 
+                updateUserWallet(playerId, tournament.entryFee, 'balance', 'refund', `Tournament Canceled: ${tournament.title}`)
+            );
+            await Promise.all(refundPromises);
+        }
+
+        // Delete the tournament
+        transaction.delete(tournamentRef);
+    });
+};
+
 
 // User: Join a tournament
 export const joinTournament = async (tournamentId: string, userId: string) => {
@@ -124,10 +155,29 @@ export const joinTournament = async (tournamentId: string, userId: string) => {
 
 
 // Admin: Update tournament details
-export const updateTournament = async (id: string, data: Partial<Tournament>) => {
+export const updateTournament = async (id: string, data: Partial<Omit<Tournament, 'id' | 'startTime' | 'endTime'> & { startTime?: Date, endTime?: Date }>) => {
     const tournamentRef = doc(db, TOURNAMENTS_COLLECTION, id);
-    return await updateDoc(tournamentRef, data);
+    
+    const updateData: { [key: string]: any } = { ...data };
+    if (data.startTime) {
+        updateData.startTime = Timestamp.fromDate(data.startTime);
+    }
+     if (data.endTime) {
+        updateData.endTime = Timestamp.fromDate(data.endTime);
+    }
+    
+    return await updateDoc(tournamentRef, updateData);
 };
+
+// Admin: Get a single tournament for editing
+export const getTournament = async (id: string): Promise<Tournament | null> => {
+    const docRef = doc(db, TOURNAMENTS_COLLECTION, id);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+        return { id: docSnap.id, ...docSnap.data() } as Tournament;
+    }
+    return null;
+}
 
 // Listen for tournaments
 export const listenForTournaments = (
