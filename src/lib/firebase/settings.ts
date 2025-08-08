@@ -65,7 +65,7 @@ export const getSettings = async (): Promise<AppSettings> => {
         privacyContent: '',
         refundContent: '',
         gstContent: '',
-        promotionBannerText: 'Commission 5%: referral 2% for all games',
+        promotionBannerText: 'Commission 5% for all games\nRefer and earn 2% on every win!\nJoin the new tournament now!',
         festiveGreeting: {
             enabled: false,
             type: 'None',
@@ -213,3 +213,5 @@ export const deleteOldGameRecords = async (): Promise<number> => {
 
     return snapshot.size;
 }
+
+    

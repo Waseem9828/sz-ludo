@@ -396,8 +396,14 @@ export default function SettingsPage() {
                             <CardContent className="space-y-6">
                                 <div className="space-y-2">
                                     <Label htmlFor="promotion-banner">Promotion Banner Text</Label>
-                                    <Input id="promotion-banner" value={settings.promotionBannerText || ''} onChange={(e) => handleContentChange('promotionBannerText', e.target.value)} placeholder="e.g., Get 10% off on all games today!" />
-                                    <p className="text-sm text-muted-foreground">This text will appear on the user's home page. Leave empty to hide.</p>
+                                    <Textarea 
+                                      id="promotion-banner"
+                                      value={settings.promotionBannerText || ''} 
+                                      onChange={(e) => handleContentChange('promotionBannerText', e.target.value)} 
+                                      placeholder="e.g., Get 10% off on all games today!"
+                                      rows={4}
+                                    />
+                                    <p className="text-sm text-muted-foreground">Each line you enter here will be shown as a separate animated message.</p>
                                 </div>
                                 
                                 <Card>
@@ -503,3 +509,5 @@ export default function SettingsPage() {
     </Card>
   );
 }
+
+    

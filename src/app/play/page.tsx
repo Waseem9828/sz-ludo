@@ -1,3 +1,4 @@
+
 'use client'
 
 import React, { useState, useEffect } from 'react';
@@ -10,6 +11,7 @@ import ChallengeList from '@/components/play/challenge-list';
 import BattleList from '@/components/play/battle-list';
 import Link from 'next/link';
 import { getSettings, AppSettings } from '@/lib/firebase/settings';
+import AnimatedBanner from '@/components/animated-banner';
 
 export default function PlayPage() {
   const { user, loading } = useAuth();
@@ -32,9 +34,7 @@ export default function PlayPage() {
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
       <Header />
        {settings?.promotionBannerText && (
-          <div className="bg-red-600 text-white text-center py-2 text-sm font-semibold animate-shine-bg">
-            {settings.promotionBannerText}
-          </div>
+          <AnimatedBanner text={settings.promotionBannerText} />
         )}
       <main className="flex-grow container mx-auto px-4 py-6 space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -65,3 +65,5 @@ export default function PlayPage() {
     </div>
   );
 }
+
+    

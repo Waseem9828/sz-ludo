@@ -12,6 +12,7 @@ import GameListing from '@/components/game-listing';
 import { FestiveDialog, FestiveBackground } from '@/components/ui/festive-dialog';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import AnimatedBanner from '@/components/animated-banner';
 
 export default function Home() {
   const { user, appUser, loading } = useAuth();
@@ -91,9 +92,7 @@ export default function Home() {
             )}
             <Header />
             {settings?.promotionBannerText && (
-              <div className="bg-red-600 text-white text-center py-2 text-sm font-semibold animate-shine-bg">
-                {settings.promotionBannerText}
-              </div>
+              <AnimatedBanner text={settings.promotionBannerText} />
             )}
             <main className="flex-grow container mx-auto px-4 py-6 space-y-8">
               {isKycPending && (
@@ -109,3 +108,5 @@ export default function Home() {
     </>
   );
 }
+
+    
