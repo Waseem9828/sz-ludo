@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from '@/context/auth-context';
 import BottomNav from '@/components/bottom-nav';
 import Script from 'next/script';
+import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
   manifest: "/manifest.json",
@@ -26,7 +27,7 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&family=Inter:wght@400;700&display=swap" rel="stylesheet" />
         <meta name="theme-color" content="#f53d4c" />
       </head>
-      <body className="font-body antialiased">
+      <body className={cn("font-body antialiased", "bg-gradient-to-br from-red-800 via-red-600 to-red-900")}>
         <AuthProvider>
             <ThemeProvider
               attribute="class"

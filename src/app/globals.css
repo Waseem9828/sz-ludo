@@ -91,10 +91,6 @@
   * {
     @apply border-border;
   }
-  html, body {
-    /* Match the splash screen background to prevent white flash */
-    background-color: #4c0519;
-  }
   body {
     @apply bg-background text-foreground;
   }
