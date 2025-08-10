@@ -87,7 +87,7 @@ const TypewriterText = ({ text, delay = 0 }: { text: string; delay?: number }) =
         >
             {letters.map((letter, index) => (
                 <motion.span key={index} variants={child}>
-                    {letter === ' ' ? '\u00A0' : letter}
+                    {letter === ' ' ? ' ' : letter}
                 </motion.span>
             ))}
         </motion.h2>
@@ -146,7 +146,7 @@ export const SplashScreen = () => {
                         <div className="animate-bounce-float">
                             <Image
                                 src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg2oNx0s_EsUtQCxkYGCkEqHAcVCA4PAgVdyNX-mDF_KO228qsfmqMAOefbIFmb-yD98WpX7jVLor2AJzeDhfqG6wC8n7lWtxU9euuYIYhPWStqYgbGjkGp6gu1JrfKmXMwCn7I_KjLGu_GlGy3PMNmf9ljC8Yr__ZpsiGxHJRKbtH6MfTuG4ofViNRsAY/s1600/73555.png"
-                                alt="SZ LUDO Logo"
+                                alt="Ludo Lounge Logo"
                                 width={120}
                                 height={120}
                                 className="drop-shadow-2xl"
@@ -155,7 +155,7 @@ export const SplashScreen = () => {
                         </div>
 
                         <h1 className="mt-4 text-4xl md:text-5xl font-black text-white drop-shadow-lg font-headline">
-                            SZ LUDO
+                            Ludo Lounge
                         </h1>
 
                         <div className="mt-2">

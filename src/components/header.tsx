@@ -190,10 +190,10 @@ export default function Header() {
           </Sheet>
            <div className="flex items-center gap-1">
             <Link href="/">
-              <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg2oNx0s_EsUtQCxkYGCkEqHAcVCA4PAgVdyNX-mDF_KO228qsfmqMAOefbIFmb-yD98WpX7jVLor2AJzeDhfqG6wC8n7lWtxU9euuYIYhPWStqYgbGjkGp6gu1JrfKmXMwCn7I_KjLGu_GlGy3PMNmf9ljC8Yr__ZpsiGxHJRKbtH6MfTuG4ofViNRsAY/s1600/73555.png" alt="SZ LUDO Logo" width={40} height={40} />
+              <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg2oNx0s_EsUtQCxkYGCkEqHAcVCA4PAgVdyNX-mDF_KO228qsfmqMAOefbIFmb-yD98WpX7jVLor2AJzeDhfqG6wC8n7lWtxU9euuYIYhPWStqYgbGjkGp6gu1JrfKmXMwCn7I_KjLGu_GlGy3PMNmf9ljC8Yr__ZpsiGxHJRKbtH6MfTuG4ofViNRsAY/s1600/73555.png" alt="Ludo Lounge Logo" width={40} height={40} />
             </Link>
             <Link href="/">
-              <h1 className="text-xl font-headline font-bold text-primary animate-shine">SZ LUDO</h1>
+              <h1 className="text-xl font-headline font-bold text-primary animate-shine">Ludo Lounge</h1>
             </Link>
           </div>
         </div>
