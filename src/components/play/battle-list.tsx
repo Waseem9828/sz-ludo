@@ -57,9 +57,14 @@ export default function BattleList() {
                             <AvatarImage src={battle.player1.photoURL || defaultAvatar} alt={battle.player1.displayName || 'P1'} />
                             <AvatarFallback>{battle.player1.displayName?.charAt(0)}</AvatarFallback>
                         </Avatar>
-                         <div className="flex items-center gap-1">
-                            <span className="font-semibold truncate">{battle.player1.displayName}</span>
-                            {battle.player1.isKycVerified && <ShieldCheck className="h-4 w-4 text-blue-500 flex-shrink-0" />}
+                         <div className="flex-grow overflow-hidden">
+                            <div className="flex items-center gap-1">
+                                <span className="font-semibold truncate">{battle.player1.displayName}</span>
+                                {battle.player1.isKycVerified && <ShieldCheck className="h-4 w-4 text-blue-500 flex-shrink-0" />}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                {battle.player1_result ? 'Result Submitted' : 'Waiting for Result'}
+                            </p>
                         </div>
                         </div>
 
@@ -69,9 +74,14 @@ export default function BattleList() {
                         </div>
 
                         <div className="flex items-center justify-end gap-2 basis-2/5 overflow-hidden">
-                         <div className="flex items-center gap-1">
-                            <span className="font-semibold truncate">{battle.player2.displayName}</span>
-                            {battle.player2.isKycVerified && <ShieldCheck className="h-4 w-4 text-blue-500 flex-shrink-0" />}
+                        <div className="flex-grow overflow-hidden text-right">
+                             <div className="flex items-center justify-end gap-1">
+                                <span className="font-semibold truncate">{battle.player2.displayName}</span>
+                                {battle.player2.isKycVerified && <ShieldCheck className="h-4 w-4 text-blue-500 flex-shrink-0" />}
+                            </div>
+                             <p className="text-xs text-muted-foreground">
+                                {battle.player2_result ? 'Result Submitted' : 'Waiting for Result'}
+                            </p>
                         </div>
                         <Avatar className="h-8 w-8 flex-shrink-0">
                             <AvatarImage src={battle.player2.photoURL || defaultAvatar} alt={battle.player2.displayName || 'P2'} />
