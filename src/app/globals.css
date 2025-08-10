@@ -97,6 +97,28 @@
 }
 
 @layer utilities {
+  .speech-bubble {
+      position: relative;
+      background: hsl(var(--muted));
+      border-radius: .4em;
+      padding: 0.75rem 1rem;
+  }
+
+  .speech-bubble:after {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      width: 0;
+      height: 0;
+      border: 20px solid transparent;
+      border-right-color: hsl(var(--muted));
+      border-left: 0;
+      border-bottom: 0;
+      margin-top: -10px;
+      margin-left: -20px;
+  }
+
   @keyframes flip {
     0% {
       transform: rotateY(0);

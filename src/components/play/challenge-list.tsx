@@ -102,8 +102,6 @@ export default function ChallengeList() {
         }
         
         try {
-            await updateUserWallet(user.uid, -challenge.amount, 'balance', 'Challenge Accepted', `Accepted battle vs ${challenge.createdBy.displayName}`);
-            
             const gameId = await acceptChallenge(challenge.id, {
                 uid: user.uid,
                 displayName: appUser.displayName || '',
@@ -114,8 +112,6 @@ export default function ChallengeList() {
             toast({ title: 'Battle Accepted!', description: `You are now in a battle for ₹${challenge.amount}.` });
             router.push(`/play/game?id=${gameId}`);
         } catch (error: any) {
-            // Refund only if the acceptChallenge part fails
-            await updateUserWallet(user.uid, challenge.amount, 'balance', 'refund', `Failed to accept battle: ${challenge.id}`);
             toast({ title: 'Failed to Accept', description: error.message, variant: 'destructive' });
         }
     };
@@ -143,26 +139,32 @@ export default function ChallengeList() {
     }
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-8">
         {sortedChallenges.map((challenge) => (
-            <motion.div 
+            <motion.div
                 key={challenge.id}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, ease: "easeOut" }}
+                className="relative"
             >
-                <Card className="bg-card shadow-sm cursor-pointer" 
+                {challenge.message && (
+                     <div className="speech-bubble mb-2">
+                        <p className="text-sm md:text-base text-muted-foreground italic">"{challenge.message}"</p>
+                    </div>
+                 )}
+                <Card className="bg-card shadow-sm cursor-pointer"
                     onClick={() => {
                         if (user?.uid === challenge.createdBy.uid) {
                             router.push(`/play/game?id=${challenge.id}`);
                         }
                     }}>
-                    <CardContent className="p-3">
+                    <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                                <Avatar className="h-10 w-10">
-                                    <AvatarImage src={challenge.createdBy.photoURL || defaultAvatar} alt={challenge.createdBy.displayName || 'User'} />
+                                <Avatar className="h-10 w-10 border-2 border-primary">
+                                    <AvatarImage src={challenge.createdBy.photoURL || defaultAvatar} alt={challenge.createdBy.displayName || 'User'} data-ai-hint="avatar person" />
                                     <AvatarFallback>{challenge.createdBy.displayName?.charAt(0)}</AvatarFallback>
                                 </Avatar>
                                 <div>
@@ -177,16 +179,8 @@ export default function ChallengeList() {
                                 <p className="text-xl text-red-600 font-bold">₹ {challenge.amount}</p>
                             </div>
                         </div>
-                         {challenge.message && (
-                             <div className="relative mt-3 ml-4">
-                                 <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-0 h-0 border-y-8 border-y-transparent border-r-8 border-r-muted"></div>
-                                 <div className="bg-muted p-2 rounded-md flex items-center gap-2">
-                                     <MessageSquare className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                                    <p className="text-sm text-muted-foreground italic">"{challenge.message}"</p>
-                                 </div>
-                             </div>
-                         )}
-                        <div className="mt-3">
+                        
+                        <div className="mt-4">
                             {user?.uid === challenge.createdBy.uid ? (
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>
