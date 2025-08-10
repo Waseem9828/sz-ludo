@@ -4,7 +4,7 @@ import { db } from './config';
 
 const TRANSACTIONS_COLLECTION = 'transactions';
 
-export type TransactionType = 'deposit' | 'withdrawal' | 'winnings' | 'game_fee' | 'penalty' | 'refund' | 'Admin Credit' | 'Admin Debit' | 'Withdrawal Rejected' | 'Challenge Created' | 'revenue' | 'Referral Earning';
+export type TransactionType = 'deposit' | 'withdrawal' | 'winnings' | 'game_fee' | 'penalty' | 'refund' | 'Admin Credit' | 'Admin Debit' | 'Withdrawal Rejected' | 'Challenge Created' | 'Challenge Accepted' | 'revenue' | 'Referral Earning';
 export type TransactionStatus = 'pending' | 'completed' | 'failed' | 'rejected' | 'approved';
 
 export interface Transaction {

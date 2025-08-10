@@ -481,4 +481,3 @@ export const deleteOldGameRecords = async (): Promise<number> => {
 
     return snapshot.size;
 }
-

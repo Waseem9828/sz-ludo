@@ -37,22 +37,18 @@ export default function ChallengeList() {
     const router = useRouter();
 
     useEffect(() => {
-        const unsubscribe = listenForGames(setChallenges, 'challenge');
+        const unsubscribe = listenForGames((games) => {
+            const sortedGames = games.sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
+            setChallenges(sortedGames);
+        }, 'challenge');
         return () => unsubscribe();
     }, []);
 
     const sortedChallenges = useMemo(() => {
-        // Sort by creation date descending
-        const sorted = challenges.sort((a, b) => {
-            const dateA = a.createdAt?.toDate() || 0;
-            const dateB = b.createdAt?.toDate() || 0;
-            return (dateB as number) - (dateA as number);
-        });
-
-        if (!user) return sorted;
+        if (!user) return challenges;
         
         // Then, bring user's own challenges to the top
-        return [...sorted].sort((a, b) => {
+        return [...challenges].sort((a, b) => {
             if (a.createdBy.uid === user.uid && b.createdBy.uid !== user.uid) return -1;
             if (a.createdBy.uid !== user.uid && b.createdBy.uid === user.uid) return 1;
             return 0;
@@ -68,7 +64,7 @@ export default function ChallengeList() {
         }
         
         // Check if user is already in an ongoing game
-        const gamesRef = collection(db, 'games');
+        const gamesRef = collection(db, "games");
         const q = query(
             gamesRef,
             where('status', '==', 'ongoing'),
