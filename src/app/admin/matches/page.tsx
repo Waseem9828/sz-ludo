@@ -53,7 +53,7 @@ export default function MatchesPage() {
         if (!match.winner) return 'N/A';
         if (match.player1?.uid === match.winner) return match.player1.displayName;
         if (match.player2?.uid === match.winner) return match.player2.displayName;
-        return 'N/A';
+        return match.winner; // Fallback to UID if names not found
     }
 
   if (loading) {
