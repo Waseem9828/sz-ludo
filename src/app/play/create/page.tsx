@@ -83,10 +83,11 @@ export default function CreateChallengePage() {
     }
 
     setIsSubmitting(true);
+    let newChallengeId = '';
     try {
         await updateUserWallet(user.uid, -numericAmount, 'balance', 'Challenge Created');
 
-        await createChallenge({
+        const newChallengeRef = await createChallenge({
             amount: numericAmount,
             createdBy: {
                 uid: user.uid,
@@ -96,34 +97,26 @@ export default function CreateChallengePage() {
             },
             message: message || `Play a game for ₹${numericAmount}!`,
         });
+        
+        newChallengeId = newChallengeRef.id;
 
         toast({
             title: 'Battle Created!',
             description: `Your open battle for ₹${numericAmount} has been set.`,
         });
-        setAmount('');
-        setMessage('');
-        router.push('/play');
+        
+        router.push(`/play/game?id=${newChallengeId}`);
+
     } catch(error: any) {
-        try {
-            await updateUserWallet(user.uid, numericAmount, 'balance', 'refund', 'Battle Creation Failed');
-        } catch (refundError: any) {
-             toast({
-                title: 'Critical Error!',
-                description: `Failed to create battle AND failed to refund your balance. Please contact support immediately. Error: ${refundError.message}`,
-                variant: 'destructive',
-                duration: 10000,
-            });
-             setIsSubmitting(false);
-            return;
-        }
+        // If the challenge creation failed but wallet was deducted, refund the user.
+        await updateUserWallet(user.uid, numericAmount, 'balance', 'refund', `Battle Creation Failed: ${newChallengeId || ''}`);
 
         toast({
             title: 'Error Creating Battle',
             description: `Something went wrong: ${error.message}. Your balance has been refunded.`,
             variant: 'destructive',
         });
-    } finally {
+        
         setIsSubmitting(false);
     }
   };

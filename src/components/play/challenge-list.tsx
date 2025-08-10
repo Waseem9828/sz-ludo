@@ -4,7 +4,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Game, listenForGames, acceptChallenge, deleteChallenge } from "@/lib/firebase/games";
 import { useAuth } from "@/context/auth-context";
 import { useToast } from "@/hooks/use-toast";
@@ -39,6 +39,15 @@ export default function ChallengeList() {
         const unsubscribe = listenForGames(setChallenges, 'challenge');
         return () => unsubscribe();
     }, []);
+
+    const sortedChallenges = useMemo(() => {
+        if (!user) return challenges;
+        return [...challenges].sort((a, b) => {
+            if (a.createdBy.uid === user.uid && b.createdBy.uid !== user.uid) return -1;
+            if (a.createdBy.uid !== user.uid && b.createdBy.uid === user.uid) return 1;
+            return 0; // Or sort by date if needed: b.createdAt.toDate() - a.createdAt.toDate()
+        });
+    }, [challenges, user]);
 
 
     const handleAccept = async (challenge: Game) => {
@@ -85,7 +94,7 @@ export default function ChallengeList() {
         try {
             await updateUserWallet(user.uid, -challenge.amount, 'balance', 'Challenge Accepted');
             
-            await acceptChallenge(challenge.id, {
+            const gameId = await acceptChallenge(challenge.id, {
                 uid: user.uid,
                 displayName: appUser.displayName || '',
                 photoURL: appUser.photoURL || '',
@@ -93,7 +102,7 @@ export default function ChallengeList() {
             });
 
             toast({ title: 'Battle Accepted!', description: `You are now in a battle for ₹${challenge.amount}.` });
-            router.push(`/play/game?id=${challenge.id}`);
+            router.push(`/play/game?id=${gameId}`);
         } catch (error: any) {
             await updateUserWallet(user.uid, challenge.amount, 'balance', 'refund', 'Accept Battle Failed');
             toast({ title: 'Failed to Accept', description: error.message, variant: 'destructive' });
@@ -124,7 +133,7 @@ export default function ChallengeList() {
 
     return (
         <div className="space-y-4">
-        {challenges.map((challenge) => (
+        {sortedChallenges.map((challenge) => (
             <motion.div 
                 key={challenge.id}
                 initial={{ opacity: 0, y: 20 }}

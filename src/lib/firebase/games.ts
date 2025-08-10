@@ -20,7 +20,8 @@ import {
     getDocs,
     QueryConstraint,
     Timestamp,
-    writeBatch
+    writeBatch,
+    DocumentReference
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from './config';
@@ -91,7 +92,7 @@ export const deleteChallenge = async (gameId: string) => {
 
 
 // Accept a challenge
-export const acceptChallenge = async (gameId: string, player2: PlayerInfo) => {
+export const acceptChallenge = async (gameId: string, player2: PlayerInfo): Promise<string> => {
     const gameRef = doc(db, GAMES_COLLECTION, gameId);
     const gameSnap = await getDoc(gameRef);
     if (!gameSnap.exists()) {
@@ -99,12 +100,13 @@ export const acceptChallenge = async (gameId: string, player2: PlayerInfo) => {
     }
     const gameData = gameSnap.data() as Game;
 
-    return await updateDoc(gameRef, {
+    await updateDoc(gameRef, {
         player2: player2,
         playerUids: [...gameData.playerUids, player2.uid],
         status: 'ongoing',
         lastUpdatedAt: serverTimestamp(),
     });
+    return gameId;
 };
 
 // Cancel an accepted challenge before room code is set
