@@ -379,7 +379,7 @@ function GamePageComponent() {
                     </CardContent>
                 </Card>
 
-                {game.status === 'ongoing' && !game.roomCode && renderRoomCodeSection()}
+                {game.status === 'ongoing' && renderRoomCodeSection()}
                 {game.status === 'ongoing' && game.roomCode && renderResultSection()}
                 
                 {game.status !== 'ongoing' && game.status !== 'challenge' && (
