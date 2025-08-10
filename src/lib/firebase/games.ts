@@ -332,13 +332,6 @@ export const listenForGames = (
             games.push({ id: doc.id, ...doc.data() } as Game);
         });
         
-        // Manual sort on the client-side
-        games.sort((a, b) => {
-             const dateA = a.createdAt?.toDate() || 0;
-             const dateB = b.createdAt?.toDate() || 0;
-             return (dateB as number) - (dateA as number);
-        });
-        
         callback(games);
     }, (error) => {
         console.error("Error listening for games: ", error);
@@ -397,8 +390,7 @@ export const listenForGamesHistory = (
 ) => {
     const q = query(
         collection(db, GAMES_COLLECTION),
-        where("status", "in", ["completed", "cancelled", "disputed"]),
-        orderBy("createdAt", "desc")
+        where("status", "in", ["completed", "cancelled", "disputed"])
     );
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -489,3 +481,4 @@ export const deleteOldGameRecords = async (): Promise<number> => {
 
     return snapshot.size;
 }
+

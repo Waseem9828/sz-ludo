@@ -21,7 +21,13 @@ export default function MatchesPage() {
     useEffect(() => {
         const unsubscribe = listenForGamesHistory(
             (games) => {
-                setMatches(games);
+                // Sort client-side
+                const sortedGames = games.sort((a, b) => {
+                    const dateA = a.createdAt?.toDate() || 0;
+                    const dateB = b.createdAt?.toDate() || 0;
+                    return (dateB as number) - (dateA as number);
+                });
+                setMatches(sortedGames);
                 setLoading(false);
             },
             (error) => {
