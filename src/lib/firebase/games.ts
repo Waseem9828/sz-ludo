@@ -351,7 +351,7 @@ export const listenForGames = (
         queryConstraints.push(where("status", "==", status));
     }
     
-    const q = query(collection(db, GAMES_COLLECTION), ...queryConstraints, orderBy("createdAt", "desc"));
+    const q = query(collection(db, GAMES_COLLECTION), ...queryConstraints);
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const games: Game[] = [];
@@ -486,7 +486,7 @@ export const deleteOldGameRecords = async (): Promise<number> => {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const timestamp = Timestamp.fromDate(thirtyDaysAgo);
 
-    const gamesRef = collection(db, GAMES_COLLECTION);
+    const gamesRef = collection(db, 'games');
     const q = query(
         gamesRef,
         where('status', 'in', ['completed', 'cancelled', 'disputed']),
