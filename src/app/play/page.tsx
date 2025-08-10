@@ -12,11 +12,13 @@ import BattleList from '@/components/play/battle-list';
 import Link from 'next/link';
 import { getSettings, AppSettings } from '@/lib/firebase/settings';
 import AnimatedBanner from '@/components/animated-banner';
+import { RefreshCw } from 'lucide-react';
 
 export default function PlayPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [settings, setSettings] = useState<AppSettings | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -24,6 +26,11 @@ export default function PlayPage() {
     }
     getSettings().then(setSettings);
   }, [user, loading, router]);
+  
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    window.location.reload();
+  };
 
 
   if (loading || !user) {
@@ -43,9 +50,14 @@ export default function PlayPage() {
                     <h2 className="text-red-600 font-semibold text-lg text-center">
                       🏆 Open Battles 🏆
                     </h2>
-                    <Link href="/play/create" className="w-full sm:w-auto">
-                        <Button variant="outline" size="sm" className="w-full">Create Open Battle</Button>
-                    </Link>
+                     <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="icon" onClick={handleRefresh} disabled={isRefreshing}>
+                            <RefreshCw className={isRefreshing ? 'animate-spin' : ''}/>
+                        </Button>
+                        <Link href="/play/create" className="w-full sm:w-auto">
+                            <Button variant="outline" size="sm" className="w-full">Create Open Battle</Button>
+                        </Link>
+                    </div>
                 </div>
                 <ChallengeList />
             </section>
@@ -65,5 +77,3 @@ export default function PlayPage() {
     </div>
   );
 }
-
-    
