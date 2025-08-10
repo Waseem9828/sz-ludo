@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ChevronLeft, Info, Upload, Loader, Send, Copy, Clock, Hash, AlertTriangle, CheckCircle } from 'lucide-react';
+import { ChevronLeft, Info, Upload, Loader, Send, Copy, Clock, Hash, AlertTriangle, CheckCircle, ListOrdered, ShieldAlert, Image as ImageIcon, Ban } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -22,12 +22,36 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { add, format } from 'date-fns';
 import { ResultDialog } from '@/components/play/result-dialog';
 import { hasJoinedLiveTournament } from '@/lib/firebase/tournaments';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 const penalties = [
     { amount: '₹100', reason: 'Fraud / Fake Screenshot' },
     { amount: '₹50', reason: 'Wrong Update' },
     { amount: '₹50', reason: 'No update after 2 hours' },
     { amount: '₹25', reason: 'Abusing' },
+];
+
+const rules = [
+    {
+        icon: ListOrdered,
+        title: "केवल Ludo King का क्लासिक मोड मान्य है (Only Ludo King Classic mode is valid)",
+        description: "कृपया सुनिश्चित करें कि आप Ludo King ऐप में केवल 'Classic' मोड में ही खेल रहे हैं। कोई अन्य मोड (जैसे, Popular, Rush, आदि) मान्य नहीं होगा।"
+    },
+    {
+        icon: ImageIcon,
+        title: "जीत का स्क्रीनशॉट अनिवार्य है (Winning screenshot is mandatory)",
+        description: "गेम जीतने के बाद, 'You Won' स्क्रीन का स्पष्ट स्क्रीनशॉट लेना अनिवार्य है। बिना स्क्रीनशॉट के जीत का दावा मान्य नहीं होगा।"
+    },
+    {
+        icon: ShieldAlert,
+        title: "गलत अपडेट या फेक स्क्रीनशॉट पर पेनल्टी (Penalty on wrong update or fake screenshot)",
+        description: "यदि आप गलत परिणाम (जैसे, हारने पर जीत का दावा) अपडेट करते हैं या नकली स्क्रीनशॉट अपलोड करते हैं, तो आप पर पेनल्टी लगाई जाएगी और आपकी आईडी ब्लॉक की जा सकती है।"
+    },
+    {
+        icon: Ban,
+        title: "गेम रद्द करना (Cancelling the game)",
+        description: "यदि आप गेम शुरू होने के बाद जानबूझकर गेम छोड़ देते हैं या रद्द कर देते हैं, तो आपके प्रतिद्वंद्वी को विजेता घोषित कर दिया जाएगा।"
+    }
 ];
 
 const defaultAvatar = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi_h6LUuqTTKYsn5TfUZwkI6Aib6Y0tOzQzcoZKstURqxyl-PJXW1DKTkF2cPPNNUbP3iuDNsOBVOYx7p-ZwrodI5w9fyqEwoabj8rU0mLzSbT5GCFUKpfCc4s_LrtHcWFDvvRstCghAfQi5Zfv2fipdZG8h4dU4vGt-eFRn-gS3QTg6_JJKhv0Yysr_ZY/s1600/82126.png";
@@ -327,10 +351,35 @@ function GamePageComponent() {
                             Back
                         </Button>
                     </Link>
-                    <Button variant="outline" className="border-red-500 text-red-500 hover:bg-red-50 hover:text-red-600">
-                        <Info className="mr-2 h-4 w-4" />
-                        Rules
-                    </Button>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" className="border-red-500 text-red-500 hover:bg-red-50 hover:text-red-600">
+                                <Info className="mr-2 h-4 w-4" />
+                                Rules
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-lg">
+                            <DialogHeader>
+                                <DialogTitle className="text-2xl text-center font-bold text-primary">गेम के नियम (Game Rules)</DialogTitle>
+                                <DialogDescription className="text-center">
+                                    कृपया गेम खेलने से पहले सभी नियमों को ध्यान से पढ़ें।
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="mt-4 space-y-4">
+                                {rules.map((rule, index) => (
+                                    <div key={index} className="flex items-start gap-4">
+                                        <div className="flex-shrink-0 bg-primary/10 text-primary p-3 rounded-full">
+                                            <rule.icon className="h-6 w-6" />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-semibold text-foreground">{rule.title}</h3>
+                                            <p className="text-sm text-muted-foreground">{rule.description}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </DialogContent>
+                    </Dialog>
                 </div>
 
                 <Card>
