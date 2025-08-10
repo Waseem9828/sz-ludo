@@ -168,21 +168,20 @@ function GamePageComponent() {
     const handleResultSubmit = async (result: 'WON' | 'LOST' | 'CANCEL') => {
         if (!game || !user) return;
         
-        let screenshotFile: File | undefined = undefined;
-        if (result === 'WON') {
-            if (!screenshot) {
-                toast({ title: `Screenshot Required`, description: `Please upload a screenshot to declare you won.`, variant: 'destructive'});
-                return;
-            }
-            screenshotFile = screenshot;
+        if (result === 'WON' && !screenshot) {
+            toast({
+                title: `Screenshot Required`,
+                description: `Please upload a screenshot to declare you won.`,
+                variant: 'destructive',
+            });
+            return;
         }
         
         setIsSubmitting(true);
         try {
-            await submitPlayerResult(game.id, user.uid, result, screenshotFile);
-            toast({title: 'Result Submitted', description: 'Waiting for opponent to submit their result.'});
+            await submitPlayerResult(game.id, user.uid, result, screenshot || undefined);
+            toast({ title: 'Result Submitted', description: 'Waiting for opponent to submit their result.' });
             
-            // Reset local state after submission
             setScreenshot(null);
             if (fileInputRef.current) fileInputRef.current.value = '';
 
@@ -487,3 +486,4 @@ export default function GamePage() {
         </Suspense>
     )
 }
+
