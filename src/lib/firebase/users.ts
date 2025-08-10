@@ -110,6 +110,8 @@ const createTransactionInBatch = (
 
 
 export const updateUserWallet = async (uid: string, amount: number, walletType: 'balance' | 'winnings' | 'agent', transactionType: TransactionType, notes?: string, relatedId?: string) => {
+    const userRef = doc(db, 'users', uid);
+    
     // Special case for revenue, which is not a real transaction for a user wallet
     if (transactionType === 'revenue') {
         const adminUserRef = doc(db, 'users', uid);
@@ -118,8 +120,6 @@ export const updateUserWallet = async (uid: string, amount: number, walletType: 
         });
     }
 
-    const userRef = doc(db, 'users', uid);
-    
     return await runTransaction(db, async (transaction) => {
         const userSnap = await transaction.get(userRef);
         if (!userSnap.exists()) {

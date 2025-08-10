@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -92,7 +93,7 @@ export default function ChallengeList() {
         }
         
         try {
-            await updateUserWallet(user.uid, -challenge.amount, 'balance', 'Challenge Accepted');
+            await updateUserWallet(user.uid, -challenge.amount, 'balance', 'Challenge Accepted', `Accepted battle vs ${challenge.createdBy.displayName}`);
             
             const gameId = await acceptChallenge(challenge.id, {
                 uid: user.uid,
@@ -104,7 +105,8 @@ export default function ChallengeList() {
             toast({ title: 'Battle Accepted!', description: `You are now in a battle for ₹${challenge.amount}.` });
             router.push(`/play/game?id=${gameId}`);
         } catch (error: any) {
-            await updateUserWallet(user.uid, challenge.amount, 'balance', 'refund', 'Accept Battle Failed');
+            // Refund only if the acceptChallenge part fails
+            await updateUserWallet(user.uid, challenge.amount, 'balance', 'refund', `Failed to accept battle: ${challenge.id}`);
             toast({ title: 'Failed to Accept', description: error.message, variant: 'destructive' });
         }
     };

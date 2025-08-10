@@ -59,15 +59,59 @@ const GAMES_COLLECTION = 'games';
 
 // Create a new challenge
 export const createChallenge = async (data: { amount: number; createdBy: PlayerInfo, message?: string }) => {
-    return await addDoc(collection(db, GAMES_COLLECTION), {
-        ...data,
-        player1: data.createdBy,
-        playerUids: [data.createdBy.uid],
-        status: 'challenge',
-        type: 'user',
-        createdAt: serverTimestamp(),
-        lastUpdatedAt: serverTimestamp(),
+    const userRef = doc(db, 'users', data.createdBy.uid);
+    const challengeRef = doc(collection(db, GAMES_COLLECTION));
+
+    await runTransaction(db, async (transaction) => {
+        const userSnap = await transaction.get(userRef);
+        if (!userSnap.exists()) {
+            throw new Error("User not found");
+        }
+        const userData = userSnap.data() as AppUser;
+        const totalBalance = (userData.wallet?.balance || 0) + (userData.wallet?.winnings || 0);
+        if (totalBalance < data.amount) {
+            throw new Error("Insufficient total balance to create challenge.");
+        }
+
+        // 1. Deduct from wallet
+        const balanceDeduction = Math.min(data.amount, userData.wallet?.balance || 0);
+        const winningsDeduction = data.amount - balanceDeduction;
+
+        const walletUpdate: { [key: string]: any } = {};
+        if (balanceDeduction > 0) {
+            walletUpdate['wallet.balance'] = increment(-balanceDeduction);
+        }
+        if (winningsDeduction > 0) {
+            walletUpdate['wallet.winnings'] = increment(-winningsDeduction);
+        }
+        transaction.update(userRef, walletUpdate);
+        
+        // 2. Create the challenge document
+        transaction.set(challengeRef, {
+            ...data,
+            player1: data.createdBy,
+            playerUids: [data.createdBy.uid],
+            status: 'challenge',
+            type: 'user',
+            createdAt: serverTimestamp(),
+            lastUpdatedAt: serverTimestamp(),
+        });
+        
+        // 3. Create transaction log
+        const transLogRef = doc(collection(db, 'transactions'));
+        transaction.set(transLogRef, {
+            userId: data.createdBy.uid,
+            userName: data.createdBy.displayName,
+            amount: data.amount,
+            type: 'Challenge Created',
+            status: 'completed',
+            relatedId: challengeRef.id,
+            notes: 'Battle created',
+            createdAt: serverTimestamp(),
+        });
     });
+    
+    return challengeRef;
 };
 
 // Delete a challenge
@@ -94,18 +138,40 @@ export const deleteChallenge = async (gameId: string) => {
 // Accept a challenge
 export const acceptChallenge = async (gameId: string, player2: PlayerInfo): Promise<string> => {
     const gameRef = doc(db, GAMES_COLLECTION, gameId);
-    const gameSnap = await getDoc(gameRef);
-    if (!gameSnap.exists()) {
-        throw new Error("Game not found");
-    }
-    const gameData = gameSnap.data() as Game;
+    
+    await runTransaction(db, async (transaction) => {
+        const gameSnap = await transaction.get(gameRef);
+        if (!gameSnap.exists()) {
+            throw new Error("Game not found");
+        }
+        const gameData = gameSnap.data() as Game;
 
-    await updateDoc(gameRef, {
-        player2: player2,
-        playerUids: [...gameData.playerUids, player2.uid],
-        status: 'ongoing',
-        lastUpdatedAt: serverTimestamp(),
+        if (gameData.status !== 'challenge') {
+            throw new Error("This challenge is no longer available.");
+        }
+
+        // Update the game document
+        transaction.update(gameRef, {
+            player2: player2,
+            playerUids: [...gameData.playerUids, player2.uid],
+            status: 'ongoing',
+            lastUpdatedAt: serverTimestamp(),
+        });
+
+        // Create transaction log for the accepting player
+        const transLogRef = doc(collection(db, 'transactions'));
+         transaction.set(transLogRef, {
+            userId: player2.uid,
+            userName: player2.displayName,
+            amount: gameData.amount,
+            type: 'Challenge Accepted',
+            status: 'completed',
+            relatedId: gameId,
+            notes: `Accepted battle vs ${gameData.createdBy.displayName}`,
+            createdAt: serverTimestamp(),
+        });
     });
+
     return gameId;
 };
 

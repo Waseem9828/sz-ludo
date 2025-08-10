@@ -9,7 +9,6 @@ import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
 import { SplashScreen } from '@/components/ui/splash-screen';
 import { createChallenge, Game, listenForGames } from '@/lib/firebase/games';
-import { updateUserWallet } from '@/lib/firebase/users';
 import { Loader } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -83,10 +82,7 @@ export default function CreateChallengePage() {
     }
 
     setIsSubmitting(true);
-    let newChallengeId = '';
     try {
-        await updateUserWallet(user.uid, -numericAmount, 'balance', 'Challenge Created');
-
         const newChallengeRef = await createChallenge({
             amount: numericAmount,
             createdBy: {
@@ -98,22 +94,17 @@ export default function CreateChallengePage() {
             message: message || `Play a game for ₹${numericAmount}!`,
         });
         
-        newChallengeId = newChallengeRef.id;
-
         toast({
             title: 'Battle Created!',
             description: `Your open battle for ₹${numericAmount} has been set.`,
         });
         
-        router.push(`/play/game?id=${newChallengeId}`);
+        router.push(`/play/game?id=${newChallengeRef.id}`);
 
     } catch(error: any) {
-        // If the challenge creation failed but wallet was deducted, refund the user.
-        await updateUserWallet(user.uid, numericAmount, 'balance', 'refund', `Battle Creation Failed: ${newChallengeId || ''}`);
-
         toast({
             title: 'Error Creating Battle',
-            description: `Something went wrong: ${error.message}. Your balance has been refunded.`,
+            description: `Something went wrong: ${error.message}.`,
             variant: 'destructive',
         });
         
