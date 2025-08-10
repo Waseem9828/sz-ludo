@@ -419,7 +419,7 @@ function GamePageComponent() {
                         </div>
                         <div className="flex items-center justify-between">
                             <span className="text-muted-foreground flex items-center gap-2"><Clock />Last Updated</span>
-                            <span className="font-medium">{format(game.lastUpdatedAt.toDate(), 'PPpp')}</span>
+                            <span className="font-medium">{game.lastUpdatedAt && format(game.lastUpdatedAt.toDate(), 'PPpp')}</span>
                         </div>
                         <div className="flex items-center justify-between">
                             <span className="text-muted-foreground flex items-center gap-2"><AlertTriangle />Update Deadline</span>
