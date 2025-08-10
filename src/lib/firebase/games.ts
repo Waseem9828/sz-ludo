@@ -281,7 +281,7 @@ export const listenForGames = (
     status?: Game['status'],
     onError?: (error: Error) => void
 ) => {
-    const queryConstraints: QueryConstraint[] = [where("type", "==", "user")];
+    const queryConstraints: QueryConstraint[] = [];
     if (status) {
         queryConstraints.push(where("status", "==", status));
     }
