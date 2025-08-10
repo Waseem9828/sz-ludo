@@ -39,7 +39,6 @@ export interface Game {
     id: string;
     amount: number;
     status: 'challenge' | 'ongoing' | 'under_review' | 'completed' | 'cancelled' | 'disputed';
-    type?: 'user';
     createdBy: PlayerInfo;
     player1: PlayerInfo;
     player2?: PlayerInfo;
@@ -59,10 +58,11 @@ const GAMES_COLLECTION = 'games';
 
 // Create a new challenge
 export const createChallenge = async (data: { amount: number; createdBy: PlayerInfo, message?: string }) => {
-    const userRef = doc(db, 'users', data.createdBy.uid);
-    const challengeRef = doc(collection(db, GAMES_COLLECTION));
+    
+    return await runTransaction(db, async (transaction) => {
+        const userRef = doc(db, 'users', data.createdBy.uid);
+        const challengeRef = doc(collection(db, GAMES_COLLECTION));
 
-    await runTransaction(db, async (transaction) => {
         const userSnap = await transaction.get(userRef);
         if (!userSnap.exists()) {
             throw new Error("User not found");
@@ -92,7 +92,6 @@ export const createChallenge = async (data: { amount: number; createdBy: PlayerI
             player1: data.createdBy,
             playerUids: [data.createdBy.uid],
             status: 'challenge',
-            type: 'user',
             createdAt: serverTimestamp(),
             lastUpdatedAt: serverTimestamp(),
         });
@@ -109,9 +108,9 @@ export const createChallenge = async (data: { amount: number; createdBy: PlayerI
             notes: 'Battle created',
             createdAt: serverTimestamp(),
         });
+        
+        return challengeRef;
     });
-    
-    return challengeRef;
 };
 
 // Delete a challenge
@@ -378,7 +377,7 @@ export const listenForUserGames = (
     callback: (games: Game[]) => void,
     onError?: (error: Error) => void
 ) => {
-    const gamesRef = collection(db, 'games');
+    const gamesRef = collection(db, GAMES_COLLECTION);
     const q = query(gamesRef, where("playerUids", "array-contains", userId), orderBy("createdAt", "desc"), limit(limitCount));
 
     const unsubscribe = onSnapshot(q, (snap) => {
@@ -445,7 +444,7 @@ export const applyPenaltyForNoUpdate = async () => {
     const twoHoursAgo = Timestamp.fromMillis(Date.now() - 2 * 60 * 60 * 1000);
 
     const q = query(
-        collection(db, 'games'),
+        collection(db, GAMES_COLLECTION),
         where('status', '==', 'ongoing'),
         where('lastUpdatedAt', '<', twoHoursAgo)
     );
@@ -487,7 +486,7 @@ export const deleteOldGameRecords = async (): Promise<number> => {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const timestamp = Timestamp.fromDate(thirtyDaysAgo);
 
-    const gamesRef = collection(db, 'games');
+    const gamesRef = collection(db, GAMES_COLLECTION);
     const q = query(
         gamesRef,
         where('status', 'in', ['completed', 'cancelled', 'disputed']),
