@@ -131,7 +131,7 @@ function AddCashPageComponent() {
               return (
                  <>
                     <CardHeader>
-                        <CardTitle className="text-center text-xl font-semibold text-red-600 animate-shine">Scan to Pay</CardTitle>
+                        <CardTitle className="text-center text-xl font-semibold text-primary">Scan to Pay</CardTitle>
                         <CardDescription className="text-center">Use any UPI app to scan the QR code below.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4 text-center">
@@ -162,7 +162,7 @@ function AddCashPageComponent() {
               return (
                   <>
                     <CardHeader>
-                        <CardTitle className="text-center text-xl font-semibold text-red-600 animate-shine">Submit Payment Proof</CardTitle>
+                        <CardTitle className="text-center text-xl font-semibold text-primary">Submit Payment Proof</CardTitle>
                         <CardDescription className="text-center">Enter the transaction ID and upload the screenshot.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -210,7 +210,7 @@ function AddCashPageComponent() {
             return (
                 <>
                 <CardHeader>
-                  <CardTitle className="text-center text-xl font-semibold text-red-600 animate-shine">Add Cash to Wallet</CardTitle>
+                  <CardTitle className="text-center text-xl font-semibold text-primary">Add Cash to Wallet</CardTitle>
                   <CardDescription className="text-center">100% Safe and Secure Payments</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -247,7 +247,7 @@ function AddCashPageComponent() {
                   
                   <Card>
                       <CardHeader>
-                          <CardTitle className="text-center text-lg text-red-600 animate-shine">Summary</CardTitle>
+                          <CardTitle className="text-center text-lg text-primary">Summary</CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-3 text-sm">
                       <div className="flex justify-between">
@@ -288,7 +288,7 @@ function AddCashPageComponent() {
         <main className="flex-grow container mx-auto px-4 py-6 space-y-6">
           <div className="flex items-center">
               <Link href="/wallet">
-                  <Button variant="outline" className="bg-primary text-primary-foreground hover:bg-primary/90">
+                  <Button variant="outline">
                       <ChevronLeft className="mr-2 h-4 w-4" />
                       Back
                   </Button>

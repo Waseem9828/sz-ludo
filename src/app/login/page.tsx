@@ -116,18 +116,18 @@ function LoginPageContent() {
            <div className="flex justify-center items-center mb-6 gap-3">
             <Link href="/" className="flex items-center gap-3">
               <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg2oNx0s_EsUtQCxkYGCkEqHAcVCA4PAgVdyNX-mDF_KO228qsfmqMAOefbIFmb-yD98WpX7jVLor2AJzeDhfqG6wC8n7lWtxU9euuYIYhPWStqYgbGjkGp6gu1JrfKmXMwCn7I_KjLGu_GlGy3PMNmf9ljC8Yr__ZpsiGxHJRKbtH6MfTuG4ofViNRsAY/s1600/73555.png" alt="SZ LUDO Logo" width={50} height={50} />
-              <h1 className="text-4xl font-headline font-black text-red-600">SZ LUDO</h1>
+              <h1 className="text-4xl font-headline font-black text-red-600 animate-shine">SZ LUDO</h1>
             </Link>
           </div>
 
         <Card className="shadow-2xl shadow-red-500/10 dark:shadow-red-500/20">
             <CardContent className="p-2">
                 <Tabs defaultValue="login" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 bg-red-100 dark:bg-red-900/50 rounded-lg p-1">
-                    <TabsTrigger value="login" className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-md">
+                <TabsList className="grid w-full grid-cols-2 bg-red-100 dark:bg-primary/10 rounded-lg p-1">
+                    <TabsTrigger value="login" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
                          <LogIn className="mr-2" /> Login
                     </TabsTrigger>
-                    <TabsTrigger value="signup" className="data-[state=active]:bg-red-600 data-[state=active]:text-white rounded-md">
+                    <TabsTrigger value="signup" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md">
                          <UserPlus className="mr-2" /> Sign Up
                     </TabsTrigger>
                 </TabsList>
@@ -142,16 +142,16 @@ function LoginPageContent() {
                             <Label htmlFor="login-password">Password</Label>
                             <Input id="login-password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={loadingAction !== null}/>
                         </div>
-                        <Button type="submit" className="w-full font-bold py-3 text-lg bg-red-600 hover:bg-red-700" disabled={loadingAction !== null}>
+                        <Button type="submit" className="w-full font-bold py-3 text-lg" disabled={loadingAction !== null}>
                             {loadingAction === 'login' ? <Loader className="animate-spin"/> : 'Login'}
                         </Button>
                         </form>
                         <div className="relative my-4">
                         <div className="absolute inset-0 flex items-center">
-                            <span className="w-full border-t border-red-200 dark:border-red-900" />
+                            <span className="w-full border-t border-red-200 dark:border-primary/20" />
                         </div>
                         <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-white dark:bg-card px-2 text-muted-foreground">Or</span>
+                            <span className="bg-card px-2 text-muted-foreground">Or</span>
                         </div>
                         </div>
                         <Button variant="outline" onClick={handleGoogleSignIn} className="w-full" disabled={loadingAction !== null}>
@@ -182,7 +182,7 @@ function LoginPageContent() {
                                 <Label htmlFor="confirm-password">Confirm Password</Label>
                                 <Input id="confirm-password" type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} disabled={loadingAction !== null}/>
                             </div>
-                            <Button type="submit" className="w-full font-bold py-3 text-lg bg-red-600 hover:bg-red-700" disabled={loadingAction !== null}>
+                            <Button type="submit" className="w-full font-bold py-3 text-lg" disabled={loadingAction !== null}>
                                  {loadingAction === 'signup' ? <Loader className="animate-spin"/> : 'Create Account'}
                             </Button>
                         </form>

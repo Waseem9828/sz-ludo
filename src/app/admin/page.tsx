@@ -171,7 +171,7 @@ export default function AdminDashboardPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
             <Card className="lg:col-span-4">
                 <CardHeader>
-                    <CardTitle className="text-red-600 animate-shine">Overview</CardTitle>
+                    <CardTitle>Overview</CardTitle>
                 </CardHeader>
                 <CardContent className="pl-2">
                    <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
@@ -204,7 +204,7 @@ export default function AdminDashboardPage() {
 
              <Card className="lg:col-span-3">
                 <CardHeader>
-                    <CardTitle className="text-red-600 animate-shine">Recent Transactions</CardTitle>
+                    <CardTitle>Recent Transactions</CardTitle>
                 </CardHeader>
                 <CardContent>
                      <Table>
@@ -238,7 +238,7 @@ export default function AdminDashboardPage() {
         <div className="grid gap-4 md:grid-cols-2">
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-red-600 animate-shine">🏆 Open Challenges</CardTitle>
+                    <CardTitle>🏆 Open Challenges</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <ChallengeList />
@@ -246,7 +246,7 @@ export default function AdminDashboardPage() {
             </Card>
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-red-600 animate-shine">⚔️ Ongoing Battles</CardTitle>
+                    <CardTitle>⚔️ Ongoing Battles</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <BattleList />

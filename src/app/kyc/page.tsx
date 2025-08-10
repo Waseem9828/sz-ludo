@@ -102,7 +102,7 @@ export default function KycPage() {
             <main className="flex-grow container mx-auto px-4 py-6">
                 <Card className="max-w-2xl mx-auto">
                     <CardHeader>
-                        <CardTitle className="text-center text-2xl font-bold font-headline text-red-600 animate-shine">
+                        <CardTitle className="text-center text-2xl font-bold font-headline text-primary">
                             KYC Verification
                         </CardTitle>
                         <CardDescription className="text-center">
@@ -116,7 +116,7 @@ export default function KycPage() {
                             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                                 <Card>
                                     <CardHeader>
-                                        <CardTitle className="text-lg text-red-600 animate-shine">Aadhaar Details</CardTitle>
+                                        <CardTitle className="text-lg text-primary">Aadhaar Details</CardTitle>
                                     </CardHeader>
                                     <CardContent>
                                         <FormField
@@ -137,7 +137,7 @@ export default function KycPage() {
 
                                 <Card>
                                     <CardHeader>
-                                        <CardTitle className="text-lg text-red-600 animate-shine">PAN Card Details</CardTitle>
+                                        <CardTitle className="text-lg text-primary">PAN Card Details</CardTitle>
                                     </CardHeader>
                                     <CardContent>
                                         <FormField
@@ -158,7 +158,7 @@ export default function KycPage() {
 
                                 <Card>
                                     <CardHeader>
-                                        <CardTitle className="text-lg text-red-600 animate-shine">Bank Account Details</CardTitle>
+                                        <CardTitle className="text-lg text-primary">Bank Account Details</CardTitle>
                                         <CardDescription>For receiving winnings.</CardDescription>
                                     </CardHeader>
                                     <CardContent className="space-y-4">

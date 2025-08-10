@@ -146,7 +146,7 @@ export default function CreateChallengePage() {
         </Link>
         <Card className="max-w-md mx-auto">
             <CardHeader>
-                <CardTitle className="text-center text-xl font-semibold text-red-600 animate-shine">Create a New Battle</CardTitle>
+                <CardTitle className="text-center text-xl font-semibold text-primary">Create a New Battle</CardTitle>
                 <CardDescription className="text-center">Set an amount and create an open battle for the community!</CardDescription>
             </CardHeader>
             <CardContent>
@@ -157,7 +157,7 @@ export default function CreateChallengePage() {
                         id="amount"
                         type="number" 
                         placeholder="Enter amount" 
-                        className="bg-card dark:bg-gray-800" 
+                        className="bg-card dark:bg-muted" 
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
                         disabled={isSubmitting}
@@ -169,7 +169,7 @@ export default function CreateChallengePage() {
                             id="message"
                             type="text" 
                             placeholder="e.g., Koi hai takkar ka?" 
-                            className="bg-card dark:bg-gray-800" 
+                            className="bg-card dark:bg-muted" 
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
                             disabled={isSubmitting}

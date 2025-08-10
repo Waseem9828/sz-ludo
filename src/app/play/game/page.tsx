@@ -189,7 +189,7 @@ function GamePageComponent() {
             return (
                  <Card>
                     <CardHeader className="py-3 bg-muted rounded-t-lg">
-                        <CardTitle className="text-center text-md font-semibold text-red-600 animate-shine">Room Code</CardTitle>
+                        <CardTitle className="text-center text-md font-semibold text-primary">Room Code</CardTitle>
                     </CardHeader>
                     <CardContent className="p-6 text-center space-y-4">
                         <div className="flex items-center justify-center gap-2">
@@ -217,7 +217,7 @@ function GamePageComponent() {
             return (
                  <Card>
                     <CardHeader className="py-3 bg-muted rounded-t-lg">
-                        <CardTitle className="text-center text-md font-semibold text-red-600 animate-shine">Enter Room Code</CardTitle>
+                        <CardTitle className="text-center text-md font-semibold text-primary">Enter Room Code</CardTitle>
                     </CardHeader>
                     <CardContent className="p-4 space-y-2">
                         <Label htmlFor="room-code-input">Share Ludo King Room Code</Label>
@@ -242,7 +242,7 @@ function GamePageComponent() {
              return (
                  <Card>
                     <CardHeader className="py-3 bg-muted rounded-t-lg">
-                        <CardTitle className="text-center text-md font-semibold text-red-600 animate-shine">Room Code</CardTitle>
+                        <CardTitle className="text-center text-md font-semibold text-primary">Room Code</CardTitle>
                     </CardHeader>
                     <CardContent className="p-6 text-center">
                        <Alert>
@@ -279,7 +279,7 @@ function GamePageComponent() {
         return (
             <Card>
                 <CardHeader className="py-3 bg-muted rounded-t-lg">
-                    <CardTitle className="text-center text-md font-semibold text-red-600 animate-shine">Game Result</CardTitle>
+                    <CardTitle className="text-center text-md font-semibold text-primary">Game Result</CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 space-y-3">
                     <p className="text-center text-sm text-muted-foreground">After your game is complete, select the outcome and submit your result.</p>
@@ -322,7 +322,7 @@ function GamePageComponent() {
             <main className="flex-grow container mx-auto px-4 py-6 space-y-6">
                 <div className="flex justify-between items-center">
                     <Link href="/play">
-                        <Button variant="outline" className="bg-primary text-primary-foreground hover:bg-primary/90">
+                        <Button variant="outline">
                             <ChevronLeft className="mr-2 h-4 w-4" />
                             Back
                         </Button>
@@ -347,7 +347,7 @@ function GamePageComponent() {
                                 <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={20} height={20} data-ai-hint="gold coin"/>
                                 <span>₹ {game.amount}</span>
                             </div>
-                             <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEilS2_YhPAJBDjdcIRsoMJLTWafsJuIyola3KN50zXQAZYWSSIbhLhWhOJGMG6UYkUB5ZOiVKgsy2bVstr2af0LVf2g-eWjXHnGO4Z0IbaePP4E7TSDB9x_eK8OqTidX968zc5Wn9p6uGlkLoD9iglU3KZ28_2IbXgl29zHTZgwxzMWPvbN6zhA5AhyH7s/s1600/74920.png" alt="vs" width={64} height={32} className="mx-auto" data-ai-hint="versus icon" />
+                             <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEilS2_YhPAJBDjdcIRsoMJLTWafsJuIyola3KN50zXQAZYWSSIbhLhWhOJGMG6UYkUB5ZOiVKgsy2bVstr2af0LVf2g-eWjXHnGO4Z0IbaePP4E7TSDB9x_eK8OqTidX968zc5Wn9p6uGlkLoD9iglU3KZ28_2IbXgl29zHTZgwxzMWPvbN6zhA5AhyH7s/s1600/74920.png" alt="vs" width={32} height={16} className="mx-auto" data-ai-hint="versus icon" />
                         </div>
                         <div className="flex items-center gap-2">
                              <span className="font-semibold">{opponent?.displayName}</span>
@@ -361,7 +361,7 @@ function GamePageComponent() {
 
                  <Card>
                     <CardHeader className="py-3 bg-muted rounded-t-lg">
-                        <CardTitle className="text-center text-md font-semibold text-red-600 animate-shine">Battle Details</CardTitle>
+                        <CardTitle className="text-center text-md font-semibold text-primary">Battle Details</CardTitle>
                     </CardHeader>
                     <CardContent className="p-4 text-sm space-y-3">
                         <div className="flex items-center justify-between">
@@ -384,7 +384,7 @@ function GamePageComponent() {
                 {game.status !== 'ongoing' && game.status !== 'challenge' && (
                     <Card>
                         <CardHeader>
-                             <CardTitle className="text-center text-lg font-semibold text-red-600 animate-shine">Game Over</CardTitle>
+                             <CardTitle className="text-center text-lg font-semibold text-primary">Game Over</CardTitle>
                         </CardHeader>
                         <CardContent className="text-center space-y-3">
                             <p className="text-muted-foreground">This game is <span className="font-bold capitalize">{game.status.replace('_', ' ')}</span>.</p>
@@ -402,7 +402,7 @@ function GamePageComponent() {
 
                 <Card>
                     <CardHeader className="py-3 bg-muted rounded-t-lg">
-                        <CardTitle className="text-center text-md font-semibold text-red-600 animate-shine">Penalty</CardTitle>
+                        <CardTitle className="text-center text-md font-semibold text-primary">Penalty</CardTitle>
                     </CardHeader>
                     <CardContent className="p-0">
                         <Table>
