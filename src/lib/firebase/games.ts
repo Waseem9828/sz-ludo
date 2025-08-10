@@ -279,34 +279,10 @@ export const submitPlayerResult = async (gameId: string, userId: string, result:
 };
 
 
-// Old updateGameStatus function, might still be used by admin
-export const updateGameStatus = async (gameId: string, status: Game['status'], winnerId?: string) => {
+// Admin: Update game status from Winnings page
+export const updateGameStatus = async (gameId: string, status: Game['status']) => {
     const gameRef = doc(db, GAMES_COLLECTION, gameId);
-    
-    return await runTransaction(db, async (transaction) => {
-        const gameSnap = await transaction.get(gameRef);
-        if (!gameSnap.exists()) {
-            throw new Error("Game not found to update status");
-        }
-        const gameData = gameSnap.data() as Game;
-
-        const updateData: { status: Game['status'], winner?: string, loser?: string, lastUpdatedAt: any } = { status, lastUpdatedAt: serverTimestamp() };
-        if (winnerId) {
-            updateData.winner = winnerId;
-            updateData.loser = gameData.playerUids.find(uid => uid !== winnerId);
-        }
-        
-        transaction.update(gameRef, updateData);
-
-        // If game is completed, update tournament points (already handled in submitPlayerResult, but keep as fallback)
-        if (status === 'completed' && winnerId) {
-            const loserId = gameData.playerUids.find(uid => uid !== winnerId);
-            await updateTournamentPoints(winnerId, gameData.amount); 
-            if (loserId) {
-                await updateTournamentPoints(loserId, gameData.amount);
-            }
-        }
-    });
+    return await updateDoc(gameRef, { status, lastUpdatedAt: serverTimestamp() });
 }
 
 // Get a single game by ID
@@ -346,17 +322,21 @@ export const listenForGames = (
     status?: Game['status'],
     onError?: (error: Error) => void
 ) => {
-    const queryConstraints: QueryConstraint[] = [];
-    if (status) {
-        queryConstraints.push(where("status", "==", status));
-    }
-    
-    const q = query(collection(db, GAMES_COLLECTION), ...queryConstraints);
+    const q = status 
+        ? query(collection(db, GAMES_COLLECTION), where("status", "==", status))
+        : query(collection(db, GAMES_COLLECTION));
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const games: Game[] = [];
         querySnapshot.forEach((doc) => {
             games.push({ id: doc.id, ...doc.data() } as Game);
+        });
+        
+        // Manual sort on the client-side
+        games.sort((a, b) => {
+             const dateA = a.createdAt?.toDate() || 0;
+             const dateB = b.createdAt?.toDate() || 0;
+             return (dateB as number) - (dateA as number);
         });
         
         callback(games);
@@ -369,6 +349,7 @@ export const listenForGames = (
 
     return unsubscribe;
 };
+
 
 // Listen for a user's recent games
 export const listenForUserGames = (
