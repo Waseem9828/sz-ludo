@@ -145,7 +145,8 @@ export default function WalletPage() {
     };
 
     const isCredit = (type: TransactionType) => {
-        return ['deposit', 'winnings', 'Admin Credit', 'refund', 'Referral Earning'].includes(type);
+        const creditTypes: TransactionType[] = ['deposit', 'winnings', 'Admin Credit', 'refund', 'Referral Earning'];
+        return creditTypes.includes(type);
     }
 
 
