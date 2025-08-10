@@ -141,7 +141,12 @@ export default function ChallengeList() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, ease: "easeOut" }}
             >
-                <Card className="bg-card shadow-sm">
+                <Card className="bg-card shadow-sm cursor-pointer" 
+                    onClick={() => {
+                        if (user?.uid === challenge.createdBy.uid) {
+                            router.push(`/play/game?id=${challenge.id}`);
+                        }
+                    }}>
                     <CardContent className="p-3">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -158,7 +163,7 @@ export default function ChallengeList() {
                                 </div>
                             </div>
                             <div className="text-right">
-                                <p className="text-xl text-green-600 font-bold">₹ {challenge.amount}</p>
+                                <p className="text-xl text-red-600 font-bold">₹ {challenge.amount}</p>
                             </div>
                         </div>
                          {challenge.message && (
@@ -174,11 +179,11 @@ export default function ChallengeList() {
                             {user?.uid === challenge.createdBy.uid ? (
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>
-                                        <Button size="sm" variant="destructive" className="w-full">
+                                        <Button size="sm" variant="destructive" className="w-full" onClick={(e) => e.stopPropagation()}>
                                             Delete Battle
                                         </Button>
                                     </AlertDialogTrigger>
-                                    <AlertDialogContent>
+                                    <AlertDialogContent onClick={(e) => e.stopPropagation()}>
                                         <AlertDialogHeader>
                                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                         <AlertDialogDescription>
@@ -192,7 +197,7 @@ export default function ChallengeList() {
                                     </AlertDialogContent>
                                 </AlertDialog>
                             ) : (
-                                <Button size="sm" className="w-full" onClick={() => handleAccept(challenge)}>
+                                <Button size="sm" className="w-full" onClick={(e) => { e.stopPropagation(); handleAccept(challenge); }}>
                                     Accept Battle
                                 </Button>
                             )}

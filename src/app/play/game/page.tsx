@@ -343,7 +343,7 @@ function GamePageComponent() {
                             <span className="font-semibold">{appUser.displayName}</span>
                         </div>
                         <div className="text-center">
-                            <div className="font-bold text-green-600 mt-1 flex items-center gap-1">
+                            <div className="font-bold text-red-600 mt-1 flex items-center gap-1">
                                 <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={20} height={20} data-ai-hint="gold coin"/>
                                 <span>₹ {game.amount}</span>
                             </div>
@@ -379,7 +379,8 @@ function GamePageComponent() {
                     </CardContent>
                 </Card>
 
-                {game.status === 'ongoing' && renderResultSection()}
+                {game.status === 'ongoing' && !game.roomCode && renderRoomCodeSection()}
+                {game.status === 'ongoing' && game.roomCode && renderResultSection()}
                 
                 {game.status !== 'ongoing' && game.status !== 'challenge' && (
                     <Card>
