@@ -55,7 +55,7 @@ export interface Tournament {
   leaderboard: LeaderboardPlayer[];
 }
 
-const TOURNAMENTS_COLLECTION = 'tournaments ';
+const TOURNAMENTS_COLLECTION = 'tournaments';
 
 // Admin: Create a new tournament
 export const createTournament = async (data: Omit<Tournament, 'id' | 'players' | 'status' | 'createdAt' | 'prizePool' | 'leaderboard' | 'startTime' | 'endTime'> & { startTime: Date, endTime: Date }) => {
