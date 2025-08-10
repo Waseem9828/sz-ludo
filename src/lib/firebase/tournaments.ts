@@ -232,10 +232,13 @@ export const listenForTournaments = (
     onError: (error: Error) => void,
     status?: Tournament['status'][]
 ) => {
-    const constraints: QueryConstraint[] = [orderBy('startTime', 'asc')];
+    const constraints: QueryConstraint[] = [];
     if (status && status.length > 0) {
+        // Firestore requires that if you use an 'in' filter, you must also order by that field first.
         constraints.push(where('status', 'in', status));
+        constraints.push(orderBy('status', 'asc')); // Order by status first
     }
+    constraints.push(orderBy('startTime', 'asc')); // Then order by startTime
     
     const q = query(collection(db, TOURNAMENTS_COLLECTION), ...constraints);
 
