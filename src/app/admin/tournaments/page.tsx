@@ -23,6 +23,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import Image from 'next/image';
 
 export default function TournamentsPage() {
     const [tournaments, setTournaments] = useState<Tournament[]>([]);
@@ -118,9 +119,15 @@ export default function TournamentsPage() {
                                     <TableRow key={t.id} >
                                         <TableCell className="font-medium hover:underline cursor-pointer whitespace-nowrap" onClick={() => router.push(`/admin/tournaments/${t.id}`)}>{t.title}</TableCell>
                                         <TableCell><Badge variant={getStatusVariant(t.status)}>{t.status}</Badge></TableCell>
-                                        <TableCell>₹{t.entryFee}</TableCell>
+                                        <TableCell className='flex items-center gap-1'>
+                                            <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={14} height={14} data-ai-hint="gold coin"/>
+                                            {t.entryFee}
+                                        </TableCell>
                                         <TableCell>{t.players.length} / {t.playerCap}</TableCell>
-                                        <TableCell>₹{t.prizePool.toFixed(2)}</TableCell>
+                                        <TableCell className='flex items-center gap-1'>
+                                            <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={14} height={14} data-ai-hint="gold coin"/>
+                                            {t.prizePool.toFixed(2)}
+                                        </TableCell>
                                         <TableCell className="whitespace-nowrap">{format(t.startTime.toDate(), 'PPpp')}</TableCell>
                                         <TableCell className="text-right space-x-2">
                                             <Button variant="outline" size="icon" asChild>

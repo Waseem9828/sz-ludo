@@ -146,7 +146,7 @@ export const SplashScreen = () => {
                         <div className="animate-bounce-float">
                             <Image
                                 src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg2oNx0s_EsUtQCxkYGCkEqHAcVCA4PAgVdyNX-mDF_KO228qsfmqMAOefbIFmb-yD98WpX7jVLor2AJzeDhfqG6wC8n7lWtxU9euuYIYhPWStqYgbGjkGp6gu1JrfKmXMwCn7I_KjLGu_GlGy3PMNmf9ljC8Yr__ZpsiGxHJRKbtH6MfTuG4ofViNRsAY/s1600/73555.png"
-                                alt="Ludo Lounge Logo"
+                                alt="SZ Ludo Logo"
                                 width={120}
                                 height={120}
                                 className="drop-shadow-2xl"
@@ -155,7 +155,7 @@ export const SplashScreen = () => {
                         </div>
 
                         <h1 className="mt-4 text-4xl md:text-5xl font-black text-white drop-shadow-lg font-headline">
-                            Ludo Lounge
+                            SZ Ludo
                         </h1>
 
                         <div className="mt-2">

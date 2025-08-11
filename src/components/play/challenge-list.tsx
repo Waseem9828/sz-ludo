@@ -10,7 +10,6 @@ import { Game, listenForGames, acceptChallenge, deleteChallenge } from "@/lib/fi
 import { useAuth } from "@/context/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { updateUserWallet } from "@/lib/firebase/users";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +25,7 @@ import { MessageSquare, ShieldCheck } from "lucide-react";
 import { motion } from 'framer-motion';
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
+import Image from 'next/image';
 
 const defaultAvatar = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi_h6LUuqTTKYsn5TfUZwkI6Aib6Y0tOzQzcoZKstURqxyl-PJXW1DKTkF2cPPNNUbP3iuDNsOBVOYx7p-ZwrodI5w9fyqEwoabj8rU0mLzSbT5GCFUKpfCc4s_LrtHcWFDvvRstCghAfQi5Zfv2fipdZG8h4dU4vGt-eFRn-gS3QTg6_JJKhv0Yysr_ZY/s1600/82126.png";
 
@@ -51,6 +51,7 @@ export default function ChallengeList() {
         return [...challenges].sort((a, b) => {
             if (a.createdBy.uid === user.uid && b.createdBy.uid !== user.uid) return -1;
             if (a.createdBy.uid !== user.uid && b.createdBy.uid === user.uid) return 1;
+            // Fallback to original sort order if owners are the same or neither is the user
             return 0;
         });
     }, [challenges, user]);
@@ -105,7 +106,7 @@ export default function ChallengeList() {
                 isKycVerified: appUser.kycStatus === 'Verified',
             });
 
-            toast({ title: 'Battle Accepted!', description: `You are now in a battle for ₹${challenge.amount}.` });
+            toast({ title: 'Battle Accepted!', description: `You are now in a battle for ${challenge.amount}.` });
             router.push(`/play/game?id=${gameId}`);
         } catch (error: any) {
             toast({ title: 'Failed to Accept', description: error.message, variant: 'destructive' });
@@ -172,7 +173,10 @@ export default function ChallengeList() {
                                 </div>
                             </div>
                             <div className="text-right">
-                                <p className="text-xl text-red-600 font-bold">₹ {challenge.amount}</p>
+                                <p className="text-xl text-red-600 font-bold flex items-center gap-1">
+                                    <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={20} height={20} data-ai-hint="gold coin"/>
+                                    {challenge.amount}
+                                </p>
                             </div>
                         </div>
                         

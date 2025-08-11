@@ -78,12 +78,12 @@ export default function WalletPage() {
         const amount = parseFloat(withdrawAmount);
         
         if (isNaN(amount) || amount < 300) {
-            toast({ title: "Invalid Amount", description: "Minimum withdrawal amount is ₹300.", variant: "destructive" });
+            toast({ title: "Invalid Amount", description: "Minimum withdrawal amount is 300.", variant: "destructive" });
             return;
         }
         
         if (amount > 10000) {
-            toast({ title: "Invalid Amount", description: "Maximum withdrawal amount is ₹10,000.", variant: "destructive" });
+            toast({ title: "Invalid Amount", description: "Maximum withdrawal amount is 10,000.", variant: "destructive" });
             return;
         }
 
@@ -110,7 +110,7 @@ export default function WalletPage() {
 
             toast({
                 title: "Withdrawal Request Submitted",
-                description: `Your request to withdraw ₹${amount} has been sent for approval.`,
+                description: `Your request to withdraw ${amount} has been sent for approval.`,
             });
             setIsWithdrawDialogOpen(false);
             setWithdrawAmount('');
@@ -159,7 +159,7 @@ export default function WalletPage() {
                         <CardDescription>Total Balance</CardDescription>
                         <CardTitle className="text-4xl font-bold flex items-center justify-center gap-2">
                              <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={36} height={36} data-ai-hint="gold coin"/>
-                            ₹{totalBalance.toFixed(2)}
+                            {totalBalance.toFixed(2)}
                         </CardTitle>
                     </CardHeader>
                 </Card>
@@ -187,7 +187,7 @@ export default function WalletPage() {
                         <CardContent className="text-center space-y-4">
                             <p className="text-3xl font-bold flex items-center justify-center gap-2">
                                 <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={32} height={32} data-ai-hint="gold coin"/>
-                                ₹{(appUser.wallet?.balance || 0).toFixed(2)}
+                                {(appUser.wallet?.balance || 0).toFixed(2)}
                             </p>
                             <Link href="/wallet/add-cash">
                                 <Button className="w-full bg-primary hover:bg-primary/90 font-bold text-lg py-6">
@@ -206,7 +206,7 @@ export default function WalletPage() {
                         <CardContent className="text-center space-y-4">
                             <p className="text-3xl font-bold flex items-center justify-center gap-2">
                                 <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={32} height={32} data-ai-hint="gold coin"/>
-                                ₹{(appUser.wallet?.winnings || 0).toFixed(2)}
+                                {(appUser.wallet?.winnings || 0).toFixed(2)}
                             </p>
                             <Dialog open={isWithdrawDialogOpen} onOpenChange={setIsWithdrawDialogOpen}>
                                 <DialogTrigger asChild>
@@ -219,12 +219,12 @@ export default function WalletPage() {
                                     <DialogHeader>
                                         <DialogTitle>Request Withdrawal</DialogTitle>
                                         <DialogDescription>
-                                            Enter the amount you wish to withdraw from your winnings of ₹{(appUser.wallet?.winnings || 0).toFixed(2)}.
+                                            Enter the amount you wish to withdraw from your winnings of {(appUser.wallet?.winnings || 0).toFixed(2)}.
                                         </DialogDescription>
                                     </DialogHeader>
                                     <div className="space-y-4">
                                          <div>
-                                            <Label htmlFor="withdraw-amount">Amount (Min: ₹300, Max: ₹10,000)</Label>
+                                            <Label htmlFor="withdraw-amount">Amount (Min: 300, Max: 10,000)</Label>
                                             <Input
                                                 id="withdraw-amount"
                                                 type="number"
@@ -240,7 +240,7 @@ export default function WalletPage() {
                                                     variant="outline"
                                                     onClick={() => setWithdrawAmount(qAmount.toString())}
                                                 >
-                                                    ₹{qAmount}
+                                                    {qAmount}
                                                 </Button>
                                             ))}
                                         </div>
@@ -265,7 +265,7 @@ export default function WalletPage() {
                                 </DialogContent>
                             </Dialog>
                              {isKycPending && <p className="text-xs text-destructive mt-2">KYC verification required to withdraw.</p>}
-                             {!isKycPending && (appUser.wallet?.winnings || 0) < 300 && <p className="text-xs text-muted-foreground mt-2">Minimum withdrawal is ₹300.</p>}
+                             {!isKycPending && (appUser.wallet?.winnings || 0) < 300 && <p className="text-xs text-muted-foreground mt-2">Minimum withdrawal is 300.</p>}
                         </CardContent>
                     </Card>
                 </div>
@@ -296,8 +296,9 @@ export default function WalletPage() {
                                                 <div className="font-medium">{opponent?.displayName || 'N/A'}</div>
                                                 <div className="text-xs text-muted-foreground">{new Date(game.createdAt?.toDate()).toLocaleDateString()}</div>
                                             </TableCell>
-                                            <TableCell className="font-bold">
-                                                ₹{game.amount}
+                                            <TableCell className="font-bold flex items-center gap-1">
+                                                 <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={14} height={14} data-ai-hint="gold coin"/>
+                                                {game.amount}
                                             </TableCell>
                                             <TableCell>
                                                 <Badge variant={result === 'Won' ? 'default' : result === 'Lost' ? 'destructive' : 'secondary'}>
@@ -340,7 +341,8 @@ export default function WalletPage() {
                                         <TableCell className="text-xs">{new Date(tx.createdAt?.toDate()).toLocaleString()}</TableCell>
                                         <TableCell className={`font-bold flex items-center gap-1 ${isCredit(tx.type) ? 'text-green-600' : 'text-red-600'}`}>
                                             {isCredit(tx.type) ? <TrendingUp size={14}/> : <TrendingDown size={14}/>}
-                                            ₹{tx.amount.toFixed(2)}
+                                            <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={12} height={12} data-ai-hint="gold coin"/>
+                                            {tx.amount.toFixed(2)}
                                         </TableCell>
                                         <TableCell><Badge variant="secondary">{tx.type.replace(/_/g, ' ')}</Badge></TableCell>
                                         <TableCell><Badge variant={getStatusBadgeVariant(tx.status)}>{tx.status}</Badge></TableCell>

@@ -190,10 +190,10 @@ export default function Header() {
           </Sheet>
            <div className="flex items-center gap-1">
             <Link href="/">
-              <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg2oNx0s_EsUtQCxkYGCkEqHAcVCA4PAgVdyNX-mDF_KO228qsfmqMAOefbIFmb-yD98WpX7jVLor2AJzeDhfqG6wC8n7lWtxU9euuYIYhPWStqYgbGjkGp6gu1JrfKmXMwCn7I_KjLGu_GlGy3PMNmf9ljC8Yr__ZpsiGxHJRKbtH6MfTuG4ofViNRsAY/s1600/73555.png" alt="Ludo Lounge Logo" width={40} height={40} />
+              <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg2oNx0s_EsUtQCxkYGCkEqHAcVCA4PAgVdyNX-mDF_KO228qsfmqMAOefbIFmb-yD98WpX7jVLor2AJzeDhfqG6wC8n7lWtxU9euuYIYhPWStqYgbGjkGp6gu1JrfKmXMwCn7I_KjLGu_GlGy3PMNmf9ljC8Yr__ZpsiGxHJRKbtH6MfTuG4ofViNRsAY/s1600/73555.png" alt="SZ Ludo Logo" width={40} height={40} />
             </Link>
             <Link href="/">
-              <h1 className="text-xl font-headline font-bold text-primary animate-shine">Ludo Lounge</h1>
+              <h1 className="text-xl font-headline font-bold text-primary animate-shine">SZ Ludo</h1>
             </Link>
           </div>
         </div>
@@ -208,7 +208,7 @@ export default function Header() {
             <Link href="/wallet">
               <Button variant="outline" className="h-9">
                   <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={16} height={16} className="mr-2" data-ai-hint="gold coin"/>
-                  <span>₹{totalBalance.toFixed(2)}</span>
+                  <span>{totalBalance.toFixed(2)}</span>
               </Button>
             </Link>
 

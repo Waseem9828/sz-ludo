@@ -11,6 +11,7 @@ import { Loader, Plus, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import Image from 'next/image';
 
 const AddFundsDialog = ({ agent, onUpdate }: { agent: AppUser; onUpdate: () => void }) => {
     const [amount, setAmount] = useState('');
@@ -26,7 +27,7 @@ const AddFundsDialog = ({ agent, onUpdate }: { agent: AppUser; onUpdate: () => v
         setIsSubmitting(true);
         try {
             await updateUserWallet(agent.uid, numericAmount, 'agent', 'Admin Credit', 'Superadmin fund transfer');
-            toast({ title: 'Success', description: `Successfully added ₹${numericAmount} to ${agent.displayName}'s wallet.` });
+            toast({ title: 'Success', description: `Successfully added funds to ${agent.displayName}'s wallet.` });
             onUpdate(); // Trigger a re-fetch or state update in the parent
             setAmount('');
         } catch (error: any) {
@@ -49,7 +50,7 @@ const AddFundsDialog = ({ agent, onUpdate }: { agent: AppUser; onUpdate: () => v
                     <DialogDescription>Add funds to this agent's wallet for processing payouts.</DialogDescription>
                 </DialogHeader>
                 <div className="py-4">
-                    <Label htmlFor="amount">Amount to Add (₹)</Label>
+                    <Label htmlFor="amount">Amount to Add</Label>
                     <Input
                         id="amount"
                         type="number"
@@ -134,19 +135,28 @@ export default function AgentsPage() {
                                     <TableCell>
                                         <div className="flex items-center gap-2 font-bold text-lg whitespace-nowrap">
                                             <Wallet className="h-5 w-5 text-muted-foreground" />
-                                            <span>₹{(agent.agentWallet?.balance || 0).toFixed(2)}</span>
+                                            <span className='flex items-center gap-1'>
+                                                <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={16} height={16} data-ai-hint="gold coin"/>
+                                                {(agent.agentWallet?.balance || 0).toFixed(2)}
+                                            </span>
                                         </div>
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex items-center gap-2 text-green-600 whitespace-nowrap">
                                             <TrendingUp className="h-5 w-5" />
-                                            <span>₹{(agent.agentWallet?.totalIn || 0).toFixed(2)}</span>
+                                             <span className='flex items-center gap-1'>
+                                                <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={16} height={16} data-ai-hint="gold coin"/>
+                                                {(agent.agentWallet?.totalIn || 0).toFixed(2)}
+                                            </span>
                                         </div>
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex items-center gap-2 text-red-600 whitespace-nowrap">
                                             <TrendingDown className="h-5 w-5" />
-                                            <span>₹{(agent.agentWallet?.totalOut || 0).toFixed(2)}</span>
+                                             <span className='flex items-center gap-1'>
+                                                <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={16} height={16} data-ai-hint="gold coin"/>
+                                                {(agent.agentWallet?.totalOut || 0).toFixed(2)}
+                                            </span>
                                         </div>
                                     </TableCell>
                                     <TableCell className="text-right">

@@ -30,7 +30,7 @@ const TelegramIcon = () => (
 const defaultSettings = {
     imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEigtvhhJRucPCHR_BWwPVLk335J3yeFT8CTExF13JYJbogG0IOrplIRwu2FzgAca1G8ssvc83saCCnC7NdVFP15FnIOppoCDc0pa31pziFzf6hGq8qCo7yZa2K9_92MtBQet6Ii0wgVFYMEyfUn8R3s6vOgo2aavCvuzdNcsYX0YizIEy9xzVB_mBt5o_4/s320/77621.png',
     shareText: "Hey! I'm playing on SZ LUDO and earning real cash. You should join too! Use my code {{referralCode}} to sign up and get a bonus. Let's play! Link: {{referralLink}}",
-    howItWorksText: "You can refer and earn 2% of your referral winning, every time. Like if your player plays for ₹10000 and wins, You will get ₹200 as referral amount."
+    howItWorksText: "You can refer and earn 2% of your referral winning, every time. Like if your player plays for 10000 and wins, You will get 200 as referral amount."
 };
 
 
@@ -93,7 +93,10 @@ export default function ReferPage() {
                         <div className="border-l mx-4"></div>
                         <div>
                             <p className="text-sm text-muted-foreground">Referral Earning</p>
-                            <p className="text-lg font-bold">₹{(appUser.referralStats?.totalEarnings || 0).toFixed(2)}</p>
+                            <p className="text-lg font-bold flex items-center justify-center gap-1">
+                                <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={16} height={16} data-ai-hint="gold coin"/>
+                                {(appUser.referralStats?.totalEarnings || 0).toFixed(2)}
+                            </p>
                         </div>
                     </CardContent>
                 </Card>
@@ -165,7 +168,7 @@ export default function ReferPage() {
                         </div>
                         <Card className="bg-muted/50 p-4">
                             <p className="text-center text-sm font-semibold">उदाहरण के लिए:</p>
-                            <p className="text-center text-xs text-muted-foreground mt-1">अगर आपका दोस्त ₹1000 के बेट वाला गेम जीतता है, तो प्राइज पूल ₹2000 होता है। आपको उस जीत का 2% यानी ₹40 आपके विनिंग वॉलेट में तुरंत मिल जाएगा।</p>
+                            <p className="text-center text-xs text-muted-foreground mt-1">अगर आपका दोस्त 1000 के बेट वाला गेम जीतता है, तो प्राइज पूल 2000 होता है। आपको उस जीत का 2% यानी 40 आपके विनिंग वॉलेट में तुरंत मिल जाएगा।</p>
                         </Card>
                     </CardContent>
                 </Card>

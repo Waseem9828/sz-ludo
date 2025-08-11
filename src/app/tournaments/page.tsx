@@ -28,6 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const pointCoinImage = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiwhVedr1V1ByzcPPUm-nlj7zY0CT7Fab4i9PDN7cj4iovWSZNHabrcsmOlwWrv2hRGgAHbBMtD6_HgNneu5DVasF1waibkgxSsnJ7hs56p5bdEECWsXuJtvMlduioy4c9cQI3UXawKt1Sib5Qr9XauGwaJ4a9Ea7tcZ0dJYA9sycViqE7ZKsvyUG8n-U4/s1600/84333.png";
+const prizeCoinImage = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png";
 
 const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
     const { user, appUser } = useAuth();
@@ -78,7 +79,7 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
             const amountPerPlayer = totalWinnersInRange > 0 ? (prizePoolAfterCommission * (dist.percentage / 100)) / totalWinnersInRange : 0;
             return {
                 rank,
-                amount: `₹${amountPerPlayer.toFixed(2)}`,
+                amount: `${amountPerPlayer.toFixed(2)}`,
             };
         }).slice(0, 10);
     }, [tournament]);
@@ -104,12 +105,15 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
                 </div>
                  <div className="grid grid-cols-3 gap-2.5 mt-3">
                     {[
-                        { label: 'Prize Pool', value: `₹${tournament.prizePool.toFixed(0)}` },
-                        { label: 'Join Fee', value: `₹${tournament.entryFee}` },
+                        { label: 'Prize Pool', value: tournament.prizePool.toFixed(0) },
+                        { label: 'Join Fee', value: tournament.entryFee },
                         { label: 'Slots', value: `${tournament.players.length}/${tournament.playerCap}` },
                     ].map(item => (
                         <div key={item.label} className="bg-white/10 dark:bg-black/20 p-2 rounded-lg text-center text-gray-900 dark:text-white">
-                        <strong className="block text-base">{item.value}</strong>
+                        <strong className="block text-base flex items-center justify-center gap-1">
+                            {item.label !== 'Slots' &&  <Image src={prizeCoinImage} alt="Points" width={14} height={14} data-ai-hint="gold coin"/>}
+                            {item.value}
+                        </strong>
                         <small className="block text-xs text-gray-700 dark:text-gray-400">{item.label}</small>
                         </div>
                     ))}
@@ -125,7 +129,7 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
                                 <AlertDialogHeader>
                                     <AlertDialogTitle>Confirm to Join "{tournament.title}"?</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                        An entry fee of ₹{tournament.entryFee} will be deducted from your wallet balance. This action cannot be undone.
+                                        An entry fee of <span className='font-bold inline-flex items-center gap-1'><Image src={prizeCoinImage} alt="Points" width={14} height={14} data-ai-hint="gold coin"/>{tournament.entryFee}</span> will be deducted from your wallet balance. This action cannot be undone.
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
@@ -190,7 +194,10 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
                                 <div className="flex-1">
                                     <div className="font-bold text-gray-800 dark:text-gray-200">Rank {item.rank} Prize</div>
                                 </div>
-                                <div className="font-black text-lg text-red-700 dark:text-red-400">{item.amount}</div>
+                                <div className="font-black text-lg text-red-700 dark:text-red-400 flex items-center gap-1">
+                                    <Image src={prizeCoinImage} alt="Points" width={16} height={16} data-ai-hint="gold coin"/>
+                                    {item.amount}
+                                </div>
                             </div>
                             );
                             })}
@@ -232,7 +239,7 @@ export default function TournamentsPage() {
             <Header />
             <main className="flex-grow container mx-auto px-4 py-6 space-y-8">
                 <div className="text-center">
-                    <h1 className="text-4xl font-extrabold text-red-600 animate-shine">Ludo Tournaments</h1>
+                    <h1 className="text-4xl font-extrabold text-red-600 animate-shine">SZ Ludo Tournaments</h1>
                     <p className="text-muted-foreground mt-1">Join the battle and win big prizes!</p>
                 </div>
 

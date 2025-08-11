@@ -25,10 +25,10 @@ import { hasJoinedLiveTournament } from '@/lib/firebase/tournaments';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 const penalties = [
-    { amount: '₹100', reason: 'Fraud / Fake Screenshot' },
-    { amount: '₹50', reason: 'Wrong Update' },
-    { amount: '₹50', reason: 'No update after 2 hours' },
-    { amount: '₹25', reason: 'Abusing' },
+    { amount: '100', reason: 'Fraud / Fake Screenshot' },
+    { amount: '50', reason: 'Wrong Update' },
+    { amount: '50', reason: 'No update after 2 hours' },
+    { amount: '25', reason: 'Abusing' },
 ];
 
 const rules = [
@@ -391,9 +391,9 @@ function GamePageComponent() {
                             <span className="font-semibold">{appUser.displayName}</span>
                         </div>
                         <div className="text-center">
-                            <div className="font-bold text-red-600 mt-1 flex items-center gap-1">
+                            <div className="font-bold text-red-600 mt-1 flex items-center justify-center gap-1">
                                 <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={20} height={20} data-ai-hint="gold coin"/>
-                                <span>₹ {game.amount}</span>
+                                <span> {game.amount}</span>
                             </div>
                              <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEilS2_YhPAJBDjdcIRsoMJLTWafsJuIyola3KN50zXQAZYWSSIbhLhWhOJGMG6UYkUB5ZOiVKgsy2bVstr2af0LVf2g-eWjXHnGO4Z0IbaePP4E7TSDB9x_eK8OqTidX968zc5Wn9p6uGlkLoD9iglU3KZ28_2IbXgl29zHTZgwxzMWPvbN6zhA5AhyH7s/s1600/74920.png" alt="vs" width={32} height={16} className="mx-auto" data-ai-hint="versus icon" />
                         </div>
@@ -464,7 +464,10 @@ function GamePageComponent() {
                             <TableBody>
                                 {penalties.map((penalty, index) => (
                                     <TableRow key={index} className={index % 2 === 0 ? 'bg-muted/50' : 'bg-card'}>
-                                        <TableCell className="font-medium">{penalty.amount}</TableCell>
+                                        <TableCell className="font-medium flex items-center gap-1">
+                                            <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={14} height={14} data-ai-hint="gold coin"/>
+                                            {penalty.amount}
+                                        </TableCell>
                                         <TableCell>{penalty.reason}</TableCell>
                                     </TableRow>
                                 ))}
@@ -486,4 +489,3 @@ export default function GamePage() {
         </Suspense>
     )
 }
-

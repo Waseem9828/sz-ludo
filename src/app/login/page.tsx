@@ -115,8 +115,8 @@ function LoginPageContent() {
        <div className="w-full max-w-md">
            <div className="flex justify-center items-center mb-6 gap-3">
             <Link href="/" className="flex items-center gap-3">
-              <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg2oNx0s_EsUtQCxkYGCkEqHAcVCA4PAgVdyNX-mDF_KO228qsfmqMAOefbIFmb-yD98WpX7jVLor2AJzeDhfqG6wC8n7lWtxU9euuYIYhPWStqYgbGjkGp6gu1JrfKmXMwCn7I_KjLGu_GlGy3PMNmf9ljC8Yr__ZpsiGxHJRKbtH6MfTuG4ofViNRsAY/s1600/73555.png" alt="Ludo Lounge Logo" width={50} height={50} />
-              <h1 className="text-4xl font-headline font-black text-primary animate-shine">Ludo Lounge</h1>
+              <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg2oNx0s_EsUtQCxkYGCkEqHAcVCA4PAgVdyNX-mDF_KO228qsfmqMAOefbIFmb-yD98WpX7jVLor2AJzeDhfqG6wC8n7lWtxU9euuYIYhPWStqYgbGjkGp6gu1JrfKmXMwCn7I_KjLGu_GlGy3PMNmf9ljC8Yr__ZpsiGxHJRKbtH6MfTuG4ofViNRsAY/s1600/73555.png" alt="SZ Ludo Logo" width={50} height={50} />
+              <h1 className="text-4xl font-headline font-black text-primary animate-shine">SZ Ludo</h1>
             </Link>
           </div>
 

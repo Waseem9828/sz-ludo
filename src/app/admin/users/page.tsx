@@ -118,18 +118,24 @@ export default function UsersPage() {
                     <TableCell>
                         <div className="flex items-center gap-1 whitespace-nowrap">
                              <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={16} height={16} data-ai-hint="coin money"/>
-                            <span>₹{user.wallet?.balance || 0} / ₹{user.wallet?.winnings || 0}</span>
+                            <span>{user.wallet?.balance || 0} / {user.wallet?.winnings || 0}</span>
                         </div>
                     </TableCell>
                     <TableCell>
                         <div className="space-y-1">
                             <div className="flex items-center gap-1 text-green-600 whitespace-nowrap">
                             <TrendingUp size={16}/>
-                            <span>₹{user.lifetimeStats?.totalDeposits || 0}</span>
+                            <span className="flex items-center gap-1">
+                                <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={12} height={12} data-ai-hint="gold coin"/>
+                                {user.lifetimeStats?.totalDeposits || 0}
+                            </span>
                             </div>
                             <div className="flex items-center gap-1 text-red-600 whitespace-nowrap">
                             <TrendingDown size={16}/>
-                            <span>₹{user.lifetimeStats?.totalWithdrawals || 0}</span>
+                            <span className="flex items-center gap-1">
+                                <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={12} height={12} data-ai-hint="gold coin"/>
+                                {user.lifetimeStats?.totalWithdrawals || 0}
+                            </span>
                             </div>
                         </div>
                     </TableCell>

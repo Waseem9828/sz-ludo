@@ -149,7 +149,10 @@ export default function WithdrawalsPage() {
                 <CardTitle className="text-blue-800">Your Agent Wallet</CardTitle>
                 <AlertDescription>
                     Your current balance for paying out withdrawals is 
-                    <span className="font-bold text-lg"> ₹{(adminUser.agentWallet?.balance || 0).toFixed(2)}</span>.
+                    <span className="font-bold text-lg flex items-center gap-1">
+                        <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={16} height={16} data-ai-hint="gold coin"/>
+                        {(adminUser.agentWallet?.balance || 0).toFixed(2)}
+                    </span>.
                     You cannot approve withdrawals exceeding this amount.
                 </AlertDescription>
             </Alert>
@@ -191,7 +194,10 @@ export default function WithdrawalsPage() {
                             </div>
                         </Link>
                     </TableCell>
-                    <TableCell>₹{withdrawal.amount}</TableCell>
+                    <TableCell className='flex items-center gap-1'>
+                        <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={14} height={14} data-ai-hint="gold coin"/>
+                        {withdrawal.amount}
+                    </TableCell>
                     <TableCell className="whitespace-nowrap">{withdrawal.upiId}</TableCell>
                     <TableCell className="whitespace-nowrap">{new Date(withdrawal.createdAt?.toDate()).toLocaleDateString()}</TableCell>
                     <TableCell>
@@ -201,11 +207,17 @@ export default function WithdrawalsPage() {
                         <div className="space-y-1 text-xs whitespace-nowrap">
                             <div className="flex items-center gap-1 text-green-600">
                             <TrendingUp size={14}/>
-                            <span>₹{withdrawal.user?.lifetimeStats?.totalDeposits || 0}</span>
+                            <span className='flex items-center gap-1'>
+                                <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={12} height={12} data-ai-hint="gold coin"/>
+                                {withdrawal.user?.lifetimeStats?.totalDeposits || 0}
+                            </span>
                             </div>
                             <div className="flex items-center gap-1 text-red-600 animate-shine">
                             <TrendingDown size={14}/>
-                            <span>₹{withdrawal.user?.lifetimeStats?.totalWithdrawals || 0}</span>
+                            <span className='flex items-center gap-1'>
+                                <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={12} height={12} data-ai-hint="gold coin"/>
+                                {withdrawal.user?.lifetimeStats?.totalWithdrawals || 0}
+                            </span>
                             </div>
                         </div>
                     </TableCell>
@@ -237,7 +249,11 @@ export default function WithdrawalsPage() {
                                 <div className="text-sm">
                                     <p><span className="font-semibold">User:</span> {withdrawal.userName}</p>
                                     <p><span className="font-semibold">UPI ID:</span> {withdrawal.upiId}</p>
-                                    <p className="text-2xl font-bold">Pay: ₹{withdrawal.amount}</p>
+                                    <p className="text-2xl font-bold flex items-center justify-center gap-1">
+                                        Pay: 
+                                        <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={24} height={24} data-ai-hint="gold coin"/>
+                                        {withdrawal.amount}
+                                    </p>
                                 </div>
                                 </div>
                             <div className="mt-6 space-y-2">

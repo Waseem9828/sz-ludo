@@ -45,7 +45,7 @@ export default function DepositsPage() {
 
             toast({
                 title: 'Deposit Approved!',
-                description: `₹${request.amount.toFixed(2)} has been credited to ${request.userName}.`,
+                description: `Successfully credited ${request.userName}.`,
             });
         } catch (error: any) {
              toast({
@@ -121,7 +121,10 @@ export default function DepositsPage() {
                             {request.userName}
                             </Link>
                         </TableCell>
-                        <TableCell>₹{request.amount}</TableCell>
+                        <TableCell className='flex items-center gap-1'>
+                             <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={14} height={14} data-ai-hint="gold coin"/>
+                            {request.amount}
+                        </TableCell>
                         <TableCell>{request.utr}</TableCell>
                         <TableCell className="whitespace-nowrap">{new Date(request.createdAt?.toDate()).toLocaleString()}</TableCell>
                         <TableCell>
@@ -143,7 +146,7 @@ export default function DepositsPage() {
                                 <div className="mt-4 space-y-4">
                                 <div className="text-sm">
                                     <p><span className="font-semibold">User:</span> {request.userName}</p>
-                                    <p><span className="font-semibold">Amount:</span> ₹{request.amount}</p>
+                                    <p><span className="font-semibold">Amount:</span> <span className='inline-flex items-center gap-1'><Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={12} height={12} data-ai-hint="gold coin"/>{request.amount}</span></p>
                                     <p><span className="font-semibold">UTR:</span> {request.utr}</p>
                                     <p><span className="font-semibold">Paid to UPI:</span> {request.upiId}</p>
                                 </div>

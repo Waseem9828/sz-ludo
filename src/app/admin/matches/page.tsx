@@ -99,7 +99,10 @@ export default function MatchesPage() {
                 {matches.map((match) => (
                 <TableRow key={match.id}>
                     <TableCell className="whitespace-nowrap">{match.player1?.displayName} vs {match.player2?.displayName || 'N/A'}</TableCell>
-                    <TableCell>₹{match.amount}</TableCell>
+                    <TableCell className="flex items-center gap-1">
+                        <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={14} height={14} data-ai-hint="gold coin"/>
+                        {match.amount}
+                    </TableCell>
                     <TableCell className="whitespace-nowrap">{getWinnerDisplayName(match)}</TableCell>
                     <TableCell>{match.roomCode}</TableCell>
                     <TableCell>

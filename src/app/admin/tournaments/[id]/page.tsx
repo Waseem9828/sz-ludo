@@ -23,7 +23,12 @@ const StatCard = ({ title, value, icon: Icon }: { title: string, value: string |
         <Icon className="h-8 w-8 text-muted-foreground mr-4" />
         <div>
             <p className="text-sm text-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold">{value}</p>
+            <div className="text-2xl font-bold flex items-center gap-1">
+                {typeof value === 'string' && value.startsWith('₹') ? 
+                <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={20} height={20} data-ai-hint="gold coin"/>
+                : null}
+                {typeof value === 'string' ? value.replace('₹','') : value}
+            </div>
         </div>
     </div>
 );
@@ -202,8 +207,14 @@ export default function TournamentDetailPage() {
                                     <TableRow key={index}>
                                         <TableCell className="font-medium">{row.rank}</TableCell>
                                         <TableCell>{row.percentage}</TableCell>
-                                        <TableCell>{row.amountPerPlayer}</TableCell>
-                                        <TableCell>{row.totalAmountForRange}</TableCell>
+                                        <TableCell className='flex items-center gap-1'>
+                                            <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={12} height={12} data-ai-hint="gold coin"/>
+                                            {row.amountPerPlayer.replace('₹','')}
+                                        </TableCell>
+                                        <TableCell className='flex items-center gap-1'>
+                                             <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={12} height={12} data-ai-hint="gold coin"/>
+                                            {row.totalAmountForRange.replace('₹','')}
+                                        </TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
