@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import AnimatedBanner from '@/components/animated-banner';
 
-export default function Home() {
+function Home() {
   const { user, appUser, loading } = useAuth();
   const router = useRouter();
   const [settings, setSettings] = useState<AppSettings | null>(null);
@@ -95,4 +95,5 @@ export default function Home() {
   );
 }
 
+export default Home;
     

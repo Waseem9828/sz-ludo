@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     const bodyText = await req.text();
     const paytmResponse = new URLSearchParams(bodyText);
     
-    const responseData: { [key: string]: any } = {};
+    const responseData: { [key:string]: any } = {};
     paytmResponse.forEach((value, key) => {
         responseData[key] = value;
     });
