@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
@@ -213,7 +212,9 @@ export default function WinningsPage() {
                                 <div>
                                     <h3 className="font-semibold mb-2 text-center">Submitted Screenshot</h3>
                                     <div className="p-2 border rounded-md bg-muted">
-                                    <Image src={match.screenshotUrl} alt="Match Screenshot" width={400} height={800} className="rounded-md mx-auto aspect-[9/16] object-contain" data-ai-hint="game screenshot"/>
+                                    <a href={match.screenshotUrl} target="_blank" rel="noopener noreferrer">
+                                        <Image src={match.screenshotUrl} alt="Match Screenshot" width={400} height={800} className="rounded-md mx-auto aspect-[9/16] object-contain" data-ai-hint="game screenshot"/>
+                                    </a>
                                     </div>
                                 </div>
                             </div>

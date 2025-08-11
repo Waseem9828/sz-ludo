@@ -44,7 +44,7 @@ export default function UsersPage() {
     }, [toast]);
 
 
-    const getKycBadgeVariant = (status: string) => {
+    const getKycBadgeVariant = (status?: string): "default" | "secondary" | "destructive" | "outline" => {
         switch (status) {
             case 'Verified':
                 return 'default';
@@ -57,7 +57,7 @@ export default function UsersPage() {
         }
     };
 
-    const getStatusBadgeVariant = (status?: string) => {
+    const getStatusBadgeVariant = (status?: string): "default" | "secondary" | "destructive" | "outline" => {
         switch (status) {
             case 'active':
                 return 'default';
@@ -146,10 +146,10 @@ export default function UsersPage() {
                         </div>
                     </TableCell>
                     <TableCell>
-                        <Badge variant={getStatusBadgeVariant(user.status || 'active') as any}>{user.status || 'active'}</Badge>
+                        <Badge variant={getStatusBadgeVariant(user.status || 'active')}>{user.status || 'active'}</Badge>
                     </TableCell>
                     <TableCell>
-                        <Badge variant={getKycBadgeVariant(user.kycStatus || 'Pending') as any}>{user.kycStatus || 'Pending'}</Badge>
+                        <Badge variant={getKycBadgeVariant(user.kycStatus || 'Pending')}>{user.kycStatus || 'Pending'}</Badge>
                     </TableCell>
                     <TableCell className="text-right">
                         <DropdownMenu>

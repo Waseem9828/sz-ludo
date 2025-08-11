@@ -4,14 +4,10 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogClose } from '@/components/ui/dialog';
-import { useToast } from '@/hooks/use-toast';
 import { Game, listenForGamesHistory } from '@/lib/firebase/games';
 import { Loader } from 'lucide-react';
-import { updateUserWallet } from '@/lib/firebase/users';
 
 export default function MatchesPage() {
     const [matches, setMatches] = useState<Game[]>([]);
@@ -23,9 +19,9 @@ export default function MatchesPage() {
             (games) => {
                 // Sort client-side
                 const sortedGames = games.sort((a, b) => {
-                    const dateA = a.createdAt?.toDate() || 0;
-                    const dateB = b.createdAt?.toDate() || 0;
-                    return (dateB as number) - (dateA as number);
+                    const dateA = a.createdAt?.toDate() || new Date(0);
+                    const dateB = b.createdAt?.toDate() || new Date(0);
+                    return dateB.getTime() - dateA.getTime();
                 });
                 setMatches(sortedGames);
                 setLoading(false);
@@ -40,7 +36,7 @@ export default function MatchesPage() {
         return () => unsubscribe();
     }, [toast]);
 
-    const getStatusBadgeVariant = (status: Game['status']) => {
+    const getStatusBadgeVariant = (status: Game['status']): "default" | "secondary" | "destructive" | "outline" => {
         switch (status) {
             case 'completed':
                 return 'default'; // Greenish in some themes

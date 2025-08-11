@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -100,7 +99,7 @@ export default function WithdrawalsPage() {
         }
     };
     
-    const getStatusBadgeVariant = (status: Withdrawal['status']) => {
+    const getStatusBadgeVariant = (status: Withdrawal['status']): "default" | "secondary" | "destructive" | "outline" => {
         switch (status) {
             case 'approved':
                 return 'default';
@@ -113,7 +112,7 @@ export default function WithdrawalsPage() {
         }
     };
 
-     const getKycBadgeVariant = (status?: 'Pending' | 'Verified' | 'Rejected') => {
+     const getKycBadgeVariant = (status?: 'Pending' | 'Verified' | 'Rejected'): "default" | "secondary" | "destructive" | "outline" => {
         switch (status) {
             case 'Verified':
                 return 'default';
@@ -199,7 +198,7 @@ export default function WithdrawalsPage() {
                         {withdrawal.amount}
                     </TableCell>
                     <TableCell className="whitespace-nowrap">{withdrawal.upiId}</TableCell>
-                    <TableCell className="whitespace-nowrap">{new Date(withdrawal.createdAt?.toDate()).toLocaleDateString()}</TableCell>
+                    <TableCell className="whitespace-nowrap">{withdrawal.createdAt?.toDate().toLocaleDateString()}</TableCell>
                     <TableCell>
                         <Badge variant={getKycBadgeVariant(withdrawal.user?.kycStatus)}>{withdrawal.user?.kycStatus || 'N/A'}</Badge>
                     </TableCell>

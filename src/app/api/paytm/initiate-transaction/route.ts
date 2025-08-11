@@ -21,8 +21,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Payment gateway not configured.' }, { status: 500 });
     }
     
-    // Using STAGING environment for testing. Change to 'PROD' for production.
-    const environment = Paytm.LibraryConstants.STAGING_ENVIRONMENT;
+    const environment = Paytm.LibraryConstants.PROD_ENVIRONMENT; // Use PROD for production
     Paytm.MerchantProperties.setMid(mid);
     Paytm.MerchantProperties.setMerchantKey(mkey);
     Paytm.MerchantProperties.setWebsite(website);

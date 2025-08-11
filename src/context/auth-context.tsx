@@ -62,7 +62,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const timer = setTimeout(() => {
         setSplashTimerDone(true);
-    }, 20000); // 20 second minimum splash time
+    }, 2000); // 2 second minimum splash time
 
     return () => {
         window.removeEventListener('beforeinstallprompt', handler);

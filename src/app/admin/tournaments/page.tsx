@@ -45,7 +45,7 @@ export default function TournamentsPage() {
         return () => unsubscribe();
     }, [toast]);
 
-    const getStatusVariant = (status: Tournament['status']) => {
+    const getStatusVariant = (status: Tournament['status']): "default" | "secondary" | "destructive" | "outline" => {
         switch (status) {
             case 'live': return 'destructive';
             case 'upcoming': return 'secondary';

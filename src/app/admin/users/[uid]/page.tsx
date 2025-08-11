@@ -212,7 +212,7 @@ export default function UserProfilePage() {
 
     }, [uid, router, toast]);
 
-    const handleKycUpdate = async (status: AppUser['kycStatus']) => {
+    const handleKycUpdate = async (status: 'Verified' | 'Rejected' | 'Pending') => {
         if (!user) return;
         setIsSubmitting(true);
         try {
@@ -226,7 +226,7 @@ export default function UserProfilePage() {
         }
     };
     
-    const handleUserStatusUpdate = async (status: AppUser['status']) => {
+    const handleUserStatusUpdate = async (status: 'active' | 'suspended') => {
         if (!user) return;
         setIsSubmitting(true);
         try {
@@ -406,7 +406,7 @@ export default function UserProfilePage() {
                         <TableBody>
                             {transactions.map(tx => (
                                 <TableRow key={tx.id}>
-                                    <TableCell>{new Date(tx.createdAt?.toDate()).toLocaleString()}</TableCell>
+                                    <TableCell>{tx.createdAt?.toDate().toLocaleString()}</TableCell>
                                     <TableCell><Badge variant="secondary">{tx.type.replace(/_/g, ' ')}</Badge></TableCell>
                                     <TableCell>₹{tx.amount.toFixed(2)}</TableCell>
                                     <TableCell><Badge>{tx.status}</Badge></TableCell>
