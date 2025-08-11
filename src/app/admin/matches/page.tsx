@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { Game, listenForGamesHistory } from '@/lib/firebase/games';
 import { Loader } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export default function MatchesPage() {
     const [matches, setMatches] = useState<Game[]>([]);
