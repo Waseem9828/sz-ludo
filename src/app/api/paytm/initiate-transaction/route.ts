@@ -21,10 +21,13 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Payment gateway not configured.' }, { status: 500 });
     }
     
-    const environment = Paytm.LibraryConstants.PROD_ENVIRONMENT; // Use PROD for production
+    // For Vercel, it's safer to explicitly set environment.
+    const environment = Paytm.LibraryConstants.PROD_ENVIRONMENT;
+    
     Paytm.MerchantProperties.setMid(mid);
     Paytm.MerchantProperties.setMerchantKey(mkey);
     Paytm.MerchantProperties.setWebsite(website);
+    Paytm.MerchantProperties.setCallbackUrl(callbackUrl);
     Paytm.MerchantProperties.setEnvironment(environment);
 
     const paytmParams = {
@@ -33,7 +36,7 @@ export async function POST(req: Request) {
         "mid": mid,
         "websiteName": website,
         "orderId": orderId,
-        "callbackUrl": `${callbackUrl}?ORDER_ID=${orderId}`,
+        "callbackUrl": `${callbackUrl}`,
         "txnAmount": {
           "value": amount,
           "currency": "INR",
@@ -47,6 +50,7 @@ export async function POST(req: Request) {
     const response = await Paytm.Payment.createTxnToken(paytmParams);
     
     if (response.response.body.resultInfo.resultStatus !== 'S') {
+        console.error("Paytm token generation failed:", response.response.body.resultInfo.resultMsg);
         throw new Error(response.response.body.resultInfo.resultMsg);
     }
     
@@ -57,7 +61,7 @@ export async function POST(req: Request) {
     });
 
   } catch (error: any) {
-    console.error('Paytm transaction initiation failed:', error);
+    console.error('Paytm transaction initiation failed:', error.message);
     return NextResponse.json({ error: error.message || 'Something went wrong' }, { status: 500 });
   }
 }

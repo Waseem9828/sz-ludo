@@ -22,6 +22,7 @@ async function verifyAndUpdate(orderId: string, amount: number, txnId: string, s
         // Log failed transaction if needed, but don't update user wallet.
         await createTransaction({
             userId,
+            userName: 'N/A',
             amount,
             type: 'deposit',
             status: 'failed',
