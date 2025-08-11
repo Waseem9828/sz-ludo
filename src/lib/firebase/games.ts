@@ -262,17 +262,16 @@ export const submitPlayerResult = async (gameId: string, userId: string, result:
                 await updateTournamentPoints(winnerId, gameData.amount);
                 await updateTournamentPoints(loserId, gameData.amount);
             }
-            // Case 2: Dispute (Both Won)
-            else if (p1Result === 'WON' && p2Result === 'WON') {
+            // Case 2: Dispute (Both Won or Both Lost)
+            else if (p1Result === p2Result) {
                 transaction.update(gameRef, { status: 'disputed' });
             }
             // Case 3: Cancellation Agreement or one cancels/one loses
             else if (p1Result === 'CANCEL' || p2Result === 'CANCEL') {
                 transaction.update(gameRef, { status: 'cancelled' });
-                // We will handle refunds in a separate, more robust function or transaction later.
-                // For now, just updating status.
-                 await updateUserWallet(player1Id, gameData.amount, 'balance', 'refund', `Game Cancelled: ${gameData.id}`);
-                 await updateUserWallet(player2Id, gameData.amount, 'balance', 'refund', `Game Cancelled: ${gameData.id}`);
+                // Refunds are handled in a separate function or transaction
+                await updateUserWallet(player1Id, gameData.amount, 'balance', 'refund', `Game Cancelled: ${gameData.id}`);
+                await updateUserWallet(player2Id, gameData.amount, 'balance', 'refund', `Game Cancelled: ${gameData.id}`);
             }
         }
     });
@@ -390,7 +389,7 @@ export const listenForGamesHistory = (
 ) => {
     const q = query(
         collection(db, GAMES_COLLECTION),
-        where("status", "in", ["completed", "cancelled", "disputed"])
+        where("status", "in", ["completed", "cancelled", "disputed"]),
     );
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
