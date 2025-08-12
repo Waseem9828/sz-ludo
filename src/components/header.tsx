@@ -98,14 +98,14 @@ export default function Header() {
     { icon: Swords, label: "Tournaments", href: "/tournaments" },
     { icon: Wallet, label: "Wallet", href: "/wallet" },
     { icon: ShieldCheck, label: "KYC", href: "/kyc" },
-    { icon: History, label: "History", href: "#" },
+    { icon: History, label: "History", href: "/history" },
     { icon: User, label: "Profile", href: "/profile" },
     { icon: Gift, label: "Refer & Earn", href: "/refer" },
     { icon: FileText, label: "Term & Conditions", href: "/terms" },
     { icon: FileText, label: "GST Policy", href: "/gst-policy" },
     { icon: Shield, label: "Privacy Policy", href: "/privacy-policy" },
     { icon: Shield, label: "Refund Policy", href: "/refund-policy" },
-    { icon: LifeBuoy, label: "Support", href: "#" },
+    { icon: LifeBuoy, label: "Support", href: "/support" },
   ];
 
   const isAdmin = appUser?.role === 'superadmin';

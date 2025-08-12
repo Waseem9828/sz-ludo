@@ -297,7 +297,7 @@ export default function WalletPage() {
                                                  ₹{game.amount}
                                             </TableCell>
                                             <TableCell>
-                                                <Badge variant={result === 'Won' ? 'default' : result === 'Lost' ? 'destructive' : 'secondary'}>
+                                                <Badge variant={result === 'Won' ? 'success' : result === 'Lost' ? 'destructive' : 'secondary'}>
                                                     {result}
                                                 </Badge>
                                             </TableCell>
