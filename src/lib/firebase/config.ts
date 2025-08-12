@@ -1,7 +1,7 @@
 
-import { initializeApp, getApps, getApp } from "firebase/app";
+import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getFirestore, enableIndexedDbPersistence, CACHE_SIZE_UNLIMITED } from "firebase/firestore";
+import { getFirestore, enableIndexedDbPersistence, Firestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 // Your web app's Firebase configuration
@@ -18,32 +18,50 @@ const firebaseConfig = {
   measurementId: "YOUR_MEASUREMENT_ID"
 };
 
-// Initialize Firebase
-// This check prevents re-initializing the app on every hot reload.
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+let app: FirebaseApp;
+let db: Firestore;
+let persistenceEnabled = false;
 
-const db = getFirestore(app);
-
-// Enable offline persistence
-if (typeof window !== 'undefined') {
-  try {
-    enableIndexedDbPersistence(db, {
-      cacheSizeBytes: CACHE_SIZE_UNLIMITED
-    }).catch((err) => {
-      if (err.code === 'failed-precondition') {
-        console.warn('Firestore persistence failed: Multiple tabs open?');
-      } else if (err.code === 'unimplemented') {
-        console.warn('Firestore persistence not available in this browser.');
-      }
-    });
-  } catch (error) {
-    console.error("Error enabling Firestore persistence:", error);
+// Singleton pattern to ensure Firebase is initialized only once.
+function getFirebaseApp() {
+  if (!app) {
+    app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
   }
+  return app;
 }
 
-const auth = getAuth(app);
-const storage = getStorage(app);
+function getDb() {
+  if (!db) {
+    db = getFirestore(getFirebaseApp());
+    // Enable offline persistence only once
+    if (typeof window !== 'undefined' && !persistenceEnabled) {
+      try {
+        enableIndexedDbPersistence(db)
+          .then(() => {
+            persistenceEnabled = true;
+            console.log("Firestore persistence enabled.");
+          })
+          .catch((err) => {
+            if (err.code == 'failed-precondition') {
+              console.warn("Firestore persistence failed: multiple tabs open?");
+            } else if (err.code == 'unimplemented') {
+              console.warn("Firestore persistence not available in this browser.");
+            }
+          });
+      } catch (error) {
+        console.error("Error enabling Firestore persistence:", error);
+      }
+    }
+  }
+  return db;
+}
+
+
+// Initialize and export Firebase services
+const auth = getAuth(getFirebaseApp());
+const storage = getStorage(getFirebaseApp());
 const googleAuthProvider = new GoogleAuthProvider();
+const firestoreDb = getDb();
 
 
-export { app, auth, db, storage, googleAuthProvider };
+export { app, auth, firestoreDb as db, storage, googleAuthProvider };
