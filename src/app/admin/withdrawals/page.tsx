@@ -143,9 +143,9 @@ export default function WithdrawalsPage() {
         <CardTitle>Manage Withdrawals</CardTitle>
         <CardDescription>Review and process user withdrawal requests.</CardDescription>
         {adminUser?.role === 'finance' && (
-            <Alert className="mt-4 bg-blue-50 border-blue-200 text-blue-700">
-                <User className="h-4 w-4 !text-blue-700" />
-                <CardTitle className="text-blue-800">Your Agent Wallet</CardTitle>
+            <Alert className="mt-4 bg-accent/10 border-accent/20 text-accent-foreground">
+                <User className="h-4 w-4 !text-accent" />
+                <CardTitle className="text-accent">Your Agent Wallet</CardTitle>
                 <AlertDescription>
                     Your current balance for paying out withdrawals is 
                     <span className="font-bold text-lg">
@@ -202,13 +202,13 @@ export default function WithdrawalsPage() {
                     </TableCell>
                     <TableCell>
                         <div className="space-y-1 text-xs whitespace-nowrap">
-                            <div className="flex items-center gap-1 text-green-600">
+                            <div className="flex items-center gap-1 text-success">
                             <TrendingUp size={14}/>
                             <span>
                                 ₹{withdrawal.user?.lifetimeStats?.totalDeposits || 0}
                             </span>
                             </div>
-                            <div className="flex items-center gap-1 text-red-600 animate-shine">
+                            <div className="flex items-center gap-1 text-destructive animate-shine">
                             <TrendingDown size={14}/>
                             <span>
                                 ₹{withdrawal.user?.lifetimeStats?.totalWithdrawals || 0}

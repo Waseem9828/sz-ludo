@@ -22,7 +22,7 @@ import { useAuth } from '@/context/auth-context';
 const chartConfig = {
   deposits: {
     label: 'Deposits',
-    color: 'hsl(var(--chart-2))',
+    color: 'hsl(var(--chart-1))',
   },
   withdrawals: {
     label: 'Withdrawals',

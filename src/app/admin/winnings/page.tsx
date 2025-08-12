@@ -195,7 +195,7 @@ export default function WinningsPage() {
                                                 <span className="text-muted-foreground">Prize Pool:</span>
                                                 <span className="font-medium">₹{prizePool.toFixed(2)}</span>
                                             </div>
-                                            <div className="flex justify-between text-red-600">
+                                            <div className="flex justify-between text-destructive">
                                                 <span className="text-muted-foreground">Platform Commission ({(commissionRate * 100).toFixed(0)}%):</span>
                                                 <span className="font-medium">- ₹{commission.toFixed(2)}</span>
                                             </div>

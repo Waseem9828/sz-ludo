@@ -139,13 +139,13 @@ export default function AgentsPage() {
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        <div className="flex items-center gap-2 text-green-600 whitespace-nowrap">
+                                        <div className="flex items-center gap-2 text-success whitespace-nowrap">
                                             <TrendingUp className="h-5 w-5" />
                                              <span>₹{(agent.agentWallet?.totalIn || 0).toFixed(2)}</span>
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        <div className="flex items-center gap-2 text-red-600 whitespace-nowrap">
+                                        <div className="flex items-center gap-2 text-destructive whitespace-nowrap">
                                             <TrendingDown className="h-5 w-5" />
                                              <span>₹{(agent.agentWallet?.totalOut || 0).toFixed(2)}</span>
                                         </div>

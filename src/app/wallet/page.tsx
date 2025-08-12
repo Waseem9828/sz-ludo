@@ -180,7 +180,7 @@ export default function WalletPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-center text-lg font-semibold text-red-600">Deposit Chips</CardTitle>
+                            <CardTitle className="text-center text-lg font-semibold text-primary">Deposit Chips</CardTitle>
                             <CardDescription className="text-center">Available for Gameplay</CardDescription>
                         </CardHeader>
                         <CardContent className="text-center space-y-4">
@@ -198,7 +198,7 @@ export default function WalletPage() {
                     
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-center text-lg font-semibold text-red-600">Winning Chips</CardTitle>
+                            <CardTitle className="text-center text-lg font-semibold text-primary">Winning Chips</CardTitle>
                             <CardDescription className="text-center">Withdrawable Balance</CardDescription>
                         </CardHeader>
                         <CardContent className="text-center space-y-4">
@@ -207,7 +207,7 @@ export default function WalletPage() {
                             </p>
                             <Dialog open={isWithdrawDialogOpen} onOpenChange={setIsWithdrawDialogOpen}>
                                 <DialogTrigger asChild>
-                                     <Button className="w-full bg-green-600 hover:bg-green-700 text-white font-bold text-lg py-6" disabled={isKycPending || (appUser.wallet?.winnings || 0) < 300}>
+                                     <Button className="w-full bg-success hover:bg-success/90 text-success-foreground font-bold text-lg py-6" disabled={isKycPending || (appUser.wallet?.winnings || 0) < 300}>
                                         <Minus className="mr-2" />
                                         Withdraw
                                     </Button>
@@ -335,7 +335,7 @@ export default function WalletPage() {
                                 {transactions.map(tx => (
                                     <TableRow key={tx.id}>
                                         <TableCell className="text-xs">{new Date(tx.createdAt?.toDate()).toLocaleString()}</TableCell>
-                                        <TableCell className={`font-bold flex items-center gap-1 ${isCredit(tx.type) ? 'text-green-600' : 'text-red-600'}`}>
+                                        <TableCell className={`font-bold flex items-center gap-1 ${isCredit(tx.type) ? 'text-success' : 'text-destructive'}`}>
                                             {isCredit(tx.type) ? <TrendingUp size={14}/> : <TrendingDown size={14}/>}
                                             ₹{tx.amount.toFixed(2)}
                                         </TableCell>

@@ -29,15 +29,18 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
+    --success: 142.1 76.2% 36.3%;
+    --success-foreground: 0 0% 98%;
+
     --border: 356 30% 80%;
     --input: 356 30% 85%;
     --ring: 356 76% 56%; /* Vibrant Red */
  
     --radius: 0.75rem;
 
-    --chart-1: 12 76% 61%;
-    --chart-2: 356 76% 56%; /* Primary */
-    --chart-3: 205 39% 44%; /* Accent */
+    --chart-1: 142.1 76.2% 36.3%; /* Success Green */
+    --chart-2: 356 76% 56%; /* Primary Red */
+    --chart-3: 205 39% 44%; /* Accent Blue */
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
 
@@ -68,10 +71,12 @@
     --accent-foreground: 0 0% 98%;
     --destructive: 0 63% 31%;
     --destructive-foreground: 0 0% 98%;
+    --success: 142.1 76.2% 36.3%;
+    --success-foreground: 0 0% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 356 76% 56%; /* Vibrant Red */
-    --chart-1: 220 70% 50%;
+    --chart-1: 142.1 76.2% 36.3%;
     --chart-2: 356 76% 56%;
     --chart-3: 205 39% 44%;
     --chart-4: 280 65% 60%;

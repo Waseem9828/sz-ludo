@@ -122,13 +122,13 @@ export default function UsersPage() {
                     </TableCell>
                     <TableCell>
                         <div className="space-y-1">
-                            <div className="flex items-center gap-1 text-green-600 whitespace-nowrap">
+                            <div className="flex items-center gap-1 text-success whitespace-nowrap">
                             <TrendingUp size={16}/>
                             <span>
                                 ₹{user.lifetimeStats?.totalDeposits || 0}
                             </span>
                             </div>
-                            <div className="flex items-center gap-1 text-red-600 whitespace-nowrap">
+                            <div className="flex items-center gap-1 text-destructive whitespace-nowrap">
                             <TrendingDown size={16}/>
                             <span>
                                 ₹{user.lifetimeStats?.totalWithdrawals || 0}

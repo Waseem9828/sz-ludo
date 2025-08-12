@@ -54,7 +54,8 @@ const CertificatePage = () => {
                 (error) => {
                     toast({ title: "Error", description: `Could not fetch tournament data: ${error.message}`, variant: "destructive" });
                     setDataLoading(false);
-                }
+                },
+                ['completed']
             );
 
             if (appUser) {
@@ -130,8 +131,10 @@ const CertificatePage = () => {
              console.error("Error generating canvas:", error);
              toast({title: "Error", description: "Could not generate certificate image.", variant: "destructive"});
         } finally {
-            downloadBtnRef.current!.disabled = false;
-            downloadBtnRef.current!.innerText = 'Download PNG';
+            if(downloadBtnRef.current) {
+                downloadBtnRef.current.disabled = false;
+                downloadBtnRef.current.innerText = 'Download PNG';
+            }
         }
     };
     
@@ -145,48 +148,49 @@ const CertificatePage = () => {
             <Header />
             <div className="container mx-auto px-4 py-6">
                 <style jsx global>{`
-                    :root{ --bg1:#fff3f3; --r1:#ff3b3b; --r2:#ff7a7a; --dark:#3a0000; --accent:#ff5b5b; }
-                    body{background:linear-gradient(180deg,#fff8f8,#ffecec) !important;}
+                    body { 
+                        background: linear-gradient(180deg, hsl(var(--background)), hsl(var(--secondary))) !important;
+                    }
                 `}</style>
 
                 <div className="w-full max-w-[420px] mx-auto flex flex-col gap-3 items-center">
                     <div className="w-full aspect-[9/16] max-w-[360px] relative rounded-[22px] overflow-hidden shadow-lg">
-                        <div ref={wallpaperRef} className="wallpaper relative w-full h-full bg-gradient-to-b from-[var(--r1)] to-[var(--r2)] flex flex-col p-7 gap-3 text-white font-sans">
+                        <div ref={wallpaperRef} className="wallpaper relative w-full h-full bg-gradient-to-b from-primary to-destructive flex flex-col p-7 gap-3 text-primary-foreground font-sans">
                             <div className="bg-shape absolute filter blur-xl opacity-10 rounded-full w-[420px] h-[420px] right-[-120px] top-[-60px] bg-white"></div>
-                            <div className="bg-shape absolute filter blur-xl opacity-10 rounded-full w-[260px] h-[260px] left-[-80px] bottom-[-60px] bg-[#ffd6d6]"></div>
+                            <div className="bg-shape absolute filter blur-xl opacity-10 rounded-full w-[260px] h-[260px] left-[-80px] bottom-[-60px] bg-secondary"></div>
                             
                             <div className="flex items-center justify-between gap-3">
-                                <div className="w-16 h-16 rounded-xl bg-gradient-to-b from-white to-[#ffecec] grid place-items-center text-[var(--r1)] font-black text-xl border-4 border-white/25">SZ</div>
+                                <div className="w-16 h-16 rounded-xl bg-gradient-to-b from-white to-secondary grid place-items-center text-primary font-black text-xl border-4 border-white/25">SZ</div>
                                 <div className="flex-1 ml-2">
-                                    <h1 ref={titleTextRef} className="m-0 text-lg font-extrabold text-white tracking-wide" style={{textShadow:'0 6px 18px rgba(0,0,0,0.15)'}}></h1>
-                                    <p ref={subtitleTextRef} className="m-0 text-xs opacity-95 text-white/95"></p>
+                                    <h1 ref={titleTextRef} className="m-0 text-lg font-extrabold text-primary-foreground tracking-wide" style={{textShadow:'0 6px 18px rgba(0,0,0,0.15)'}}></h1>
+                                    <p ref={subtitleTextRef} className="m-0 text-xs opacity-95 text-primary-foreground/95"></p>
                                 </div>
                             </div>
 
                             <div className="flex flex-col items-center justify-center p-2 rounded-2xl bg-gradient-to-b from-white/10 to-black/5 backdrop-blur-sm mt-1.5">
-                                <div className="text-3xl font-black leading-none text-white" style={{textShadow:'0 8px 26px rgba(0,0,0,0.15)'}}>Congratulations!</div>
-                                <div className="text-xs opacity-95 text-white mt-1.5">You've secured a top rank in the tournament</div>
+                                <div className="text-3xl font-black leading-none text-primary-foreground" style={{textShadow:'0 8px 26px rgba(0,0,0,0.15)'}}>Congratulations!</div>
+                                <div className="text-xs opacity-95 text-primary-foreground mt-1.5">You've secured a top rank in the tournament</div>
                             </div>
                             
                             <div className="flex flex-col items-center gap-2.5 mt-1.5">
-                                <div className="w-[170px] h-[170px] rounded-[22px] bg-gradient-to-b from-white to-[#fff8f8] grid place-items-center border-8 border-white/70 shadow-lg">
+                                <div className="w-[170px] h-[170px] rounded-[22px] bg-gradient-to-b from-white to-secondary grid place-items-center border-8 border-white/70 shadow-lg">
                                     <img id="tokenImg" src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg2oNx0s_EsUtQCxkYGCkEqHAcVCA4PAgVdyNX-mDF_KO228qsfmqMAOefbIFmb-yD98WpX7jVLor2AJzeDhfqG6wC8n7lWtxU9euuYIYhPWStqYgbGjkGp6gu1JrfKmXMwCn7I_KjLGu_GlGy3PMNmf9ljC8Yr__ZpsiGxHJRKbtH6MfTuG4ofViNRsAY/s1600/73555.png" alt="token" className="w-[130px] h-[130px] object-contain" />
                                 </div>
-                                <div className="font-extrabold text-[#6b0000]">Winner Token</div>
+                                <div className="font-extrabold text-red-900 dark:text-red-200">Winner Token</div>
                             </div>
 
                             <div className="w-full flex flex-col gap-2 items-center mt-1.5">
-                                <div ref={playerNameRef} className="text-xl font-black text-white" style={{textShadow:'0 10px 30px rgba(0,0,0,0.22)'}}></div>
+                                <div ref={playerNameRef} className="text-xl font-black text-primary-foreground" style={{textShadow:'0 10px 30px rgba(0,0,0,0.22)'}}></div>
                                 <div className="flex gap-2.5 mt-1">
-                                    <div ref={rankBadgeRef} className="bg-white/10 backdrop-blur-sm py-2 px-3 rounded-xl font-extrabold text-white"></div>
-                                    <div ref={prizeBadgeRef} className="bg-white/10 backdrop-blur-sm py-2 px-3 rounded-xl font-extrabold text-white"></div>
+                                    <div ref={rankBadgeRef} className="bg-white/10 backdrop-blur-sm py-2 px-3 rounded-xl font-extrabold text-primary-foreground"></div>
+                                    <div ref={prizeBadgeRef} className="bg-white/10 backdrop-blur-sm py-2 px-3 rounded-xl font-extrabold text-primary-foreground"></div>
                                 </div>
                             </div>
 
                             <div className="flex justify-between gap-2 mt-auto">
-                                <div className="flex-1 bg-white/10 p-2 rounded-xl text-center"><b id="statScore" className="block text-sm font-black text-white">452</b><small className="text-xs text-white/90">Score</small></div>
-                                <div className="flex-1 bg-white/10 p-2 rounded-xl text-center"><b id="statWins" className="block text-sm font-black text-white">12</b><small className="text-xs text-white/90">Wins</small></div>
-                                <div className="flex-1 bg-white/10 p-2 rounded-xl text-center"><b ref={statDateRef} className="block text-sm font-black text-white"></b><small className="text-xs text-white/90">Date</small></div>
+                                <div className="flex-1 bg-white/10 p-2 rounded-xl text-center"><b id="statScore" className="block text-sm font-black text-primary-foreground">452</b><small className="text-xs text-white/90">Score</small></div>
+                                <div className="flex-1 bg-white/10 p-2 rounded-xl text-center"><b id="statWins" className="block text-sm font-black text-primary-foreground">12</b><small className="text-xs text-white/90">Wins</small></div>
+                                <div className="flex-1 bg-white/10 p-2 rounded-xl text-center"><b ref={statDateRef} className="block text-sm font-black text-primary-foreground"></b><small className="text-xs text-white/90">Date</small></div>
                             </div>
                         </div>
                     </div>
@@ -211,7 +215,7 @@ const CertificatePage = () => {
                         </div>
                         
                          {!isWinner && (
-                            <p className="text-xs text-center text-red-600 mt-2">Note: You are not a tournament winner. A fee of ₹1 will be charged to generate this certificate.</p>
+                            <p className="text-xs text-center text-destructive mt-2">Note: You are not a tournament winner. A fee of ₹1 will be charged to generate this certificate.</p>
                         )}
                     </div>
                 </div>
