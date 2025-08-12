@@ -149,25 +149,15 @@ export const acceptChallenge = async (gameId: string, player2: PlayerInfo): Prom
             throw new Error("This challenge is no longer available.");
         }
 
+        // Deduct fee from accepting player's wallet
+        await updateUserWallet(player2.uid, -gameData.amount, 'balance', 'Challenge Accepted', `Accepted battle vs ${gameData.createdBy.displayName}`);
+
         // Update the game document
         transaction.update(gameRef, {
             player2: player2,
             playerUids: [...gameData.playerUids, player2.uid],
             status: 'ongoing',
             lastUpdatedAt: serverTimestamp(),
-        });
-
-        // Create transaction log for the accepting player
-        const transLogRef = doc(collection(db, 'transactions'));
-         transaction.set(transLogRef, {
-            userId: player2.uid,
-            userName: player2.displayName,
-            amount: gameData.amount,
-            type: 'Challenge Accepted',
-            status: 'completed',
-            relatedId: gameId,
-            notes: `Accepted battle vs ${gameData.createdBy.displayName}`,
-            createdAt: serverTimestamp(),
         });
     });
 

@@ -21,8 +21,10 @@ let persistenceEnabled = false;
 
 // Singleton pattern to ensure Firebase is initialized only once.
 function getFirebaseApp() {
-  if (!app) {
-    app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+  if (!getApps().length) {
+    app = initializeApp(firebaseConfig);
+  } else {
+    app = getApp();
   }
   return app;
 }
