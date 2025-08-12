@@ -143,9 +143,8 @@ export default function WinningsPage() {
                     return (
                 <TableRow key={match.id}>
                     <TableCell className="whitespace-nowrap">{`${match.player1?.displayName} vs ${match.player2?.displayName}`}</TableCell>
-                    <TableCell className='flex items-center gap-1'>
-                        <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={14} height={14} data-ai-hint="gold coin"/>
-                        {match.amount}
+                    <TableCell>
+                        ₹{match.amount}
                     </TableCell>
                     <TableCell className="whitespace-nowrap">{match.winner === match.player1.uid ? match.player1.displayName : match.player2?.displayName || 'N/A'}</TableCell>
                     <TableCell className="space-x-2">
@@ -194,16 +193,16 @@ export default function WinningsPage() {
                                         <CardContent className="p-4 text-sm space-y-2">
                                             <div className="flex justify-between">
                                                 <span className="text-muted-foreground">Prize Pool:</span>
-                                                <span className="font-medium flex items-center gap-1"><Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={12} height={12} data-ai-hint="gold coin"/>{prizePool.toFixed(2)}</span>
+                                                <span className="font-medium">₹{prizePool.toFixed(2)}</span>
                                             </div>
                                             <div className="flex justify-between text-red-600">
                                                 <span className="text-muted-foreground">Platform Commission ({(commissionRate * 100).toFixed(0)}%):</span>
-                                                <span className="font-medium flex items-center gap-1">- <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={12} height={12} data-ai-hint="gold coin"/>{commission.toFixed(2)}</span>
+                                                <span className="font-medium">- ₹{commission.toFixed(2)}</span>
                                             </div>
                                             <hr/>
                                             <div className="flex justify-between font-bold">
                                                 <span>Final Amount to Winner:</span>
-                                                <span className='flex items-center gap-1'><Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={12} height={12} data-ai-hint="gold coin"/>{finalAmount.toFixed(2)}</span>
+                                                <span>₹{finalAmount.toFixed(2)}</span>
                                             </div>
                                         </CardContent>
                                     </Card>

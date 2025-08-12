@@ -93,9 +93,8 @@ export default function ReferPage() {
                         <div className="border-l mx-4"></div>
                         <div>
                             <p className="text-sm text-muted-foreground">Referral Earning</p>
-                            <p className="text-lg font-bold flex items-center justify-center gap-1">
-                                <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={16} height={16} data-ai-hint="gold coin"/>
-                                {(appUser.referralStats?.totalEarnings || 0).toFixed(2)}
+                            <p className="text-lg font-bold">
+                                ₹{(appUser.referralStats?.totalEarnings || 0).toFixed(2)}
                             </p>
                         </div>
                     </CardContent>

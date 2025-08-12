@@ -20,19 +20,15 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 
-const MetricCard = ({ icon, label, value, imageIcon }: { icon?: React.ReactNode, label: string, value: string | number, imageIcon?: string }) => (
+const MetricCard = ({ icon, label, value }: { icon?: React.ReactNode, label: string, value: string | number }) => (
     <Card className="bg-secondary/50">
         <CardContent className="p-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                {imageIcon ? <Image src={imageIcon} alt={label} width={16} height={16} data-ai-hint="coin money" /> : icon}
+                {icon}
                 <span>{label}</span>
             </div>
-            <p className="text-lg font-bold mt-1 flex items-center gap-1">
-                {label.toLowerCase().includes('earning') || label.toLowerCase().includes('won') || label.toLowerCase().includes('penalty') ? 
-                    <>
-                         <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={14} height={14} data-ai-hint="gold coin"/>
-                         {value}
-                    </> : value}
+            <p className="text-lg font-bold mt-1">
+                {typeof value === 'string' && value.startsWith('₹') ? value : `₹${value}`}
             </p>
         </CardContent>
     </Card>
@@ -205,11 +201,12 @@ export default function ProfilePage() {
                         <div className="grid grid-cols-2 gap-4">
                             <MetricCard icon={<BarChart2 className="h-4 w-4" />} label="Games Played" value={appUser.gameStats?.played || 0} />
                             <MetricCard 
+                                icon={<Trophy className="h-4 w-4" />}
                                 label="Chips Won" 
-                                value={`${(appUser.lifetimeStats?.totalWinnings || 0).toFixed(2)}`} 
+                                value={`₹${(appUser.lifetimeStats?.totalWinnings || 0).toFixed(2)}`} 
                             />
-                            <MetricCard label="Referral Earning" value={`${(appUser.referralStats?.totalEarnings || 0).toFixed(2)}`} />
-                            <MetricCard label="Penalty" value={`0`} />
+                            <MetricCard icon={<Gift className="h-4 w-4" />} label="Referral Earning" value={`₹${(appUser.referralStats?.totalEarnings || 0).toFixed(2)}`} />
+                            <MetricCard icon={<AlertCircle className="h-4 w-4" />} label="Penalty" value={`₹0`} />
                         </div>
                     </CardContent>
                 </Card>

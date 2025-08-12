@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -106,7 +105,7 @@ export default function ChallengeList() {
                 isKycVerified: appUser.kycStatus === 'Verified',
             });
 
-            toast({ title: 'Battle Accepted!', description: `You are now in a battle for ${challenge.amount}.` });
+            toast({ title: 'Battle Accepted!', description: `You are now in a battle for ₹${challenge.amount}.` });
             router.push(`/play/game?id=${gameId}`);
         } catch (error: any) {
             toast({ title: 'Failed to Accept', description: error.message, variant: 'destructive' });
@@ -173,9 +172,8 @@ export default function ChallengeList() {
                                 </div>
                             </div>
                             <div className="text-right">
-                                <p className="text-xl text-red-600 font-bold flex items-center gap-1">
-                                    <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={20} height={20} data-ai-hint="gold coin"/>
-                                    {challenge.amount}
+                                <p className="text-xl text-red-600 font-bold">
+                                    ₹{challenge.amount}
                                 </p>
                             </div>
                         </div>

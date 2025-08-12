@@ -35,7 +35,7 @@ function AddCashPageComponent() {
   const handleProceed = async () => {
     const numericAmount = parseFloat(amount);
     if (isNaN(numericAmount) || numericAmount < 10) {
-      toast({ title: 'Invalid Amount', description: 'Please enter an amount of at least 10.', variant: 'destructive' });
+      toast({ title: 'Invalid Amount', description: 'Please enter an amount of at least ₹10.', variant: 'destructive' });
       return;
     }
     
@@ -140,9 +140,8 @@ function AddCashPageComponent() {
                                 <Image src={qrCodeUrl} alt="UPI QR Code" width={250} height={250} data-ai-hint="qr code"/>
                             </div>
                         )}
-                        <div className="text-2xl font-bold flex items-center justify-center gap-2">
-                             <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={24} height={24} data-ai-hint="gold coin"/>
-                            Pay: {amount}
+                        <div className="text-2xl font-bold">
+                            Pay: ₹{amount}
                         </div>
                         <div className="text-sm text-muted-foreground">
                             <p>To: {activeUpi?.name}</p>
@@ -201,7 +200,7 @@ function AddCashPageComponent() {
                     <CheckCircle className="h-20 w-20 text-green-500 mx-auto animate-pulse"/>
                     <CardTitle className="text-center text-2xl font-semibold text-green-600">Request Submitted!</CardTitle>
                     <CardDescription className="text-center">
-                        Your deposit request for {amount} has been received. Please wait 5-10 minutes for verification. Your wallet will be updated automatically.
+                        Your deposit request for ₹{amount} has been received. Please wait 5-10 minutes for verification. Your wallet will be updated automatically.
                     </CardDescription>
                      <Link href="/wallet">
                         <Button className="w-full">Go to Wallet</Button>
@@ -220,7 +219,7 @@ function AddCashPageComponent() {
                   <div className="space-y-4">
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                        <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={16} height={16} data-ai-hint="gold coin"/>
+                        ₹
                       </span>
                       <Input
                         id="amount"
@@ -241,10 +240,7 @@ function AddCashPageComponent() {
                           disabled={isLoadingUpi}
                           className={`flex-col h-auto ${amount === qAmount.toString() ? 'border-primary' : ''}`}
                         >
-                          <span className="flex items-center gap-1">
-                            <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={12} height={12} data-ai-hint="gold coin"/>
-                            {qAmount}
-                          </span>
+                          ₹{qAmount}
                         </Button>
                       ))}
                     </div>
@@ -260,25 +256,25 @@ function AddCashPageComponent() {
                       <CardContent className="space-y-3 text-sm">
                       <div className="flex justify-between">
                               <span>Deposit Amount (Excl. Govt. Tax) A</span>
-                              <span className='flex items-center gap-1'><Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={12} height={12} data-ai-hint="gold coin"/>{summary.depositAmount}</span>
+                              <span>₹{summary.depositAmount}</span>
                       </div>
                       <div className="flex justify-between">
                               <span>Govt. Tax (28% GST)</span>
-                              <span className='flex items-center gap-1'><Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={12} height={12} data-ai-hint="gold coin"/>{summary.taxAmount}</span>
+                              <span>₹{summary.taxAmount}</span>
                       </div>
                       <hr/>
                       <div className="flex justify-between font-bold">
                               <span>Total</span>
-                              <span className='flex items-center gap-1'><Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={12} height={12} data-ai-hint="gold coin"/>{summary.total}</span>
+                              <span>₹{summary.total}</span>
                       </div>
                       <div className="flex justify-between text-green-600">
                               <span>Cashback Bonus B</span>
-                              <span className='flex items-center gap-1'><Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={12} height={12} data-ai-hint="gold coin"/>{summary.cashback}</span>
+                              <span>₹{summary.cashback}</span>
                       </div>
                       <hr/>
                       <div className="flex justify-between font-bold">
                               <span>Add To Wallet Balance (A + B)</span>
-                              <span className='flex items-center gap-1'><Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={12} height={12} data-ai-hint="gold coin"/>{summary.walletBalance}</span>
+                              <span>₹{summary.walletBalance}</span>
                       </div>
                       </CardContent>
                   </Card>

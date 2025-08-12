@@ -77,7 +77,7 @@ export default function CreateChallengePage() {
     if (totalBalance < numericAmount) {
       toast({
         title: 'Insufficient Balance',
-        description: `You need ${numericAmount} to create this battle, but you only have ${totalBalance.toFixed(2)}.`,
+        description: `You need ₹${numericAmount} to create this battle, but you only have ₹${totalBalance.toFixed(2)}.`,
         variant: 'destructive',
       });
       return;
@@ -93,12 +93,12 @@ export default function CreateChallengePage() {
                 photoURL: appUser.photoURL || '',
                 isKycVerified: appUser.kycStatus === 'Verified',
             },
-            message: message || `Play a game for ${numericAmount}!`,
+            message: message || `Play a game for ₹${numericAmount}!`,
         });
         
         toast({
             title: 'Battle Created!',
-            description: `Your open battle for ${numericAmount} has been set.`,
+            description: `Your open battle for ₹${numericAmount} has been set.`,
         });
         
         router.push(`/play/game?id=${newChallengeRef.id}`);
@@ -141,7 +141,7 @@ export default function CreateChallengePage() {
                         <Label htmlFor="amount">Amount</Label>
                         <div className="relative">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                                <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj01a-tA55LItcrvtalUaOwdFji0EZjLW15nqZKCiNP4b6T_v7b79g7eUrg3YAsYW5i-FfbZDEONDIv-jXI_wJcwFZCbVWRuyW1hBUdPHlJ6u8SpjD_-ZveIEuDAFSTsB_7OfvxveJyyqKoyf6AsLtPZwEF2lryvPHsqXQB5MNMBGYGfEc0F0wmq9r5CmA/s1600/84440.png" alt="coin" width={16} height={16} data-ai-hint="gold coin"/>
+                                ₹
                             </span>
                              <Input 
                                 id="amount"
