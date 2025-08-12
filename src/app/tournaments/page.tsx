@@ -6,7 +6,7 @@ import Header from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { listenForTournaments, Tournament, joinTournament } from "@/lib/firebase/tournaments";
-import { Loader, Users, Trophy, Star } from 'lucide-react';
+import { Loader, Users, Trophy, Star, Award } from 'lucide-react';
 import { format, formatDistanceToNowStrict } from 'date-fns';
 import { SplashScreen } from '@/components/ui/splash-screen';
 import { useAuth } from '@/context/auth-context';
@@ -26,6 +26,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import Link from 'next/link';
 
 const pointCoinImage = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiwhVedr1V1ByzcPPUm-nlj7zY0CT7Fab4i9PDN7cj4iovWSZNHabrcsmOlwWrv2hRGgAHbBMtD6_HgNneu5DVasF1waibkgxSsnJ7hs56p5bdEECWsXuJtvMlduioy4c9cQI3UXawKt1Sib5Qr9XauGwaJ4a9Ea7tcZ0dJYA9sycViqE7ZKsvyUG8n-U4/s1600/84333.png";
 
@@ -238,6 +239,14 @@ export default function TournamentsPage() {
                 <div className="text-center">
                     <h1 className="text-4xl font-extrabold text-red-600 animate-shine">SZ Ludo Tournaments</h1>
                     <p className="text-muted-foreground mt-1">Join the battle and win big prizes!</p>
+                </div>
+
+                <div className="text-center">
+                    <Link href="/tournaments/certificate">
+                        <Button>
+                            <Award className="mr-2" /> Generate Winner Certificate
+                        </Button>
+                    </Link>
                 </div>
 
                 {tournaments.length > 0 ? (
