@@ -2,7 +2,6 @@
 'use client'
 
 import Header from "@/components/header";
-import Typewriter from "@/components/ui/typewriter";
 import { useEffect, useState } from "react";
 import { getSettings } from "@/lib/firebase/settings";
 import { SplashScreen } from "@/components/ui/splash-screen";
@@ -35,9 +34,7 @@ export default function TermsPage() {
                 <div className="bg-card p-6 md:p-8 rounded-lg shadow-md">
                     <h1 className="text-3xl font-bold mb-6 font-headline text-center text-red-600 animate-shine">Terms and Conditions</h1>
                     
-                    <Typewriter speed={10}>
-                         <div className="prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: content }} />
-                    </Typewriter>
+                    <div className="prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: content }} />
                 </div>
             </main>
         </div>
