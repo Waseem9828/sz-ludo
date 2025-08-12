@@ -91,7 +91,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 }
                 setAppUser({ ...data, isKycVerified: data.kycStatus === 'Verified' });
             }
-            setLoading(false); // Set loading to false once we have user data or know it doesn't exist
+            setLoading(false); 
         }, (error) => {
             console.error("Firestore onSnapshot error:", error);
             setLoading(false);
@@ -99,7 +99,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return () => unsubscribeFirestore();
       } else {
         setAppUser(null);
-        setLoading(false); // Set loading to false if there's no user
+        setLoading(false);
       }
     });
 

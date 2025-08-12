@@ -1,0 +1,21 @@
+{
+  "name": "SZ Ludo",
+  "short_name": "SZ Ludo",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F1D5D6",
+  "theme_color": "#E63946",
+  "description": "Play Ludo and win real cash!",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
