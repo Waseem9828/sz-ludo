@@ -145,7 +145,6 @@ function AddCashPageComponent() {
                         </div>
                         <div className="text-sm text-muted-foreground">
                             <p>To: {activeUpi?.name}</p>
-                            <p>UPI ID: {activeUpi?.id}</p>
                         </div>
                         <a href={upiLink}>
                         <Button className="w-full font-bold text-lg py-6 md:hidden">Pay with UPI</Button>
