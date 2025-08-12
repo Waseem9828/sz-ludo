@@ -1,7 +1,7 @@
 
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, enableIndexedDbPersistence, CACHE_SIZE_UNLIMITED } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 // Your web app's Firebase configuration
@@ -23,6 +23,24 @@ const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 const db = getFirestore(app);
+
+// Enable offline persistence
+if (typeof window !== 'undefined') {
+  try {
+    enableIndexedDbPersistence(db, {
+      cacheSizeBytes: CACHE_SIZE_UNLIMITED
+    }).catch((err) => {
+      if (err.code === 'failed-precondition') {
+        console.warn('Firestore persistence failed: Multiple tabs open?');
+      } else if (err.code === 'unimplemented') {
+        console.warn('Firestore persistence not available in this browser.');
+      }
+    });
+  } catch (error) {
+    console.error("Error enabling Firestore persistence:", error);
+  }
+}
+
 const auth = getAuth(app);
 const storage = getStorage(app);
 const googleAuthProvider = new GoogleAuthProvider();
