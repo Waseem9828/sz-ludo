@@ -13,12 +13,14 @@ import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { getTournament, updateTournament, Tournament } from '@/lib/firebase/tournaments';
-import { Calendar as CalendarIcon, ChevronLeft, Loader, PlusCircle, Trash2 } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, Loader, PlusCircle, Trash2, Upload } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { uploadBannerImage, deleteBannerImage } from '@/lib/firebase/settings';
+import Image from 'next/image';
 
 const prizeDistributionSchema = z.object({
   rankStart: z.coerce.number().min(1, 'Rank must be at least 1'),
@@ -31,6 +33,7 @@ const prizeDistributionSchema = z.object({
 
 const tournamentSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters long'),
+  imageUrl: z.string().url('Please upload an image.').min(1, 'Image is required.'),
   entryFee: z.coerce.number().min(0, 'Entry fee cannot be negative'),
   playerCap: z.coerce.number().min(2, 'Player capacity must be at least 2'),
   adminCommission: z.coerce.number().min(0).max(100),
@@ -41,6 +44,67 @@ const tournamentSchema = z.object({
     message: "End time must be after the start time.",
     path: ["endTime"],
 });
+
+const BannerManager = ({ title, bannerUrl, onUpdate, singleImage = true }: { title: string, bannerUrl: string, onUpdate: (url: string) => void, singleImage?: boolean }) => {
+    const [isUploading, setIsUploading] = useState(false);
+    const { toast } = useToast();
+
+    const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        try {
+            const newUrl = await uploadBannerImage(file, 'tournaments');
+            onUpdate(newUrl);
+            toast({ title: 'Success', description: 'Image uploaded!' });
+        } catch (error: any) {
+            toast({ title: 'Upload Failed', description: error.message, variant: 'destructive' });
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const handleImageDelete = async (urlToDelete: string) => {
+        try {
+            await deleteBannerImage(urlToDelete);
+            onUpdate('');
+            toast({ title: 'Success', description: 'Image deleted!' });
+        } catch (error: any) {
+            toast({ title: 'Delete Failed', description: error.message, variant: 'destructive' });
+        }
+    };
+
+    return (
+        <Card className="p-4 bg-muted/20">
+            <CardTitle className="text-sm font-medium mb-2">{title}</CardTitle>
+            <div className="grid grid-cols-1 gap-4 mb-4">
+                {bannerUrl && (
+                    <div className="relative group">
+                        <Image src={bannerUrl} alt={`${title} Banner`} width={200} height={112} className="rounded-md object-cover aspect-video" data-ai-hint="game tournament"/>
+                        <Button
+                            variant="destructive"
+                            size="icon"
+                            className="absolute top-1 right-1 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => handleImageDelete(bannerUrl)}
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </div>
+                )}
+            </div>
+            {(!bannerUrl) && (
+                <Label htmlFor={`banner-upload-${title.replace(/\s+/g, '-')}`} className="w-full">
+                    <div className="flex items-center justify-center w-full px-4 py-2 border-2 border-dashed rounded-md cursor-pointer hover:bg-muted">
+                        {isUploading ? <Loader className="animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                        <span>Upload Image</span>
+                    </div>
+                    <Input id={`banner-upload-${title.replace(/\s+/g, '-')}`} type="file" accept="image/*" className="sr-only" onChange={handleImageUpload} disabled={isUploading} />
+                </Label>
+             )}
+        </Card>
+    );
+};
 
 export default function EditTournamentPage() {
   const router = useRouter();
@@ -54,6 +118,7 @@ export default function EditTournamentPage() {
     resolver: zodResolver(tournamentSchema),
     defaultValues: {
         prizeDistribution: [],
+        imageUrl: '',
     },
   });
 
@@ -66,6 +131,7 @@ export default function EditTournamentPage() {
                 ...tournamentData,
                 startTime: tournamentData.startTime.toDate(),
                 endTime: tournamentData.endTime.toDate(),
+                imageUrl: tournamentData.imageUrl || '',
             });
         } else {
              toast({ title: "Error", description: "Tournament not found.", variant: "destructive" });
@@ -137,7 +203,23 @@ export default function EditTournamentPage() {
                     </FormItem>
                   )}
                 />
-                 <div></div>
+                 <FormField
+                  control={form.control}
+                  name="imageUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tournament Image</FormLabel>
+                      <FormControl>
+                        <BannerManager
+                            title="Tournament Image"
+                            bannerUrl={field.value}
+                            onUpdate={field.onChange}
+                         />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="startTime"

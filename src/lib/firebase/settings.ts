@@ -163,7 +163,7 @@ export const incrementUpiAmount = async (upiId: string, amount: number) => {
 };
 
 // Upload a banner image to storage
-export const uploadBannerImage = async (file: File, folder: string): Promise<string> => {
+export const uploadBannerImage = async (file: File, folder: 'classic' | 'popular' | 'tournaments'): Promise<string> => {
     const filePath = `banners/${folder}/${Date.now()}_${file.name}`;
     const storageRef = ref(storage, filePath);
     await uploadBytes(storageRef, file);
@@ -213,5 +213,3 @@ export const deleteOldGameRecords = async (): Promise<number> => {
 
     return snapshot.size;
 }
-
-    

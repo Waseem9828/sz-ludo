@@ -91,7 +91,7 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
         <div className="flex flex-col lg:flex-row gap-6 items-start">
             <div className="flex-shrink-0 w-full lg:w-[420px]">
                 <div className="w-full h-[250px] rounded-xl relative overflow-hidden group">
-                    <Image src="https://placehold.co/400x300.png" alt="tournament banner" fill className="object-cover transition-transform duration-700 ease-in-out group-hover:scale-105" data-ai-hint="game tournament"/>
+                    <Image src={tournament.imageUrl || "https://placehold.co/400x300.png"} alt={tournament.title} fill className="object-cover transition-transform duration-700 ease-in-out group-hover:scale-105" data-ai-hint="game tournament"/>
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent rounded-xl"></div>
                     <div className="absolute top-4 left-4">
                         <Badge variant="destructive" className="capitalize text-sm shadow-lg">{tournament.status}</Badge>
@@ -120,7 +120,7 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
                      <div className="mt-3">
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
-                            <Button className="w-full h-auto py-3 rounded-xl bg-gradient-to-r from-red-500 to-red-600 border-none text-white font-extrabold shadow-lg animate-glowPulse hover:shadow-xl disabled:opacity-70" disabled={!isJoinable || isJoining}>
+                            <Button className="w-full h-auto py-3 rounded-xl bg-gradient-to-r from-red-500 to-red-600 border-none text-white font-extrabold shadow-lg animate-glowPulse hover:shadow-xl disabled:opacity-70" disabled={!isJoinable || isJoining || isUserJoined}>
                                 {isJoining ? <Loader className="animate-spin" /> : isUserJoined ? '✅ Joined' : 'Join Now'}
                             </Button>
                             </AlertDialogTrigger>
