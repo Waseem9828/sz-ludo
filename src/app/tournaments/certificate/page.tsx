@@ -37,6 +37,7 @@ const CertificatePage = () => {
     const subtitleTextRef = useRef<HTMLDivElement>(null);
     const wallpaperRef = useRef<HTMLDivElement>(null);
     const downloadBtnRef = useRef<HTMLButtonElement>(null);
+    const tokenImgRef = useRef<HTMLImageElement>(null);
 
     useEffect(() => {
         if (!loading && !user) {
@@ -103,37 +104,50 @@ const CertificatePage = () => {
         }
         
         const el = wallpaperRef.current;
-        if (!el || !window.html2canvas) return;
+        const imgEl = tokenImgRef.current;
+        if (!el || !imgEl || !window.html2canvas) return;
 
         downloadBtnRef.current!.disabled = true;
         downloadBtnRef.current!.innerText = 'Generating...';
-
-        const targetWidth = 1080;
-        const targetHeight = 1920;
         
         try {
-            const canvas = await window.html2canvas(el, {
-                backgroundColor: null,
-                scale: 3,
-                useCORS: true,
-                allowTaint: true,
-                width: el.offsetWidth,
-                height: el.offsetHeight,
-            });
+            // Fetch image and convert to base64
+            const response = await fetch(imgEl.src);
+            const blob = await response.blob();
+            const reader = new FileReader();
+            reader.readAsDataURL(blob);
+            reader.onloadend = async () => {
+                const base64data = reader.result;
+                imgEl.src = base64data as string;
 
-            const data = canvas.toDataURL('image/png');
-            const a = document.createElement('a');
-            const safePlayerName = (playerName || 'player').replace(/\s+/g, '_');
-            a.href = data;
-            a.download = `${safePlayerName}_SZLudo_winner_story.png`;
-            a.click();
+                // Now render the canvas
+                const canvas = await window.html2canvas(el, {
+                    backgroundColor: null,
+                    scale: 3, // Higher scale for better resolution
+                    useCORS: true,
+                });
+
+                const data = canvas.toDataURL('image/png');
+                const a = document.createElement('a');
+                const safePlayerName = (playerName || 'player').replace(/\s+/g, '_');
+                a.href = data;
+                a.download = `${safePlayerName}_SZLudo_winner_story.png`;
+                a.click();
+
+                // Revert image src if needed, although it's temporary
+                imgEl.src = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg2oNx0s_EsUtQCxkYGCkEqHAcVCA4PAgVdyNX-mDF_KO228qsfmqMAOefbIFmb-yD98WpX7jVLor2AJzeDhfqG6wC8n7lWtxU9euuYIYhPWStqYgbGjkGp6gu1JrfKmXMwCn7I_KjLGu_GlGy3PMNmf9ljC8Yr__ZpsiGxHJRKbtH6MfTuG4ofViNRsAY/s1600/73555.png";
+                if(downloadBtnRef.current) {
+                    downloadBtnRef.current.disabled = false;
+                    downloadBtnRef.current!.innerText = 'Download PNG';
+                }
+            };
+
         } catch (error) {
              console.error("Error generating canvas:", error);
              toast({title: "Error", description: "Could not generate certificate image.", variant: "destructive"});
-        } finally {
-            if(downloadBtnRef.current) {
+              if(downloadBtnRef.current) {
                 downloadBtnRef.current.disabled = false;
-                downloadBtnRef.current.innerText = 'Download PNG';
+                downloadBtnRef.current!.innerText = 'Download PNG';
             }
         }
     };
@@ -174,7 +188,7 @@ const CertificatePage = () => {
                             
                             <div className="flex flex-col items-center gap-2.5 mt-1.5">
                                 <div className="w-[170px] h-[170px] rounded-[22px] bg-gradient-to-b from-white to-secondary grid place-items-center border-8 border-white/70 shadow-lg">
-                                    <img id="tokenImg" src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg2oNx0s_EsUtQCxkYGCkEqHAcVCA4PAgVdyNX-mDF_KO228qsfmqMAOefbIFmb-yD98WpX7jVLor2AJzeDhfqG6wC8n7lWtxU9euuYIYhPWStqYgbGjkGp6gu1JrfKmXMwCn7I_KjLGu_GlGy3PMNmf9ljC8Yr__ZpsiGxHJRKbtH6MfTuG4ofViNRsAY/s1600/73555.png" alt="token" className="w-[130px] h-[130px] object-contain" />
+                                    <img ref={tokenImgRef} src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg2oNx0s_EsUtQCxkYGCkEqHAcVCA4PAgVdyNX-mDF_KO228qsfmqMAOefbIFmb-yD98WpX7jVLor2AJzeDhfqG6wC8n7lWtxU9euuYIYhPWStqYgbGjkGp6gu1JrfKmXMwCn7I_KjLGu_GlGy3PMNmf9ljC8Yr__ZpsiGxHJRKbtH6MfTuG4ofViNRsAY/s1600/73555.png" alt="token" className="w-[130px] h-[130px] object-contain" />
                                 </div>
                                 <div className="font-extrabold text-red-900 dark:text-red-200">Winner Token</div>
                             </div>
@@ -221,7 +235,4 @@ const CertificatePage = () => {
                 </div>
             </div>
         </>
-    );
-};
-
-export default CertificatePage;
+    
