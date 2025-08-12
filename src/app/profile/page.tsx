@@ -28,7 +28,7 @@ const MetricCard = ({ icon, label, value }: { icon?: React.ReactNode, label: str
                 <span>{label}</span>
             </div>
             <p className="text-lg font-bold mt-1">
-                {typeof value === 'string' && value.startsWith('₹') ? value : `₹${value}`}
+                {typeof value === 'string' ? value : `₹${value}`}
             </p>
         </CardContent>
     </Card>

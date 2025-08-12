@@ -267,7 +267,7 @@ function AddCashPageComponent() {
                               <span>Total</span>
                               <span>₹{summary.total}</span>
                       </div>
-                      <div className="flex justify-between text-green-600">
+                      <div className="flex justify-between text-success">
                               <span>Cashback Bonus B</span>
                               <span>₹{summary.cashback}</span>
                       </div>

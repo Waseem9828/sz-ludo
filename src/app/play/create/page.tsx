@@ -64,7 +64,7 @@ export default function CreateChallengePage() {
     if (!amount || isNaN(numericAmount) || numericAmount < 50) {
       toast({
         title: 'Invalid Amount',
-        description: 'Minimum battle amount is 50.',
+        description: 'Minimum battle amount is ₹50.',
         variant: 'destructive',
       });
       return;

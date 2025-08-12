@@ -167,7 +167,7 @@ export default function ReferPage() {
                         </div>
                         <Card className="bg-muted/50 p-4">
                             <p className="text-center text-sm font-semibold">उदाहरण के लिए:</p>
-                            <p className="text-center text-xs text-muted-foreground mt-1">अगर आपका दोस्त 1000 के बेट वाला गेम जीतता है, तो प्राइज पूल 2000 होता है। आपको उस जीत का 2% यानी 40 आपके विनिंग वॉलेट में तुरंत मिल जाएगा।</p>
+                            <p className="text-center text-xs text-muted-foreground mt-1">अगर आपका दोस्त ₹1000 के बेट वाला गेम जीतता है, तो प्राइज पूल ₹2000 होता है। आपको उस जीत का 2% यानी ₹40 आपके विनिंग वॉलेट में तुरंत मिल जाएगा।</p>
                         </Card>
                     </CardContent>
                 </Card>

@@ -268,7 +268,6 @@ const CertificatePage = () => {
                     .wallpaper.template-vibrant .token-wrap{background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.5)}
                     .wallpaper.template-vibrant .token-label{color: white; font-weight: bold;}
                 `}</style>
-
                 <div className="w-full max-w-[420px] mx-auto flex flex-col gap-3 items-center">
                     <div ref={previewWrapRef} className="wallpaper-wrap aspect-[9/16] max-w-[360px] relative rounded-[22px] overflow-hidden shadow-lg">
                         <div id="wallpaper" className={cn("wallpaper", `template-${selectedTemplate}`)}>
