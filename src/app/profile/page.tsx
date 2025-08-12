@@ -39,22 +39,19 @@ const defaultAvatar = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvX
 export default function ProfilePage() {
     const { toast } = useToast();
     const router = useRouter();
-    const { user, appUser, loading, logout } = useAuth();
+    const { user, appUser, logout } = useAuth();
     
     const [username, setUsername] = useState("");
     const [isEditingUsername, setIsEditingUsername] = useState(false);
     const [tempUsername, setTempUsername] = useState("");
 
     useEffect(() => {
-        if (!loading && !user) {
-            router.push('/login');
-        }
         if (user && appUser) {
             const name = appUser.displayName || user.displayName || user.email?.split('@')[0] || 'User';
             setUsername(name);
             setTempUsername(name);
         }
-    }, [user, appUser, loading, router]);
+    }, [user, appUser]);
 
 
     const handleEditUsername = async () => {
@@ -101,7 +98,7 @@ export default function ProfilePage() {
         }
     };
     
-    if (loading || !user || !appUser) {
+    if (!user || !appUser) {
         return <SplashScreen />;
     }
     

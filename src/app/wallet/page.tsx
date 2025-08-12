@@ -36,7 +36,7 @@ const quickWithdrawAmounts = [300, 1000, 5000, 10000];
 export default function WalletPage() {
     const { toast } = useToast();
     const router = useRouter();
-    const { user, appUser, loading } = useAuth();
+    const { user, appUser } = useAuth();
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [games, setGames] = useState<Game[]>([]);
     const [isWithdrawDialogOpen, setIsWithdrawDialogOpen] = useState(false);
@@ -45,10 +45,6 @@ export default function WalletPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
-        if (!loading && !user) {
-            router.push('/login');
-            return;
-        }
         if (appUser?.upiId) {
             setUpiId(appUser.upiId);
         }
@@ -62,7 +58,7 @@ export default function WalletPage() {
             };
         }
 
-    }, [user, appUser, loading, router]);
+    }, [user, appUser]);
 
 
     const handleWithdrawChips = async () => {
@@ -122,7 +118,7 @@ export default function WalletPage() {
         }
     };
     
-    if (loading || !user || !appUser) {
+    if (!user || !appUser) {
         return <SplashScreen />;
     }
 

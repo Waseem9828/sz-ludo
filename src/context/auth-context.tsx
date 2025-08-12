@@ -47,8 +47,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [appUser, setAppUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const [splashTimerDone, setSplashTimerDone] = useState(false);
-  const [authChecked, setAuthChecked] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [installable, setInstallable] = useState(false);
 
@@ -60,13 +58,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
     window.addEventListener('beforeinstallprompt', handler);
 
-    const timer = setTimeout(() => {
-        setSplashTimerDone(true);
-    }, 2000); // 2 second minimum splash time
-
     return () => {
         window.removeEventListener('beforeinstallprompt', handler);
-        clearTimeout(timer);
     };
   }, []);
 
@@ -86,11 +79,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setAuthChecked(true);
-      if (user) {
-        const userRef = doc(db, 'users', user.uid);
+    const unsubscribeAuth = onAuthStateChanged(auth, (authUser) => {
+      setUser(authUser);
+      if (authUser) {
+        const userRef = doc(db, 'users', authUser.uid);
         const unsubscribeFirestore = onSnapshot(userRef, (doc) => {
             if (doc.exists()) {
                 const data = doc.data() as AppUser;
@@ -99,23 +91,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 }
                 setAppUser({ ...data, isKycVerified: data.kycStatus === 'Verified' });
             }
+            setLoading(false); // Set loading to false once we have user data or know it doesn't exist
         }, (error) => {
             console.error("Firestore onSnapshot error:", error);
+            setLoading(false);
         });
         return () => unsubscribeFirestore();
       } else {
         setAppUser(null);
+        setLoading(false); // Set loading to false if there's no user
       }
     });
 
     return () => unsubscribeAuth();
   }, []);
-
-  useEffect(() => {
-    if(authChecked) {
-        setLoading(false);
-    }
-  }, [authChecked]);
   
   const signUp = async (email:string, password:string, name:string, phone:string, referralCode?: string) => {
       const methods = await fetchSignInMethodsForEmail(auth, email);
@@ -232,14 +221,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await signOut(auth);
   };
   
-  const showSplash = loading || !splashTimerDone;
-
-  if (showSplash) {
+  if (loading) {
     return <SplashScreen />;
   }
 
   return (
-    <AuthContext.Provider value={{ user, appUser, loading: false, installable, installPwa, signUp, signIn, signInWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, appUser, loading, installable, installPwa, signUp, signIn, signInWithGoogle, logout }}>
       {children}
     </AuthContext.Provider>
   );

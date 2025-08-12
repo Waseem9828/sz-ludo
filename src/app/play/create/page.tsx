@@ -22,15 +22,11 @@ export default function CreateChallengePage() {
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const { user, appUser, loading } = useAuth();
+  const { user, appUser } = useAuth();
   const router = useRouter();
   const [myChallenges, setMyChallenges] = useState<Game[]>([]);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-    
     if (user) {
         const unsubscribe = listenForGames((challenges) => {
             const userChallenges = challenges.filter(c => c.createdBy.uid === user.uid);
@@ -38,7 +34,7 @@ export default function CreateChallengePage() {
         }, 'challenge');
         return () => unsubscribe();
     }
-  }, [user, loading, router]);
+  }, [user]);
 
 
   const handleSetChallenge = async () => {
@@ -113,11 +109,6 @@ export default function CreateChallengePage() {
         setIsSubmitting(false);
     }
   };
-
-   if (loading || !user) {
-    return <SplashScreen />;
-  }
-
 
   return (
     <>

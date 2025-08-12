@@ -15,27 +15,18 @@ import AnimatedBanner from '@/components/animated-banner';
 import { RefreshCw } from 'lucide-react';
 
 export default function PlayPage() {
-  const { user, loading } = useAuth();
-  const router = useRouter();
+  const { user } = useAuth();
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
     getSettings().then(setSettings);
-  }, [user, loading, router]);
+  }, []);
   
   const handleRefresh = () => {
     setIsRefreshing(true);
     window.location.reload();
   };
-
-
-  if (loading || !user) {
-    return <SplashScreen />;
-  }
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
