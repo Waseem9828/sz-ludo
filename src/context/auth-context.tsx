@@ -145,7 +145,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (referralCode && referralCode.startsWith('SZLUDO')) {
             const referrerUid = referralCode.replace('SZLUDO', '');
-            if (referrerUid) {
+            if (referrerUid && referrerUid !== newUser.uid) { // Ensure user is not referring themselves
                  const referrerRef = doc(db, 'users', referrerUid);
                  const referrerSnap = await transaction.get(referrerRef);
                  if (referrerSnap.exists()) {
@@ -196,7 +196,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
             if (referralCode && referralCode.startsWith('SZLUDO')) {
                 const referrerUid = referralCode.replace('SZLUDO', '');
-                 if (referrerUid) {
+                 if (referrerUid && referrerUid !== newUser.uid) { // Ensure user is not referring themselves
                     const referrerRef = doc(db, 'users', referrerUid);
                     const referrerSnap = await transaction.get(referrerRef);
                     if (referrerSnap.exists()) {

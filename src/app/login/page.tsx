@@ -21,13 +21,21 @@ function LoginPageContent() {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [referralCode, setReferralCode] = useState('');
   const [loadingAction, setLoadingAction] = useState<null | 'login' | 'signup' | 'google'>(null);
   
   const { signUp, signIn, signInWithGoogle, user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const refCode = searchParams.get('ref');
   const { toast } = useToast();
+
+  useEffect(() => {
+    const refCodeFromUrl = searchParams.get('ref');
+    if (refCodeFromUrl) {
+      setReferralCode(refCodeFromUrl);
+    }
+  }, [searchParams]);
+
 
   useEffect(() => {
     if (user) {
@@ -48,7 +56,7 @@ function LoginPageContent() {
     }
     setLoadingAction('signup');
     try {
-      await signUp(email, password, name, phone, refCode || undefined);
+      await signUp(email, password, name, phone, referralCode || undefined);
       router.push('/');
       toast({
         title: 'Success',
@@ -89,7 +97,7 @@ function LoginPageContent() {
   const handleGoogleSignIn = async () => {
     setLoadingAction('google');
     try {
-      await signInWithGoogle(refCode || undefined);
+      await signInWithGoogle(referralCode || undefined);
       router.push('/');
       toast({
         title: 'Success',
@@ -181,6 +189,10 @@ function LoginPageContent() {
                             <div className="space-y-2">
                                 <Label htmlFor="confirm-password">Confirm Password</Label>
                                 <Input id="confirm-password" type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} disabled={loadingAction !== null}/>
+                            </div>
+                             <div className="space-y-2">
+                                <Label htmlFor="referral-code">Referral Code (Optional)</Label>
+                                <Input id="referral-code" type="text" placeholder="Enter referral code" value={referralCode} onChange={(e) => setReferralCode(e.target.value)} disabled={loadingAction !== null}/>
                             </div>
                             <Button type="submit" className="w-full font-bold py-3 text-lg" disabled={loadingAction !== null}>
                                  {loadingAction === 'signup' ? <Loader className="animate-spin"/> : 'Create Account'}
