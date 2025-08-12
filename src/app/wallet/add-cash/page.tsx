@@ -97,7 +97,8 @@ function AddCashPageComponent() {
 
   const qrCodeUrl = useMemo(() => {
     if (!upiLink || upiLink === '#') return '';
-    return `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiLink)}`;
+    // Primary color: #E63946 -> R: 230, G: 57, B: 70
+    return `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiLink)}&color=230-57-70`;
   }, [upiLink]);
 
   const summary = useMemo(() => {
