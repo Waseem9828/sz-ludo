@@ -310,8 +310,8 @@ export default function UserProfilePage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                                 <StatCard title="Total Balance" value={`₹${totalBalance.toFixed(2)}`} icon={Wallet} />
                                 <StatCard title="Games Played" value={user.gameStats?.played || 0} icon={Gamepad2} />
-                                <StatCard title="Total Deposits" value={`₹${user.lifetimeStats?.totalDeposits || 0}`} icon={TrendingUp} />
-                                <StatCard title="Total Withdrawals" value={`₹${user.lifetimeStats?.totalWithdrawals || 0}`} icon={TrendingDown} />
+                                <StatCard title="Total Deposits" value={`₹${(user.lifetimeStats?.totalDeposits || 0).toFixed(2)}`} icon={TrendingUp} />
+                                <StatCard title="Total Withdrawals" value={`₹${(user.lifetimeStats?.totalWithdrawals || 0).toFixed(2)}`} icon={TrendingDown} />
                             </div>
                         </CardContent>
                     </Card>
