@@ -18,8 +18,12 @@ export default function RefundPolicyPage() {
                 const md = new Remarkable();
                 setContent(md.render(settings.refundContent));
             } else {
-                setContent("Refund Policy has not been configured yet.");
+                setContent("<h3>Refund Policy Not Configured</h3><p>The Refund Policy has not been configured by the admin yet. Please check back later.</p>");
             }
+            setLoading(false);
+        }).catch(err => {
+            console.error(err);
+            setContent("<h3>Error</h3><p>Could not load Refund Policy.</p>");
             setLoading(false);
         });
     }, []);
@@ -33,7 +37,7 @@ export default function RefundPolicyPage() {
             <Header />
             <main className="flex-grow container mx-auto px-4 py-6 space-y-6">
                 <div className="bg-card p-6 md:p-8 rounded-lg shadow-md">
-                    <h1 className="text-3xl font-bold mb-6 font-headline text-center text-red-600 animate-shine">Refund Policy</h1>
+                    <h1 className="text-3xl font-bold mb-6 font-headline text-center text-primary animate-shine">Refund Policy</h1>
                     
                     <div className="prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: content }} />
                 </div>

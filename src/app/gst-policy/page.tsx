@@ -17,8 +17,12 @@ export default function GstPolicyPage() {
                 const md = new Remarkable();
                 setContent(md.render(settings.gstContent));
             } else {
-                setContent("GST Policy has not been configured yet.");
+                setContent("<h3>GST Policy Not Configured</h3><p>The GST Policy has not been configured by the admin yet. Please check back later.</p>");
             }
+            setLoading(false);
+        }).catch(err => {
+            console.error(err);
+            setContent("<h3>Error</h3><p>Could not load GST Policy.</p>");
             setLoading(false);
         });
     }, []);
@@ -32,7 +36,7 @@ export default function GstPolicyPage() {
             <Header />
             <main className="flex-grow container mx-auto px-4 py-6 space-y-6">
                 <div className="bg-card p-6 md:p-8 rounded-lg shadow-md">
-                    <h1 className="text-3xl font-bold mb-6 font-headline text-center text-red-600 animate-shine">GST पॉलिसी (GST Policy)</h1>
+                    <h1 className="text-3xl font-bold mb-6 font-headline text-center text-primary animate-shine">GST Policy</h1>
                     
                     <div className="prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: content }} />
                 </div>

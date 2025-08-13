@@ -54,6 +54,73 @@ export interface AppSettings {
   referralSettings?: ReferralSettings;
 }
 
+const defaultGstPolicy = `
+### GST Policy for SZ Ludo
+
+**Effective Date: [Date]**
+
+This GST Policy outlines how Goods and Services Tax (GST) is applied to the services offered on the SZ Ludo platform.
+
+1.  **Applicability of GST:**
+    *   As per the regulations set by the Government of India, a Goods and Services Tax (GST) of 28% is applicable on all deposits made by users into their SZ Ludo wallets.
+    *   This tax is levied on the amount you deposit to play games on our platform.
+
+2.  **How GST is Calculated:**
+    *   When you make a deposit, the total amount is inclusive of GST.
+    *   **Example:** If you deposit ₹100, this amount is treated as the value of the service plus the applicable GST. The breakdown will be as follows:
+        *   Deposited Amount (A): ₹78.12
+        *   GST (28% on A): ₹21.88
+        *   Total Paid by User: ₹100.00
+    *   The amount of ₹78.12 will be credited to your Deposit Wallet for gameplay.
+
+3.  **Cashback Bonus:**
+    *   To support our players, SZ Ludo provides a Cashback Bonus equivalent to the GST amount paid.
+    *   In the example above, you will receive a Cashback Bonus of ₹21.88.
+    *   This bonus will also be added to your Deposit Wallet.
+    *   Therefore, your total wallet balance after a ₹100 deposit will be ₹100 (₹78.12 Deposit + ₹21.88 Cashback).
+
+4.  **Invoices:**
+    *   SZ Ludo will maintain records of all transactions, including the GST collected. Users can request transaction details through our support channels.
+
+5.  **Policy Changes:**
+    *   SZ Ludo reserves the right to modify this GST Policy in accordance with changes in government regulations. Any changes will be updated on this page and communicated to our users.
+
+For any questions regarding our GST policy, please contact our customer support.
+`;
+
+const defaultRefundPolicy = `
+### Refund and Cancellation Policy for SZ Ludo
+
+**Effective Date: [Date]**
+
+This policy outlines the terms and conditions for refunds and cancellations on the SZ Ludo platform.
+
+1.  **General Policy:**
+    *   Once a user joins a battle by paying the entry fee, the fee is non-refundable. The entry fee is pooled to form the prize money for the winner.
+    *   SZ Ludo is a skill-based gaming platform, and we are not responsible for losses incurred due to game outcomes.
+
+2.  **Game Cancellation:**
+    *   **User-Initiated Cancellation:** If a player cancels a game after the room code has been shared or fails to join the game room within a reasonable time, the opponent will be declared the winner, and no refund will be issued to the canceling player.
+    *   **Mutual Cancellation:** If both players agree to cancel a game before a result is submitted, the entry fee will be refunded to both players' deposit wallets.
+    *   **Technical Issues:** If a game is canceled due to a technical failure on the SZ Ludo platform, a full refund of the entry fee will be processed to the users' deposit wallets.
+
+3.  **Disputed Games:**
+    *   If a game result is disputed by one or both players, the game will be put "under review."
+    *   Our support team will investigate the dispute by reviewing the submitted evidence (e.g., screenshots).
+    *   If the dispute is found to be valid and a clear winner cannot be determined, SZ Ludo may, at its discretion, cancel the game and refund the entry fee to both players.
+    *   Submitting false claims or fake screenshots will result in a penalty and may lead to account suspension, with no refund.
+
+4.  **Deposit Refunds:**
+    *   Amounts deposited into your wallet are for the sole purpose of participating in games on the platform and cannot be withdrawn or refunded.
+    *   Only winnings from games can be withdrawn, subject to our withdrawal policy and KYC verification.
+
+5.  **Processing Refunds:**
+    *   All eligible refunds will be credited directly to the user's SZ Ludo deposit wallet. Refunds are typically processed within 24-48 hours after a decision is made.
+
+For any questions or to raise a dispute, please contact our support team immediately.
+`;
+
+
 export const getSettings = async (): Promise<AppSettings> => {
   const docRef = doc(db, SETTINGS_COLLECTION, APP_CONFIG_DOC);
   const docSnap = await getDoc(docRef);
@@ -63,8 +130,8 @@ export const getSettings = async (): Promise<AppSettings> => {
         appSettings: { adminCommission: 5 },
         termsContent: '',
         privacyContent: '',
-        refundContent: '',
-        gstContent: '',
+        refundContent: defaultRefundPolicy,
+        gstContent: defaultGstPolicy,
         promotionBannerText: 'Commission 5% for all games\nRefer and earn 2% on every win!\nJoin the new tournament now!',
         festiveGreeting: {
             enabled: false,
@@ -117,8 +184,12 @@ export const getSettings = async (): Promise<AppSettings> => {
     const upiIds = (data.upiIds || []).map(upi => ({ name: '', currentAmount: 0, limit: 50000, ...upi }));
     const festiveGreeting = data.festiveGreeting || defaults.festiveGreeting;
     const homePageCards = data.homePageCards && data.homePageCards.length > 0 ? data.homePageCards : defaults.homePageCards;
+    
+    // Ensure content fields have defaults if they are empty or null
+    const gstContent = data.gstContent || defaults.gstContent;
+    const refundContent = data.refundContent || defaults.refundContent;
 
-    return { ...defaults, ...data, upiIds, festiveGreeting, homePageCards };
+    return { ...defaults, ...data, upiIds, festiveGreeting, homePageCards, gstContent, refundContent };
   } else {
     // If the document doesn't exist, create it with default values
     await setDoc(docRef, defaults);
