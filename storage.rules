@@ -4,40 +4,38 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
 
-    // Helper function to check if a user is an admin
-    function isAdmin() {
-      return exists(/databases/(default)/documents/users/$(request.auth.uid)) &&
-             get(/databases/(default)/documents/users/$(request.auth.uid)).data.role in ['superadmin', 'finance', 'support'];
+    function isSignedIn() {
+      return request.auth != null;
     }
 
-    // Helper function to check if a user is part of a specific game
-    function isPlayerInGame(gameId) {
-      return exists(/databases/(default)/documents/games/$(gameId)) &&
-             request.auth.uid in get(/databases/(default)/documents/games/$(gameId)).data.playerUids;
-    }
-
-    // Deposits: Allow a user to upload to their own deposit folder
-    match /deposits/{userId}/{fileName} {
-      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
-      allow create: if request.auth != null && request.auth.uid == userId;
-    }
-
-    // Game Screenshots: Allow only players in the game to upload
-    match /screenshots/{gameId}/{fileName} {
-      allow read: if request.auth != null && (isPlayerInGame(gameId) || isAdmin());
-      allow create: if request.auth != null && isPlayerInGame(gameId);
+    function isOwner(userId) {
+      return request.auth.uid == userId;
     }
     
-    // Banners: Allow admins to write, anyone to read
-    match /banners/{allPaths=**} {
-        allow read;
-        allow write: if request.auth != null && isAdmin();
+    function isGamePlayer(gameId) {
+       return request.auth.uid in get(/databases/(default)/documents/games/$(gameId)).data.playerUids;
     }
 
-    // Tournaments: Allow admins to write, anyone to read
+    // Banners can be read by anyone, but only written by admins.
+    match /banners/{allPaths=**} {
+      allow read: if true;
+      allow write: if isSignedIn() && get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'superadmin';
+    }
+
+    // Tournaments images can be read by anyone, but only written by admins.
     match /tournaments/{allPaths=**} {
-        allow read;
-        allow write: if request.auth != null && isAdmin();
+      allow read: if true;
+      allow write: if isSignedIn() && get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'superadmin';
+    }
+    
+    // Deposit screenshots can only be created by the user who owns that folder path.
+    match /deposits/{userId}/{fileName} {
+      allow read, write: if isSignedIn() && isOwner(userId);
+    }
+    
+    // Game result screenshots can only be created by a player in that game.
+    match /screenshots/{gameId}/{fileName} {
+       allow read, write: if isSignedIn() && isGamePlayer(gameId);
     }
   }
 }
