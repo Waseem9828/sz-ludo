@@ -163,6 +163,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
         
         transaction.set(userRef, newAppUser);
+        
+        // This was failing before. Now it should work.
+        const transLogRef = doc(collection(db, 'transactions'));
+        transaction.set(transLogRef, {
+            userId: newUser.uid,
+            userName: name, // Use the name directly
+            amount: 0,
+            type: 'Sign Up',
+            status: 'completed',
+            notes: 'User account created.',
+            createdAt: serverTimestamp(),
+        });
+        
         setAppUser(newAppUser);
         setUser(newUser);
         return userCredential;
@@ -208,6 +221,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 }
             }
             transaction.set(userRef, newAppUser);
+
+            const transLogRef = doc(collection(db, 'transactions'));
+            transaction.set(transLogRef, {
+                userId: newUser.uid,
+                userName: newUser.displayName,
+                amount: 0,
+                type: 'Sign Up',
+                status: 'completed',
+                notes: 'User account created with Google.',
+                createdAt: serverTimestamp(),
+            });
+
             setAppUser(newAppUser);
         }
         return result;
