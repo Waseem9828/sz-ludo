@@ -44,7 +44,7 @@ export default function SupportPage() {
                         <CardTitle className="text-center text-xl font-semibold text-red-600">Support Center</CardTitle>
                     </CardHeader>
                     <CardContent className="text-center space-y-4">
-                        <Image src="https://placehold.co/600x400.png" alt="Support Illustration" width={300} height={200} className="mx-auto rounded-lg" data-ai-hint="support customer service"/>
+                        <Image src="https://placehold.co/600x400.png" alt="Support Illustration" width={300} height={200} className="mx-auto rounded-lg" data-ai-hint="support customer service" priority/>
                         <p className="text-muted-foreground">
                             Have questions? We're here to help!
                         </p>

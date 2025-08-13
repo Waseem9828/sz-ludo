@@ -1,7 +1,7 @@
 
 import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getFirestore, enableIndexedDbPersistence, Firestore } from "firebase/firestore";
+import { getFirestore, initializeFirestore, persistentLocalCache, memoryLocalCache, Firestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 // Your web app's Firebase configuration
@@ -17,7 +17,6 @@ const firebaseConfig = {
 
 let app: FirebaseApp;
 let db: Firestore;
-let persistenceEnabled = false;
 
 // Singleton pattern to ensure Firebase is initialized only once.
 function getFirebaseApp() {
@@ -31,26 +30,11 @@ function getFirebaseApp() {
 
 function getDb() {
   if (!db) {
-    db = getFirestore(getFirebaseApp());
-    // Enable offline persistence only once
-    if (typeof window !== 'undefined' && !persistenceEnabled) {
-      try {
-        enableIndexedDbPersistence(db)
-          .then(() => {
-            persistenceEnabled = true;
-            console.log("Firestore persistence enabled.");
-          })
-          .catch((err) => {
-            if (err.code == 'failed-precondition') {
-              console.warn("Firestore persistence failed: multiple tabs open?");
-            } else if (err.code == 'unimplemented') {
-              console.warn("Firestore persistence not available in this browser.");
-            }
-          });
-      } catch (error) {
-        console.error("Error enabling Firestore persistence:", error);
-      }
-    }
+     const app = getFirebaseApp();
+     db = initializeFirestore(app, {
+         cache: typeof window !== 'undefined' ? persistentLocalCache({}) : memoryLocalCache({}),
+     });
+     console.log("Firestore initialized with new settings.");
   }
   return db;
 }
