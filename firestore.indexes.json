@@ -29,7 +29,7 @@
         }
       ]
     },
-     {
+    {
       "collectionGroup": "games",
       "queryScope": "COLLECTION",
       "fields": [
