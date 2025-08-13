@@ -27,6 +27,7 @@ export default function GameCard({ title, description, images, link, aiHint }: H
                       src={image}
                       alt={`${title} banner ${index + 1}`}
                       fill
+                      sizes="(max-width: 768px) 100vw, 50vw"
                       className="object-cover group-hover:scale-105 transition-transform duration-300"
                       data-ai-hint={aiHint || "game"}
                     />
@@ -40,6 +41,7 @@ export default function GameCard({ title, description, images, link, aiHint }: H
             src={images[0] || 'https://placehold.co/600x400.png'}
             alt={`${title} banner`}
             fill
+            sizes="(max-width: 768px) 100vw, 50vw"
             className="object-cover group-hover:scale-105 transition-transform duration-300"
             data-ai-hint={aiHint || "game"}
           />
