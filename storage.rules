@@ -1,41 +1,41 @@
-
 rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
 
-    function isSignedIn() {
-      return request.auth != null;
+    // Helper function to check for admin role
+    function isAdmin() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin';
     }
 
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-    
-    function isGamePlayer(gameId) {
-       return request.auth.uid in get(/databases/(default)/documents/games/$(gameId)).data.playerUids;
+    // Default deny all reads and writes
+    match /{allPaths=**} {
+      allow read, write: if false;
     }
 
-    // Banners can be read by anyone, but only written by admins.
+    // Banners: Readable by all, writable only by admins.
     match /banners/{allPaths=**} {
-      allow read: if true;
-      allow write: if isSignedIn() && get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'superadmin';
+      allow get: if true;
+      allow write: if isAdmin();
+    }
+    
+    // Tournaments: Readable by all, writable only by admins.
+    match /tournaments/{allPaths=**} {
+      allow get: if true;
+      allow write: if isAdmin();
     }
 
-    // Tournaments images can be read by anyone, but only written by admins.
-    match /tournaments/{allPaths=**} {
-      allow read: if true;
-      allow write: if isSignedIn() && get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'superadmin';
-    }
-    
-    // Deposit screenshots can only be created by the user who owns that folder path.
+    // Deposit screenshots: Users can only write to their own folder.
     match /deposits/{userId}/{fileName} {
-      allow read, write: if isSignedIn() && isOwner(userId);
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
-    
-    // Game result screenshots can only be created by a player in that game.
+
+    // Game screenshots: Users can write if they are part of the game.
     match /screenshots/{gameId}/{fileName} {
-       allow read, write: if isSignedIn() && isGamePlayer(gameId);
+      allow read, write: if request.auth != null &&
+             exists(/databases/$(database)/documents/games/$(gameId)) &&
+             request.auth.uid in get(/databases/$(database)/documents/games/$(gameId)).data.playerUids;
     }
   }
 }

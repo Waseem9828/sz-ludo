@@ -36,8 +36,9 @@ export const createDepositRequest = async (data: {
     utr: string;
     screenshotFile: File;
 }) => {
-    // 1. Upload screenshot to Firebase Storage
-    const screenshotRef = ref(storage, `deposits/${data.userId}/${Date.now()}_${data.screenshotFile.name}`);
+    // 1. Upload screenshot to Firebase Storage in a user-specific folder
+    const filePath = `deposits/${data.userId}/${Date.now()}_${data.screenshotFile.name}`;
+    const screenshotRef = ref(storage, filePath);
     const uploadResult = await uploadBytes(screenshotRef, data.screenshotFile);
     const screenshotUrl = await getDownloadURL(uploadResult.ref);
 
