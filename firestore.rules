@@ -28,52 +28,59 @@ service cloud.firestore {
       allow write: if isSuperAdmin();
     }
     
-    // Users can only manage their own documents
+    // Users collection
     match /users/{userId} {
+      // Read: self or admin
       allow read: if isAuth() && (request.auth.uid == userId || isAdmin());
       allow list: if isAdmin();
-      allow create: if isAuth() && request.auth.uid == userId;
+
+      // Create: self or admin
+      allow create: if isAuth() && (request.auth.uid == userId || isSuperAdmin());
+
+      // Update: self or admin
       allow update: if isAuth() && (request.auth.uid == userId || isAdmin());
+
+      // Delete: only superadmin
       allow delete: if isSuperAdmin();
 
-      // User-specific subcollections
-       match /userNotifications/{notificationId} {
+      // Subcollection: userNotifications
+      match /userNotifications/{notificationId} {
         allow read, write: if isAuth() && request.auth.uid == userId;
       }
     }
 
-    // Transactions can only be created by the user, and read only by the user or admin
+    // Transactions
     match /transactions/{transactionId} {
       allow read: if isAuth() && (resource.data.userId == request.auth.uid || isAdmin());
-      allow create: if isAuth(); // Allows user to create their own transaction logs
+      allow create: if isAuth(); // Allow any authenticated user to create a transaction log for themselves.
       allow update, delete: if isAdmin();
     }
 
-    // Games can be created, updated, and read by any authenticated user
+    // Games
     match /games/{gameId} {
-        allow read, list: if isAuth();
-        allow create, update: if isAuth();
-        allow delete: if isAdmin();
+      allow read, list: if isAuth();
+      allow create, update: if isAuth();
+      allow delete: if isAdmin();
     }
     
-    // Withdrawals can be created by the user, and managed by admin
+    // Withdrawals
     match /withdrawals/{withdrawalId} {
-        allow read: if isAuth();
-        allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
-        allow update, delete: if isAdmin();
+      allow read: if isAuth();
+      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin();
     }
     
-    // Deposits can be created by the user, and managed by admin
+    // Deposits
     match /deposits/{depositId} {
-        allow read: if isAuth();
-        allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
-        allow update, delete: if isAdmin();
+      allow read: if isAuth();
+      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin();
     }
     
-    // Tournaments can be read by anyone, but only managed by admin
+    // Tournaments
     match /tournaments/{tournamentId} {
-        allow read: if true;
-        allow create, update, delete: if isSuperAdmin();
+      allow read: if true;
+      allow create, update, delete: if isSuperAdmin();
     }
   }
 }

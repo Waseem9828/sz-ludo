@@ -3,36 +3,38 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-  
+
+    // Helper functions
     function isAuth() {
       return request.auth != null;
     }
-    
+
     function isSuperAdmin() {
       return request.auth.token.role == 'superadmin';
     }
 
-    // Banners: Public read, admin write
+    // Banners: Public read, only admin write
     match /banners/{allPaths=**} {
       allow read: if true;
-      allow write: if isSuperAdmin();
-    }
-    
-    // Tournaments: Public read, admin write
-    match /tournaments/{allPaths=**} {
-      allow read: if true;
-      allow write: if isSuperAdmin();
+      allow write: if isAuth() && isSuperAdmin();
     }
 
-    // Deposit screenshots: Only the user can upload to their own folder
+    // Tournaments: Public read, only admin write
+    match /tournaments/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAuth() && isSuperAdmin();
+    }
+
+    // Deposit Screenshots: Only the user can create, read, or delete their own screenshots.
     match /deposits/{userId}/{fileName} {
       allow read, write: if isAuth() && request.auth.uid == userId;
     }
     
-    // Game screenshots: Only authenticated users can upload
-    // A more secure rule would check if the user is a player in the gameId
+    // Game Screenshots: Only authenticated users can write. Read is public for simplicity if needed, but write is restricted.
     match /screenshots/{gameId}/{fileName} {
-      allow read, write: if isAuth();
+      allow write: if isAuth();
+      allow read: if true; 
     }
+
   }
 }
