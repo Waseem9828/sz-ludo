@@ -1,81 +1,73 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper functions
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    function isAdmin() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin';
-    }
-
-    // USER PROFILES
+  
+    // Users can only read and write to their own document.
+    // A user can create their own document upon signup.
     match /users/{userId} {
-      allow read: if isSignedIn() && (isOwner(userId) || isAdmin());
-      allow create: if isSignedIn() && isOwner(userId); // Allow user to create their own profile
-      allow update: if isSignedIn() && (isOwner(userId) || isAdmin());
-      // No one can delete user profiles for now
-      allow delete: if false;
-
-      // User-specific subcollections
+      allow read, update: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null;
+      
+      // Users can only read/write their own userNotifications subcollection
       match /userNotifications/{notificationId} {
-        allow read, write: if isSignedIn() && isOwner(userId);
+         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
     }
+    
+    // Admins have full access to all user data for management.
+    match /users/{userId} {
+      allow read, write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role IN ['superadmin', 'finance', 'support'];
+    }
 
-    // GAMES
+    // Games can be read by anyone logged in.
+    // Creation and updates are allowed for logged-in users.
     match /games/{gameId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn(); // User can create a game
-      allow update: if isSignedIn() && request.auth.uid in resource.data.playerUids; // Only players in the game can update it
-      allow delete: if isSignedIn() && request.auth.uid == resource.data.createdBy.uid; // Only creator can delete their 'challenge'
+      allow read, create, update: if request.auth != null;
+      allow delete: if request.auth != null && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin' ||
+        resource.data.createdBy.uid == request.auth.uid
+      );
     }
 
-    // DEPOSITS & WITHDRAWALS (Admin controlled)
-    match /deposits/{depositId} {
-       allow read, create: if isSignedIn(); // Users can create deposit requests
-       allow update: if isAdmin(); // Only admin can approve/reject
-    }
-
-    match /withdrawals/{withdrawalId} {
-       allow read, create: if isSignedIn(); // Users can create withdrawal requests
-       allow update: if isAdmin(); // Only admin can approve/reject
-    }
-    
-    // TRANSACTIONS
+    // Only allow users to create transactions for themselves.
+    // They can only read their own transactions.
     match /transactions/{transactionId} {
-        // User can create their own transaction record, but can't specify all fields
-        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-        // User can only read their own transactions. Admin can read all.
-        allow read: if isSignedIn() && (isOwner(resource.data.userId) || isAdmin());
-        // No one can update or delete transactions to maintain a clean record
-        allow update, delete: if false;
-    }
-
-    // NOTIFICATIONS (Admin write, users read)
-    match /notifications/{notificationId} {
-        allow read: if true;
-        allow write: if isAdmin();
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      
+      // Admins have full read access to all transactions.
+      allow read: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role IN ['superadmin', 'finance', 'support'];
     }
     
-    // TOURNAMENTS (Admin write, users read)
-    match /tournaments/{tournamentId} {
-        allow read: if true;
-        allow create, update, delete: if isAdmin();
+    // Deposit requests can only be read by admins.
+    match /deposits/{depositId} {
+        allow read, write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role IN ['superadmin', 'finance'];
+        allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+    
+    // Withdrawal requests can only be managed by admins.
+    match /withdrawals/{withdrawalId} {
+        allow read, write: if get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role IN ['superadmin', 'finance'];
+        allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
     }
 
-    // SETTINGS (Admin write, everyone read)
+    // Settings can be read by anyone, but only written by a superadmin.
     match /settings/{docId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin';
+    }
+    
+    // Notifications can be read by anyone, but only written by admins.
+    match /notifications/{notificationId} {
+        allow read: if true;
+        allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role IN ['superadmin', 'support'];
+    }
+    
+    // Tournaments can be read by anyone, but only managed by superadmin.
+    match /tournaments/{tournamentId} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin';
     }
   }
 }
