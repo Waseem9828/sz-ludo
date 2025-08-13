@@ -9,13 +9,13 @@ import { cn } from '@/lib/utils';
 import { Poppins, PT_Sans } from 'next/font/google';
 
 const poppins = Poppins({
-  subsets: ['latin'],
+  subsets: ['latin', 'latin-ext'],
   weight: ['400', '700', '900'],
   variable: '--font-headline',
 });
 
 const ptSans = PT_Sans({
-  subsets: ['latin'],
+  subsets: ['latin', 'latin-ext'],
   weight: ['400', '700'],
   variable: '--font-body',
 });
