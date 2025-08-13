@@ -207,7 +207,7 @@ export default function Header() {
             )}
             <Link href="/wallet">
               <Button variant="outline" className="h-9">
-                  <span className='mr-2'>&#8377;</span>
+                  <span className='mr-2'>₹</span>
                   <span>{totalBalance.toFixed(2)}</span>
               </Button>
             </Link>

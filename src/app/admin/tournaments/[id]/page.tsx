@@ -24,7 +24,7 @@ const StatCard = ({ title, value, icon: Icon }: { title: string, value: string |
         <div>
             <p className="text-sm text-muted-foreground">{title}</p>
             <p className="text-2xl font-bold">
-                {typeof value === 'string' && value.startsWith('₹') ? value : `₹${value}`}
+                {typeof value === 'string' && value.startsWith('₹') ? value : typeof value === 'string' && value.endsWith('%') ? value : `₹${value}`}
             </p>
         </div>
     </div>
