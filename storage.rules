@@ -3,38 +3,45 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-
-    // Helper functions
+    
+    // Helper function to check if a user is authenticated
     function isAuth() {
       return request.auth != null;
     }
-
-    function isSuperAdmin() {
-      return request.auth.token.role == 'superadmin';
+    
+    // Helper function to check if the user is an admin
+    function isAdmin() {
+      return isAuth() && request.auth.token.role in ['superadmin', 'finance', 'support'];
     }
 
-    // Banners: Public read, only admin write
+    // Banners can be read by anyone, but only written by admins.
     match /banners/{allPaths=**} {
       allow read: if true;
-      allow write: if isAuth() && isSuperAdmin();
+      allow write: if isAdmin();
     }
-
-    // Tournaments: Public read, only admin write
+    
+    // Tournament images can be read by anyone, but only written by admins.
     match /tournaments/{allPaths=**} {
-      allow read: if true;
-      allow write: if isAuth() && isSuperAdmin();
+        allow read: if true;
+        allow write: if isAdmin();
     }
 
-    // Deposit Screenshots: Only the user can create, read, or delete their own screenshots.
+    // Users can upload their own deposit screenshots into their own folder.
+    // This path matches the code in `src/lib/firebase/deposits.ts`.
     match /deposits/{userId}/{fileName} {
       allow read, write: if isAuth() && request.auth.uid == userId;
     }
     
-    // Game Screenshots: Only authenticated users can write. Read is public for simplicity if needed, but write is restricted.
+    // Users can upload their own game result screenshots.
+    // The gameId in the path provides context. Only players of that game can upload.
     match /screenshots/{gameId}/{fileName} {
-      allow write: if isAuth();
-      allow read: if true; 
+      allow read: if isAuth(); // Allow admins or players to read. A more secure rule would check game document.
+      allow write: if isAuth() && exists(/databases/$(database)/documents/games/$(gameId)) && request.auth.uid in get(/databases/$(database)/documents/games/$(gameId)).data.playerUids;
     }
 
+    // Default deny all other paths
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
   }
 }
