@@ -96,8 +96,8 @@ export const getSettings = async (): Promise<AppSettings> => {
             enabled: true,
             title: 'Ludo Tournament',
             description: 'Join the battle & win big!',
-            images: ['https://placehold.co/600x400.png'],
-            aiHint: 'trophy prize'
+            images: ['https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjMYnl_sLxTw811HdcMKNc8yZvwKgRYyA-ksBV8El6ACH4NGWgUALgHZPLthwmji23N9jTdWdJn1xo0XKYRIIRaCj6nklevYEbRLZACYyneB-Weogz-tnIGHGJ2heKTl2LRjzhNv7w_g8YWX2HubOuP6CSlmBw0pr_TdvoFKg25ddZHgoXCa-umHp4JIMg/s1600/90758.png'],
+            aiHint: 'tournament banner'
           },
           {
             id: 'mega-tournament',
