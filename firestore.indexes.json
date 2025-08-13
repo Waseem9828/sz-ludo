@@ -6,24 +6,6 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "type",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "games",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
           "fieldPath": "playerUids",
           "arrayConfig": "CONTAINS"
         },
@@ -42,18 +24,10 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "lastUpdatedAt",
-          "order": "ASCENDING"
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
         }
       ]
-    },
-    {
-        "collectionGroup": "games",
-        "queryScope": "COLLECTION",
-        "fields": [
-            { "fieldPath": "status", "order": "ASCENDING" },
-            { "fieldPath": "createdAt", "order": "DESCENDING" }
-        ]
     },
     {
       "collectionGroup": "games",
@@ -61,11 +35,11 @@
       "fields": [
         {
           "fieldPath": "status",
-          "arrayConfig": "CONTAINS"
+          "order": "ASCENDING"
         },
         {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
+          "fieldPath": "lastUpdatedAt",
+          "order": "ASCENDING"
         }
       ]
     },
@@ -90,20 +64,6 @@
         {
           "fieldPath": "status",
           "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "transactions",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "status",
-          "arrayConfig": "CONTAINS"
         },
         {
           "fieldPath": "createdAt",
