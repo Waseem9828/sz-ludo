@@ -1,99 +1,100 @@
-
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Helper functions
-    function isAuth() {
-      return request.auth != null;
-    }
-
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-    
+  
+    // Helper function to check for admin roles
     function isAdmin() {
-      // Check the role of the currently authenticated user from their document in the 'users' collection.
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['superadmin', 'finance', 'support'];
     }
 
-    // Users Collection
+    // Rules for the 'users' collection
     match /users/{userId} {
-      // A new user can create their own document.
-      allow create: if isAuth() && isOwner(userId);
-      // A user can read their own data. Admins can read any user's data.
-      allow get: if isAuth() && (isOwner(userId) || isAdmin());
-      // A user can update their own data. Admins can update any user's data.
-      allow update: if isAuth() && (isOwner(userId) || isAdmin());
-      // No one can delete a user document from the client-side.
-      allow delete: if false;
+      // Admins can read any user profile. Users can only read their own.
+      allow get: if request.auth.uid == userId || isAdmin();
       
-      // Rules for the userNotifications subcollection within each user document.
+      // Admins can list all users. This is crucial for the admin panel.
+      allow list: if isAdmin();
+      
+      // A user can only create their own document.
+      allow create: if request.auth.uid == userId;
+      
+      // Admins can update any user. Users can only update their own profile.
+      allow update: if request.auth.uid == userId || isAdmin();
+      
+      // No user should be able to delete their account directly through the client.
+      allow delete: if false;
+
+      // Subcollection for user notifications
       match /userNotifications/{notificationId} {
-        // A user can read and write to their own notification status subcollection.
-        allow read, write: if isAuth() && isOwner(userId);
+        allow read, write: if request.auth.uid == userId;
       }
     }
 
-    // Games Collection
+    // Rules for the 'games' collection
     match /games/{gameId} {
-      // Any authenticated user can view the list of games or get a specific game.
-      allow list, get: if isAuth();
-      // Any authenticated user can create a new game.
-      allow create: if isAuth();
-      // An admin or one of the players in the game can update it.
-      allow update: if isAuth() && (isAdmin() || request.auth.uid in resource.data.playerUids);
-      // The creator can delete a 'challenge' game. An admin can delete any game.
-      allow delete: if isAuth() && (isAdmin() || (resource.data.status == 'challenge' && resource.data.createdBy.uid == request.auth.uid));
+      // Any authenticated user can view or list games.
+      allow get, list: if request.auth.uid != null;
+      
+      // Any authenticated user can create a game.
+      allow create: if request.auth.uid != null;
+      
+      // Only players in the game or an admin can update it.
+      allow update: if request.auth.uid in resource.data.playerUids || isAdmin();
+      
+      // Only the creator of a challenge or an admin can delete it.
+      allow delete: if request.auth.uid == resource.data.createdBy.uid || isAdmin();
     }
 
-    // Transactions Collection
+    // Rules for the 'transactions' collection
     match /transactions/{transactionId} {
-      // A user can create a transaction record for themselves.
-      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
-      // A user can see their own transactions. An admin can see any transaction.
-      allow get, list: if isAuth() && (isAdmin() || isOwner(resource.data.userId));
+       // A user can create their own transaction record.
+       allow create: if request.auth.uid == request.resource.data.userId;
+
+       // A user can only read their own transactions. Admins can read any.
+       allow get, list: if request.auth.uid == resource.data.userId || isAdmin();
+       
+       // Transactions cannot be updated or deleted by clients.
+       allow update, delete: if false;
     }
 
-    // Settings Collection
-    match /settings/{docId} {
-      // Anyone can read the application settings.
-      allow get: if true;
-      // Only admins can change the settings.
-      allow write: if isAuth() && isAdmin();
-    }
-    
-    // Notifications Collection
-    match /notifications/{notificationId} {
-      // Anyone can read notifications.
-      allow get, list: if true;
-      // Only admins can create or change notifications.
-      allow write: if isAuth() && isAdmin();
-    }
-    
-    // Withdrawals Collection
-    match /withdrawals/{withdrawalId} {
-      // A user can create their own withdrawal request.
-      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
-      // Admins can view and manage all withdrawal requests.
-      allow get, list, update: if isAuth() && isAdmin();
-    }
-    
-    // Deposits Collection
+    // Rules for the 'deposits' collection (manual deposits)
     match /deposits/{depositId} {
-      // A user can create their own deposit request.
-      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
-      // Admins can view and manage all deposit requests.
-      allow get, list, update: if isAuth() && isAdmin();
+      // Users can create their own deposit requests.
+      allow create: if request.auth.uid == request.resource.data.userId;
+
+      // Only admins can read, update or delete deposit requests.
+      allow read, update, delete: if isAdmin();
     }
 
-    // Tournaments Collection
+    // Rules for the 'withdrawals' collection
+    match /withdrawals/{withdrawalId} {
+        // Users can create their own withdrawal requests.
+        allow create: if request.auth.uid == request.resource.data.userId;
+        
+        // Only admins can read, update, or delete withdrawal requests.
+        allow read, update, delete: if isAdmin();
+    }
+
+    // Rules for general app settings
+    match /settings/app-config {
+      // Anyone can read the settings.
+      allow get: if true;
+      // Only admins can write/update the settings.
+      allow write: if isAdmin();
+    }
+
+    // Rules for notifications
+    match /notifications/{notificationId} {
+        // Anyone can read notifications.
+        allow read: if true;
+        // Only admins can create/update/delete notifications.
+        allow write: if isAdmin();
+    }
+    
+    // Rules for tournaments
     match /tournaments/{tournamentId} {
-        // Anyone authenticated can read tournament data.
-        allow get, list: if isAuth();
-        // Only admins can create, update, or delete tournaments.
-        allow write, delete: if isAuth() && isAdmin();
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
     }
   }
 }
