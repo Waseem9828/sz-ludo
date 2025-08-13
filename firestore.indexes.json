@@ -24,12 +24,12 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
+          "fieldPath": "lastUpdatedAt",
+          "order": "ASCENDING"
         }
       ]
     },
-    {
+     {
       "collectionGroup": "games",
       "queryScope": "COLLECTION",
       "fields": [
@@ -38,8 +38,8 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "lastUpdatedAt",
-          "order": "ASCENDING"
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
         }
       ]
     },
