@@ -119,11 +119,11 @@ export default function TournamentsPage() {
                                     <TableRow key={t.id} >
                                         <TableCell className="font-medium hover:underline cursor-pointer whitespace-nowrap" onClick={() => router.push(`/admin/tournaments/${t.id}`)}>{t.title}</TableCell>
                                         <TableCell><Badge variant={getStatusVariant(t.status)}>{t.status}</Badge></TableCell>
-                                        <TableCell>
+                                        <TableCell className="font-sans">
                                             ₹{t.entryFee}
                                         </TableCell>
                                         <TableCell>{t.players.length} / {t.playerCap}</TableCell>
-                                        <TableCell>
+                                        <TableCell className="font-sans">
                                             ₹{t.prizePool.toFixed(2)}
                                         </TableCell>
                                         <TableCell className="whitespace-nowrap">{format(t.startTime.toDate(), 'PPpp')}</TableCell>

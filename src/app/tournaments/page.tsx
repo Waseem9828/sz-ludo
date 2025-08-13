@@ -110,7 +110,7 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
                         { label: 'Slots', value: `${tournament.players.length}/${tournament.playerCap}` },
                     ].map(item => (
                         <div key={item.label} className="bg-white/10 dark:bg-black/20 p-2 rounded-lg text-center text-gray-900 dark:text-white">
-                        <strong className="block text-base">
+                        <strong className="block text-base font-sans">
                             {item.value}
                         </strong>
                         <small className="block text-xs text-gray-700 dark:text-gray-400">{item.label}</small>
@@ -128,7 +128,7 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
                                 <AlertDialogHeader>
                                     <AlertDialogTitle>Confirm to Join "{tournament.title}"?</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                        An entry fee of <span className='font-bold'>₹{tournament.entryFee}</span> will be deducted from your wallet balance. This action cannot be undone.
+                                        An entry fee of <span className='font-bold font-sans'>₹{tournament.entryFee}</span> will be deducted from your wallet balance. This action cannot be undone.
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
@@ -193,7 +193,7 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
                                 <div className="flex-1">
                                     <div className="font-bold text-gray-800 dark:text-gray-200">Rank {item.rank} Prize</div>
                                 </div>
-                                <div className="font-black text-lg text-red-700 dark:text-red-400">
+                                <div className="font-black text-lg text-red-700 dark:text-red-400 font-sans">
                                     {item.amount}
                                 </div>
                             </div>

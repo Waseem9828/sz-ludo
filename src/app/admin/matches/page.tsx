@@ -96,7 +96,7 @@ export default function MatchesPage() {
                 {matches.map((match) => (
                 <TableRow key={match.id}>
                     <TableCell className="whitespace-nowrap">{match.player1?.displayName} vs {match.player2?.displayName || 'N/A'}</TableCell>
-                    <TableCell>
+                    <TableCell className="font-sans">
                         ₹{match.amount}
                     </TableCell>
                     <TableCell className="whitespace-nowrap">{getWinnerDisplayName(match)}</TableCell>

@@ -27,7 +27,7 @@ const MetricCard = ({ icon, label, value }: { icon?: React.ReactNode, label: str
                 {icon}
                 <span>{label}</span>
             </div>
-            <p className="text-lg font-bold mt-1">
+            <p className="text-lg font-bold mt-1 font-sans">
                 {typeof value === 'string' && value.startsWith('₹') ? value : typeof value === 'number' ? `₹${value.toFixed(2)}` : value}
             </p>
         </CardContent>
@@ -203,7 +203,7 @@ export default function ProfilePage() {
                                 value={appUser.lifetimeStats?.totalWinnings || 0}
                             />
                             <MetricCard icon={<Gift className="h-4 w-4" />} label="Referral Earning" value={appUser.referralStats?.totalEarnings || 0} />
-                            <MetricCard icon={<AlertCircle className="h-4 w-4" />} label="Penalty" value={`₹0`} />
+                            <MetricCard icon={<AlertCircle className="h-4 w-4" />} label="Penalty" value={"₹0"} />
                         </div>
                     </CardContent>
                 </Card>

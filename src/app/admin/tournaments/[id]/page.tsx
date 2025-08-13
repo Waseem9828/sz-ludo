@@ -23,7 +23,7 @@ const StatCard = ({ title, value, icon: Icon }: { title: string, value: string |
         <Icon className="h-8 w-8 text-muted-foreground mr-4" />
         <div>
             <p className="text-sm text-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold">
+            <p className="text-2xl font-bold font-sans">
                 {typeof value === 'string' && value.startsWith('₹') ? value : typeof value === 'string' && value.endsWith('%') ? value : `₹${value}`}
             </p>
         </div>
@@ -204,8 +204,8 @@ export default function TournamentDetailPage() {
                                     <TableRow key={index}>
                                         <TableCell className="font-medium">{row.rank}</TableCell>
                                         <TableCell>{row.percentage}</TableCell>
-                                        <TableCell>{row.amountPerPlayer}</TableCell>
-                                        <TableCell>{row.totalAmountForRange}</TableCell>
+                                        <TableCell className="font-sans">{row.amountPerPlayer}</TableCell>
+                                        <TableCell className="font-sans">{row.totalAmountForRange}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>

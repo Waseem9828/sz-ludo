@@ -105,7 +105,7 @@ export default function HistoryPage() {
                                                         <div className="font-medium">{opponent?.displayName || 'N/A'}</div>
                                                         <div className="text-xs text-muted-foreground">{new Date(game.createdAt?.toDate()).toLocaleDateString()}</div>
                                                     </TableCell>
-                                                    <TableCell className="font-bold">
+                                                    <TableCell className="font-bold font-sans">
                                                         ₹{game.amount}
                                                     </TableCell>
                                                     <TableCell>
@@ -150,7 +150,7 @@ export default function HistoryPage() {
                                                 <TableCell className="text-xs">{new Date(tx.createdAt?.toDate()).toLocaleString()}</TableCell>
                                                 <TableCell className={`font-bold flex items-center gap-1 ${isCredit(tx.type) ? 'text-success' : 'text-destructive'}`}>
                                                     {isCredit(tx.type) ? <TrendingUp size={14}/> : <TrendingDown size={14}/>}
-                                                    ₹{tx.amount.toFixed(2)}
+                                                    <span className="font-sans">₹{tx.amount.toFixed(2)}</span>
                                                 </TableCell>
                                                 <TableCell><Badge variant="secondary">{tx.type.replace(/_/g, ' ')}</Badge></TableCell>
                                                 <TableCell><Badge variant={getStatusBadgeVariant(tx.status)}>{tx.status}</Badge></TableCell>

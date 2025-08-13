@@ -65,9 +65,9 @@ export default function SupportPage() {
                         <Accordion type="single" collapsible className="w-full">
                             {faqs.map((faq, index) => (
                                 <AccordionItem key={index} value={`item-${index}`}>
-                                    <AccordionTrigger>{faq.question}</AccordionTrigger>
+                                    <AccordionTrigger>{faq.question.replace('₹300', '<span class="font-sans">₹300</span>')}</AccordionTrigger>
                                     <AccordionContent>
-                                        {faq.answer}
+                                        <div dangerouslySetInnerHTML={{ __html: faq.answer.replace('₹300', '<span class="font-sans">₹300</span>') }} />
                                     </AccordionContent>
                                 </AccordionItem>
                             ))}

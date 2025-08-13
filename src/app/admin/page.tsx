@@ -162,7 +162,7 @@ export default function AdminDashboardPage() {
                         <kpi.icon className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{kpi.value}</div>
+                        <div className="text-2xl font-bold font-sans">{kpi.value}</div>
                     </CardContent>
                 </Card>
             ))}
@@ -189,6 +189,7 @@ export default function AdminDashboardPage() {
                           axisLine={false}
                           tickMargin={10}
                           tickFormatter={(value) => `₹${value / 1000}k`}
+                          className="font-sans"
                         />
                         <ChartTooltip 
                            cursor={false}
@@ -224,7 +225,7 @@ export default function AdminDashboardPage() {
                                         {tx.userName}
                                       </Link>
                                     </TableCell>
-                                    <TableCell>₹{tx.amount}</TableCell>
+                                    <TableCell className="font-sans">₹{tx.amount}</TableCell>
                                     <TableCell><Badge variant={getTypeBadgeVariant(tx.type)}>{tx.type.replace(/_/g, ' ')}</Badge></TableCell>
                                     <TableCell><Badge variant={getStatusBadgeVariant(tx.status)}>{tx.status}</Badge></TableCell>
                                 </TableRow>

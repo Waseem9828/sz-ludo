@@ -133,19 +133,19 @@ export default function AgentsPage() {
                                 <TableRow key={agent.uid}>
                                     <TableCell className="font-medium whitespace-nowrap">{agent.displayName}</TableCell>
                                     <TableCell>
-                                        <div className="flex items-center gap-2 font-bold text-lg whitespace-nowrap">
+                                        <div className="flex items-center gap-2 font-bold text-lg whitespace-nowrap font-sans">
                                             <Wallet className="h-5 w-5 text-muted-foreground" />
                                             <span>₹{(agent.agentWallet?.balance || 0).toFixed(2)}</span>
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        <div className="flex items-center gap-2 text-success whitespace-nowrap">
+                                        <div className="flex items-center gap-2 text-success whitespace-nowrap font-sans">
                                             <TrendingUp className="h-5 w-5" />
                                              <span>₹{(agent.agentWallet?.totalIn || 0).toFixed(2)}</span>
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        <div className="flex items-center gap-2 text-destructive whitespace-nowrap">
+                                        <div className="flex items-center gap-2 text-destructive whitespace-nowrap font-sans">
                                             <TrendingDown className="h-5 w-5" />
                                              <span>₹{(agent.agentWallet?.totalOut || 0).toFixed(2)}</span>
                                         </div>

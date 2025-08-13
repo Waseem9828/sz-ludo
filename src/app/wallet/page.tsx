@@ -153,7 +153,7 @@ export default function WalletPage() {
                 <Card>
                     <CardHeader className="text-center">
                         <CardDescription>Total Balance</CardDescription>
-                        <CardTitle className="text-4xl font-bold">
+                        <CardTitle className="text-4xl font-bold font-sans">
                             ₹{totalBalance.toFixed(2)}
                         </CardTitle>
                     </CardHeader>
@@ -180,7 +180,7 @@ export default function WalletPage() {
                             <CardDescription className="text-center">Available for Gameplay</CardDescription>
                         </CardHeader>
                         <CardContent className="text-center space-y-4">
-                            <p className="text-3xl font-bold">
+                            <p className="text-3xl font-bold font-sans">
                                 ₹{(appUser.wallet?.balance || 0).toFixed(2)}
                             </p>
                             <Link href="/wallet/add-cash">
@@ -198,7 +198,7 @@ export default function WalletPage() {
                             <CardDescription className="text-center">Withdrawable Balance</CardDescription>
                         </CardHeader>
                         <CardContent className="text-center space-y-4">
-                            <p className="text-3xl font-bold">
+                            <p className="text-3xl font-bold font-sans">
                                 ₹{(appUser.wallet?.winnings || 0).toFixed(2)}
                             </p>
                             <Dialog open={isWithdrawDialogOpen} onOpenChange={setIsWithdrawDialogOpen}>
@@ -212,12 +212,12 @@ export default function WalletPage() {
                                     <DialogHeader>
                                         <DialogTitle>Request Withdrawal</DialogTitle>
                                         <DialogDescription>
-                                            Enter the amount you wish to withdraw from your winnings of ₹{(appUser.wallet?.winnings || 0).toFixed(2)}.
+                                            Enter the amount you wish to withdraw from your winnings of <span className="font-sans">₹{(appUser.wallet?.winnings || 0).toFixed(2)}</span>.
                                         </DialogDescription>
                                     </DialogHeader>
                                     <div className="space-y-4">
                                          <div>
-                                            <Label htmlFor="withdraw-amount">Amount (Min: ₹300, Max: ₹10,000)</Label>
+                                            <Label htmlFor="withdraw-amount">Amount (Min: <span className="font-sans">₹300</span>, Max: <span className="font-sans">₹10,000</span>)</Label>
                                             <Input
                                                 id="withdraw-amount"
                                                 type="number"
@@ -233,7 +233,7 @@ export default function WalletPage() {
                                                     variant="outline"
                                                     onClick={() => setWithdrawAmount(qAmount.toString())}
                                                 >
-                                                    ₹{qAmount}
+                                                    <span className="font-sans">₹{qAmount}</span>
                                                 </Button>
                                             ))}
                                         </div>
@@ -258,7 +258,7 @@ export default function WalletPage() {
                                 </DialogContent>
                             </Dialog>
                              {isKycPending && <p className="text-xs text-destructive mt-2">KYC verification required to withdraw.</p>}
-                             {!isKycPending && (appUser.wallet?.winnings || 0) < 300 && <p className="text-xs text-muted-foreground mt-2">Minimum withdrawal is ₹300.</p>}
+                             {!isKycPending && (appUser.wallet?.winnings || 0) < 300 && <p className="text-xs text-muted-foreground mt-2">Minimum withdrawal is <span className="font-sans">₹300</span>.</p>}
                         </CardContent>
                     </Card>
                 </div>
@@ -289,7 +289,7 @@ export default function WalletPage() {
                                                 <div className="font-medium">{opponent?.displayName || 'N/A'}</div>
                                                 <div className="text-xs text-muted-foreground">{new Date(game.createdAt?.toDate()).toLocaleDateString()}</div>
                                             </TableCell>
-                                            <TableCell className="font-bold">
+                                            <TableCell className="font-bold font-sans">
                                                  ₹{game.amount}
                                             </TableCell>
                                             <TableCell>
@@ -333,7 +333,7 @@ export default function WalletPage() {
                                         <TableCell className="text-xs">{new Date(tx.createdAt?.toDate()).toLocaleString()}</TableCell>
                                         <TableCell className={`font-bold flex items-center gap-1 ${isCredit(tx.type) ? 'text-success' : 'text-destructive'}`}>
                                             {isCredit(tx.type) ? <TrendingUp size={14}/> : <TrendingDown size={14}/>}
-                                            ₹{tx.amount.toFixed(2)}
+                                            <span className="font-sans">₹{tx.amount.toFixed(2)}</span>
                                         </TableCell>
                                         <TableCell><Badge variant="secondary">{tx.type.replace(/_/g, ' ')}</Badge></TableCell>
                                         <TableCell><Badge variant={getStatusBadgeVariant(tx.status)}>{tx.status}</Badge></TableCell>

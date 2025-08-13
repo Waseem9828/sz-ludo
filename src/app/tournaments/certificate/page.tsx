@@ -191,7 +191,7 @@ const CertificatePage = () => {
                     .wallpaper .player-box{width:100%;display:flex;flex-direction:column;gap:8px;align-items:center;margin-top:6px; z-index: 1;}
                     .wallpaper .player-name{font-size:20px;font-weight:900;text-shadow:0 10px 30px rgba(0,0,0,0.22)}
                     .wallpaper .player-meta{display:flex;gap:10px;margin-top:4px}
-                    .wallpaper .meta-badge{padding:8px 12px;border-radius:12px;font-weight:800;}
+                    .wallpaper .meta-badge{padding:8px 12px;border-radius:12px;font-weight:800; font-family: sans-serif;}
                     .wallpaper .stats{display:flex;justify-content:space-between;gap:8px;margin-top:auto; z-index: 1;}
                     .wallpaper .stat{flex:1;padding:8px;border-radius:12px;text-align:center}
                     .wallpaper .stat b{display:block;font-size:14px;font-weight:900;}
@@ -319,7 +319,7 @@ const CertificatePage = () => {
                                      <RadioGroupItem value={template.id} id={template.id} className="sr-only" />
                                      <template.icon className="h-5 w-5 mb-1" />
                                      <span className="text-sm font-medium">{template.name}</span>
-                                     <span className="text-xs font-bold text-primary">
+                                     <span className="text-xs font-bold text-primary font-sans">
                                         {isWinner ? 'FREE' : template.cost === 0 ? 'FREE' : `₹${template.cost}`}
                                     </span>
                                 </Label>
@@ -347,7 +347,7 @@ const CertificatePage = () => {
                                 <Button ref={downloadBtnRef} className="w-full" onClick={handleDownload}>Download PNG</Button>
                                 
                                 {!isWinner && templates.find(t => t.id === selectedTemplate)!.cost > 0 && (
-                                    <p className="text-xs text-center text-destructive mt-2">
+                                    <p className="text-xs text-center text-destructive mt-2 font-sans">
                                         Note: A fee of ₹{templates.find(t => t.id === selectedTemplate)!.cost} will be charged to generate this certificate.
                                     </p>
                                 )}

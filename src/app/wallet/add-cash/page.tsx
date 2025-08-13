@@ -141,7 +141,7 @@ function AddCashPageComponent() {
                                 <Image src={qrCodeUrl} alt="UPI QR Code" width={250} height={250} data-ai-hint="qr code"/>
                             </div>
                         )}
-                        <div className="text-2xl font-bold">
+                        <div className="text-2xl font-bold font-sans">
                             Pay: ₹{amount}
                         </div>
                         <div className="text-sm text-muted-foreground">
@@ -200,7 +200,7 @@ function AddCashPageComponent() {
                     <CheckCircle className="h-20 w-20 text-green-500 mx-auto animate-pulse"/>
                     <CardTitle className="text-center text-2xl font-semibold text-green-600">Request Submitted!</CardTitle>
                     <CardDescription className="text-center">
-                        Your deposit request for ₹{amount} has been received. Please wait 5-10 minutes for verification. Your wallet will be updated automatically.
+                        Your deposit request for <span className="font-sans">₹{amount}</span> has been received. Please wait 5-10 minutes for verification. Your wallet will be updated automatically.
                     </CardDescription>
                      <Link href="/wallet">
                         <Button className="w-full">Go to Wallet</Button>
@@ -218,7 +218,7 @@ function AddCashPageComponent() {
                 <CardContent className="space-y-6">
                   <div className="space-y-4">
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-sans">
                         ₹
                       </span>
                       <Input
@@ -240,7 +240,7 @@ function AddCashPageComponent() {
                           disabled={isLoadingUpi}
                           className={`flex-col h-auto ${amount === qAmount.toString() ? 'border-primary' : ''}`}
                         >
-                          ₹{qAmount}
+                          <span className="font-sans">₹{qAmount}</span>
                         </Button>
                       ))}
                     </div>
@@ -254,25 +254,25 @@ function AddCashPageComponent() {
                           <CardTitle className="text-center text-lg text-primary">Summary</CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-3 text-sm">
-                      <div className="flex justify-between">
+                      <div className="flex justify-between font-sans">
                               <span>Deposit Amount (Excl. Govt. Tax) A</span>
                               <span>₹{summary.depositAmount}</span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex justify-between font-sans">
                               <span>Govt. Tax (28% GST)</span>
                               <span>₹{summary.taxAmount}</span>
                       </div>
                       <hr/>
-                      <div className="flex justify-between font-bold">
+                      <div className="flex justify-between font-bold font-sans">
                               <span>Total</span>
                               <span>₹{summary.total}</span>
                       </div>
-                      <div className="flex justify-between text-success">
+                      <div className="flex justify-between text-success font-sans">
                               <span>Cashback Bonus B</span>
                               <span>₹{summary.cashback}</span>
                       </div>
                       <hr/>
-                      <div className="flex justify-between font-bold">
+                      <div className="flex justify-between font-bold font-sans">
                               <span>Add To Wallet Balance (A + B)</span>
                               <span>₹{summary.walletBalance}</span>
                       </div>

@@ -121,7 +121,7 @@ export default function DepositsPage() {
                             {request.userName}
                             </Link>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="font-sans">
                             ₹{request.amount}
                         </TableCell>
                         <TableCell>{request.utr}</TableCell>
@@ -145,7 +145,7 @@ export default function DepositsPage() {
                                 <div className="mt-4 space-y-4">
                                 <div className="text-sm">
                                     <p><span className="font-semibold">User:</span> {request.userName}</p>
-                                    <p><span className="font-semibold">Amount:</span> ₹{request.amount}</p>
+                                    <p><span className="font-semibold">Amount:</span> <span className="font-sans">₹{request.amount}</span></p>
                                     <p><span className="font-semibold">UTR:</span> {request.utr}</p>
                                     <p><span className="font-semibold">Paid to UPI:</span> {request.upiId}</p>
                                 </div>

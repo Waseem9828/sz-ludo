@@ -391,7 +391,7 @@ function GamePageComponent() {
                             <span className="font-semibold">{appUser.displayName}</span>
                         </div>
                         <div className="text-center">
-                            <div className="font-bold text-red-600 mt-1">
+                            <div className="font-bold text-red-600 mt-1 font-sans">
                                 ₹{game.amount}
                             </div>
                              <Image src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEilS2_YhPAJBDjdcIRsoMJLTWafsJuIyola3KN50zXQAZYWSSIbhLhWhOJGMG6UYkUB5ZOiVKgsy2bVstr2af0LVf2g-eWjXHnGO4Z0IbaePP4E7TSDB9x_eK8OqTidX968zc5Wn9p6uGlkLoD9iglU3KZ28_2IbXgl29zHTZgwxzMWPvbN6zhA5AhyH7s/s1600/74920.png" alt="vs" width={32} height={16} className="mx-auto" data-ai-hint="versus icon" />
@@ -463,7 +463,7 @@ function GamePageComponent() {
                             <TableBody>
                                 {penalties.map((penalty, index) => (
                                     <TableRow key={index} className={index % 2 === 0 ? 'bg-muted/50' : 'bg-card'}>
-                                        <TableCell className="font-medium">
+                                        <TableCell className="font-medium font-sans">
                                             {penalty.amount}
                                         </TableCell>
                                         <TableCell>{penalty.reason}</TableCell>

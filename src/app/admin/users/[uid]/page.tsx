@@ -25,7 +25,7 @@ const StatCard = ({ title, value, icon: Icon }: { title: string, value: string |
         <Icon className="h-8 w-8 text-muted-foreground mr-4" />
         <div>
             <p className="text-sm text-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold">{value}</p>
+            <p className="text-2xl font-bold font-sans">{value}</p>
         </div>
     </div>
 );
@@ -408,7 +408,7 @@ export default function UserProfilePage() {
                                 <TableRow key={tx.id}>
                                     <TableCell>{tx.createdAt?.toDate().toLocaleString()}</TableCell>
                                     <TableCell><Badge variant="secondary">{tx.type.replace(/_/g, ' ')}</Badge></TableCell>
-                                    <TableCell>₹{tx.amount.toFixed(2)}</TableCell>
+                                    <TableCell className="font-sans">₹{tx.amount.toFixed(2)}</TableCell>
                                     <TableCell><Badge>{tx.status}</Badge></TableCell>
                                     <TableCell>{tx.notes || tx.relatedId || 'N/A'}</TableCell>
                                 </TableRow>

@@ -285,7 +285,7 @@ export default function SettingsPage() {
                                         <Label>Daily Progress</Label>
                                         <div className="flex items-center gap-4 mt-1">
                                             <Progress value={progress} className="w-full" />
-                                            <span className="text-sm font-mono whitespace-nowrap">₹{upi.currentAmount.toLocaleString()} / ₹{upi.limit.toLocaleString()}</span>
+                                            <span className="text-sm font-mono whitespace-nowrap font-sans">₹{upi.currentAmount.toLocaleString()} / ₹{upi.limit.toLocaleString()}</span>
                                         </div>
                                     </div>
                                     <Button variant="ghost" size="icon" className="absolute top-2 right-2 text-destructive" onClick={() => removeUpiId(index)}>

@@ -143,7 +143,7 @@ export default function WinningsPage() {
                     return (
                 <TableRow key={match.id}>
                     <TableCell className="whitespace-nowrap">{`${match.player1?.displayName} vs ${match.player2?.displayName}`}</TableCell>
-                    <TableCell>
+                    <TableCell className="font-sans">
                         ₹{match.amount}
                     </TableCell>
                     <TableCell className="whitespace-nowrap">{match.winner === match.player1.uid ? match.player1.displayName : match.player2?.displayName || 'N/A'}</TableCell>
@@ -190,7 +190,7 @@ export default function WinningsPage() {
                                         <CardHeader className="p-4">
                                             <CardTitle className="text-base">Payout Calculation</CardTitle>
                                         </CardHeader>
-                                        <CardContent className="p-4 text-sm space-y-2">
+                                        <CardContent className="p-4 text-sm space-y-2 font-sans">
                                             <div className="flex justify-between">
                                                 <span className="text-muted-foreground">Prize Pool:</span>
                                                 <span className="font-medium">₹{prizePool.toFixed(2)}</span>

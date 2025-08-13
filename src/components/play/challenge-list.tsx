@@ -172,7 +172,7 @@ export default function ChallengeList() {
                                 </div>
                             </div>
                             <div className="text-right">
-                                <p className="text-xl text-red-600 font-bold">
+                                <p className="text-xl text-red-600 font-bold font-sans">
                                     ₹{challenge.amount}
                                 </p>
                             </div>

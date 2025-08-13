@@ -148,7 +148,7 @@ export default function WithdrawalsPage() {
                 <CardTitle className="text-accent">Your Agent Wallet</CardTitle>
                 <AlertDescription>
                     Your current balance for paying out withdrawals is 
-                    <span className="font-bold text-lg">
+                    <span className="font-bold text-lg font-sans">
                         ₹{(adminUser.agentWallet?.balance || 0).toFixed(2)}
                     </span>.
                     You cannot approve withdrawals exceeding this amount.
@@ -192,7 +192,7 @@ export default function WithdrawalsPage() {
                             </div>
                         </Link>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="font-sans">
                         ₹{withdrawal.amount}
                     </TableCell>
                     <TableCell className="whitespace-nowrap">{withdrawal.upiId}</TableCell>
@@ -201,7 +201,7 @@ export default function WithdrawalsPage() {
                         <Badge variant={getKycBadgeVariant(withdrawal.user?.kycStatus)}>{withdrawal.user?.kycStatus || 'N/A'}</Badge>
                     </TableCell>
                     <TableCell>
-                        <div className="space-y-1 text-xs whitespace-nowrap">
+                        <div className="space-y-1 text-xs whitespace-nowrap font-sans">
                             <div className="flex items-center gap-1 text-success">
                             <TrendingUp size={14}/>
                             <span>
@@ -244,7 +244,7 @@ export default function WithdrawalsPage() {
                                 <div className="text-sm">
                                     <p><span className="font-semibold">User:</span> {withdrawal.userName}</p>
                                     <p><span className="font-semibold">UPI ID:</span> {withdrawal.upiId}</p>
-                                    <p className="text-2xl font-bold">
+                                    <p className="text-2xl font-bold font-sans">
                                         Pay: ₹{withdrawal.amount}
                                     </p>
                                 </div>
