@@ -105,6 +105,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
   
   const signUp = async (email:string, password:string, name:string, phone:string, referralCode?: string) => {
+    // Preliminary validation
     const methods = await fetchSignInMethodsForEmail(auth, email);
     if (methods.length > 0) {
       throw new Error('This email address is already in use.');
@@ -113,19 +114,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const usersRef = collection(db, "users");
     const phoneQuery = query(usersRef, where("phone", "==", phone), limit(1));
     const phoneQuerySnapshot = await getDocs(phoneQuery);
-
     if (!phoneQuerySnapshot.empty) {
       throw new Error("This phone number is already registered.");
     }
     
-    // Step 1: Create user in Firebase Auth
+    // Step 1: Create user in Firebase Auth. This is the most critical first step.
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const newUser = userCredential.user;
     
-    // Step 2: Update Auth profile
-    await updateProfile(newUser, { displayName: name, photoURL: defaultAvatar });
-    
-    // Step 3: Create Firestore user document
+    // Step 2: Now that the user is authenticated, create their Firestore document.
+    // This will pass the security rules `allow create: if request.auth.uid == userId;`
     const userRef = doc(db, "users", newUser.uid);
     const newAppUser: AppUser = {
         uid: newUser.uid,
@@ -133,25 +131,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         displayName: name,
         phone: phone,
         photoURL: defaultAvatar,
-        wallet: {
-            balance: 0,
-            winnings: 0,
-        },
+        wallet: { balance: 0, winnings: 0 },
         kycStatus: 'Pending',
         status: 'active',
         gameStats: { played: 0, won: 0, lost: 0 },
         lifetimeStats: { totalDeposits: 0, totalWithdrawals: 0, totalWinnings: 0 },
         referralStats: { referredCount: 0, totalEarnings: 0 },
+        isKycVerified: false,
     };
     
-    if (email === 'admin@example.com' || email === 'super@admin.com') { // Example admin emails
+    if (email === 'admin@example.com' || email === 'super@admin.com') { 
         newAppUser.role = 'superadmin';
         newAppUser.lifetimeStats.totalRevenue = 0;
     }
 
     await setDoc(userRef, newAppUser);
+
+    // Step 3: Handle post-creation tasks like profile update and referrals.
+    // These are less critical and can happen after the main user document is created.
+    await updateProfile(newUser, { displayName: name, photoURL: defaultAvatar });
     
-    // Handle Referral logic in a separate transaction after user creation
     if (referralCode && referralCode.startsWith('SZLUDO')) {
         const referrerCodeUid = referralCode.replace('SZLUDO', '');
         if (referrerCodeUid && referrerCodeUid !== newUser.uid) {
@@ -162,18 +161,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     if (referrerSnap.exists()) {
                         transaction.update(userRef, { 'referralStats.referredBy': referrerCodeUid });
                         transaction.update(referrerRef, { 'referralStats.referredCount': increment(1) });
-                    } else {
-                        console.warn(`Referrer with code ${referralCode} not found.`);
                     }
                 });
-            } catch (e) {
-                console.error("Referral transaction failed: ", e);
-            }
+            } catch (e) { console.error("Referral transaction failed: ", e); }
         }
     }
 
-    // Step 4: Create a separate transaction log for the signup event.
-    // This is done outside the initial creation to avoid complex transaction rules.
+    // Step 4: Create a transaction log. This is a separate write.
     await createTransaction({
         userId: newUser.uid,
         userName: name,
@@ -184,8 +178,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         createdAt: Timestamp.now()
     });
 
-    setAppUser(newAppUser);
-    setUser(newUser);
     return userCredential;
 }
 
@@ -211,6 +203,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             gameStats: { played: 0, won: 0, lost: 0 },
             lifetimeStats: { totalDeposits: 0, totalWithdrawals: 0, totalWinnings: 0 },
             referralStats: { referredCount: 0, totalEarnings: 0 },
+            isKycVerified: false,
         };
 
         await setDoc(userRef, newAppUser);

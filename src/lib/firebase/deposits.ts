@@ -36,24 +36,27 @@ export const createDepositRequest = async (data: {
     utr: string;
     screenshotFile: File;
 }) => {
-    // 1. Upload screenshot to Firebase Storage in a user-specific folder
-    // This path is secure and matches storage.rules
+    // 1. Upload screenshot to Firebase Storage. The path is critical for security rules.
     const filePath = `deposits/${data.userId}/${Date.now()}_${data.screenshotFile.name}`;
     const screenshotRef = ref(storage, filePath);
+    
+    // This step must complete successfully before proceeding.
     const uploadResult = await uploadBytes(screenshotRef, data.screenshotFile);
     const screenshotUrl = await getDownloadURL(uploadResult.ref);
 
-    // 2. Create the deposit request document in Firestore
-    return await addDoc(collection(db, DEPOSITS_COLLECTION), {
+    // 2. Now that the upload is successful and we have the URL, create the document.
+    const docData = {
         userId: data.userId,
         userName: data.userName,
         amount: data.amount,
         upiId: data.upiId,
         utr: data.utr,
         screenshotUrl: screenshotUrl,
-        status: 'pending',
+        status: 'pending' as const,
         createdAt: serverTimestamp(),
-    });
+    };
+    
+    return await addDoc(collection(db, DEPOSITS_COLLECTION), docData);
 };
 
 // Update deposit status
