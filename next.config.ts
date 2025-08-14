@@ -22,6 +22,12 @@ const nextConfig: NextConfig = {
         hostname: 'blogger.googleusercontent.com',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: "https",
+        hostname: "firebasestorage.googleapis.com",
+        port: "",
+        pathname: "/**",
       }
     ],
   },

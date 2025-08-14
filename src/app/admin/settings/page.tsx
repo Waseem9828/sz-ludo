@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { getSettings, updateSettings, UpiId, AppSettings, uploadBannerImage, deleteBannerImage, deleteOldGameRecords, HomePageCard } from '@/lib/firebase/settings';
-import { Loader, Trash2, PlusCircle, Upload, Archive } from 'lucide-react';
+import { Loader, Trash2, PlusCircle, Upload, Archive, Link as LinkIcon } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
@@ -26,9 +26,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Dialog, DialogClose, DialogFooter, DialogHeader, DialogTitle, DialogDescription, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+
 
 const BannerManager = ({ title, bannerUrls, onUpdate, singleImage = false }: { title: string, bannerUrls: string[], onUpdate: (urls: string[]) => void, singleImage?: boolean }) => {
     const [isUploading, setIsUploading] = useState(false);
+    const [newImageUrl, setNewImageUrl] = useState('');
     const { toast } = useToast();
 
     const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,7 +40,6 @@ const BannerManager = ({ title, bannerUrls, onUpdate, singleImage = false }: { t
 
         setIsUploading(true);
         try {
-            // Re-using 'classic' as a generic folder, can be changed if needed
             const newUrl = await uploadBannerImage(file, 'classic'); 
             onUpdate(singleImage ? [newUrl] : [...bannerUrls, newUrl]);
             toast({ title: 'Success', description: 'Image uploaded!' });
@@ -47,12 +49,24 @@ const BannerManager = ({ title, bannerUrls, onUpdate, singleImage = false }: { t
             setIsUploading(false);
         }
     };
+    
+    const handleAddImageUrl = () => {
+        if (!newImageUrl.startsWith('http')) {
+            toast({title: 'Invalid URL', description: 'Please enter a valid image URL.', variant: 'destructive' });
+            return;
+        }
+         onUpdate(singleImage ? [newImageUrl] : [...bannerUrls, newImageUrl]);
+         setNewImageUrl('');
+    }
 
     const handleImageDelete = async (urlToDelete: string) => {
         try {
-            await deleteBannerImage(urlToDelete);
+            // Check if it's a Firebase Storage URL before trying to delete from storage
+            if (urlToDelete.includes('firebasestorage.googleapis.com')) {
+                await deleteBannerImage(urlToDelete);
+            }
             onUpdate(bannerUrls.filter(url => url !== urlToDelete));
-            toast({ title: 'Success', description: 'Image deleted!' });
+            toast({ title: 'Success', description: 'Image removed!' });
         } catch (error: any) {
             toast({ title: 'Delete Failed', description: error.message, variant: 'destructive' });
         }
@@ -77,13 +91,44 @@ const BannerManager = ({ title, bannerUrls, onUpdate, singleImage = false }: { t
                 ))}
             </div>
             {(!singleImage || bannerUrls.length === 0) && (
-                <Label htmlFor={`banner-upload-${title.replace(/\s+/g, '-')}`} className="w-full">
-                    <div className="flex items-center justify-center w-full px-4 py-2 border-2 border-dashed rounded-md cursor-pointer hover:bg-muted">
-                        {isUploading ? <Loader className="animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                        <span>Upload Image</span>
-                    </div>
-                    <Input id={`banner-upload-${title.replace(/\s+/g, '-')}`} type="file" accept="image/*" className="sr-only" onChange={handleImageUpload} disabled={isUploading} />
-                </Label>
+                 <div className="flex gap-2">
+                    <Label htmlFor={`banner-upload-${title.replace(/\s+/g, '-')}`} className="flex-grow">
+                        <div className="flex items-center justify-center w-full px-4 py-2 border-2 border-dashed rounded-md cursor-pointer hover:bg-muted">
+                            {isUploading ? <Loader className="animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                            <span>Upload</span>
+                        </div>
+                        <Input id={`banner-upload-${title.replace(/\s+/g, '-')}`} type="file" accept="image/*" className="sr-only" onChange={handleImageUpload} disabled={isUploading} />
+                    </Label>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                           <Button variant="outline" size="icon">
+                                <LinkIcon />
+                           </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Add Image from URL</DialogTitle>
+                                <DialogDescription>Paste an image link from Blogger or another website.</DialogDescription>
+                            </DialogHeader>
+                             <div className="py-4">
+                                <Label htmlFor="image-url">Image URL</Label>
+                                <Input
+                                    id="image-url"
+                                    type="url"
+                                    value={newImageUrl}
+                                    onChange={(e) => setNewImageUrl(e.target.value)}
+                                    placeholder="https://..."
+                                />
+                            </div>
+                             <DialogFooter>
+                                <DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose>
+                                <DialogClose asChild>
+                                    <Button onClick={handleAddImageUrl}>Add Image</Button>
+                                </DialogClose>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+                </div>
              )}
         </Card>
     );

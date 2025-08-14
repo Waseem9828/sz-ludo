@@ -244,15 +244,27 @@ export const uploadBannerImage = async (file: File, folder: 'classic' | 'popular
 // Delete a banner image from storage
 export const deleteBannerImage = async (url: string): Promise<void> => {
     try {
-        const storageRef = ref(storage, url);
+        const decodedUrl = decodeURIComponent(url);
+        // Extract the path from the full URL.
+        // e.g., from https://firebasestorage.googleapis.com/v0/b/project-id.appspot.com/o/path%2Fto%2Fimage.jpg?alt=media&token=...
+        // to path/to/image.jpg
+        const pathRegex = /o\/(.*?)\?alt=media/;
+        const match = decodedUrl.match(pathRegex);
+        
+        if (!match || !match[1]) {
+            throw new Error("Could not parse Firebase Storage URL.");
+        }
+        
+        const filePath = match[1];
+        const storageRef = ref(storage, filePath);
         await deleteObject(storageRef);
     } catch (error: any) {
-        // If the object does not exist, Firebase throws an error. We can ignore it.
         if (error.code === 'storage/object-not-found') {
             console.warn(`Attempted to delete an image that doesn't exist: ${url}`);
             return;
         }
-        throw error;
+        console.error("Error deleting image: ", error);
+        throw new Error("Failed to delete image from storage. Check console for details.");
     }
 };
 
