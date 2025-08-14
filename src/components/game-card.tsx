@@ -5,14 +5,18 @@ import type { HomePageCard } from '@/lib/firebase/settings';
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 import Link from 'next/link';
+import { cn } from "@/lib/utils";
 
 export default function GameCard({ title, description, images, link, aiHint }: HomePageCard & {link: string}) {
 
   const hasMultipleImages = images.length > 1;
 
   return (
-    <Card className="overflow-hidden shadow-lg hover:shadow-primary/20 hover:shadow-xl transition-shadow duration-300 group">
-      <div className="relative w-full aspect-[16/9]">
+    <Card className={cn(
+        "overflow-hidden shadow-lg hover:shadow-primary/20 hover:shadow-xl transition-all duration-300 group",
+        "bg-gradient-to-br from-card to-background"
+    )}>
+      <div className="relative w-full aspect-[4/3] bg-muted/50">
         {hasMultipleImages ? (
           <Carousel
             plugins={[Autoplay({ delay: 5000, stopOnInteraction: false })]}
@@ -46,12 +50,13 @@ export default function GameCard({ title, description, images, link, aiHint }: H
             data-ai-hint={aiHint || "game"}
           />
         )}
+         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
       </div>
-      <CardContent className="p-4 bg-card text-center">
-        <h3 className="text-xl font-bold font-headline text-red-600">{title}</h3>
-        <p className="text-sm text-muted-foreground mb-3">{description}</p>
+      <CardContent className="p-3 text-center">
+        <h3 className="text-lg font-bold font-headline text-primary">{title}</h3>
+        <p className="text-xs text-muted-foreground mb-3">{description}</p>
         <Link href={link}>
-          <Button className="w-full font-bold">Play Now</Button>
+          <Button size="sm" className="w-full font-bold">Play Now</Button>
         </Link>
       </CardContent>
     </Card>

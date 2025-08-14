@@ -232,7 +232,7 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent>
             <Tabs defaultValue="payments">
-                <TabsList className="grid grid-cols-2 md:grid-cols-4">
+                <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto">
                     <TabsTrigger value="payments">Payment</TabsTrigger>
                     <TabsTrigger value="content">Content</TabsTrigger>
                     <TabsTrigger value="app">App</TabsTrigger>
@@ -240,7 +240,7 @@ export default function SettingsPage() {
                 </TabsList>
                 
                 <TabsContent value="payments">
-                    <Card>
+                    <Card className="mt-4">
                         <CardHeader>
                             <CardTitle>Payment Settings</CardTitle>
                             <CardDescription>Manage UPI IDs for payments. The system will automatically rotate to the next available UPI ID once a limit is reached.</CardDescription>
@@ -314,7 +314,7 @@ export default function SettingsPage() {
                 </TabsContent>
 
                 <TabsContent value="content">
-                     <Card>
+                     <Card className="mt-4">
                         <CardHeader>
                             <CardTitle>Content Management</CardTitle>
                             <CardDescription>Update the text for your legal and information pages here. Use Markdown for formatting.</CardDescription>
@@ -346,7 +346,7 @@ export default function SettingsPage() {
                 </TabsContent>
 
                  <TabsContent value="app">
-                     <div className="space-y-6">
+                     <div className="space-y-6 mt-4">
                         <Card>
                             <CardHeader>
                                 <CardTitle>Home Page Cards</CardTitle>
@@ -467,7 +467,7 @@ export default function SettingsPage() {
                 </TabsContent>
 
                  <TabsContent value="data">
-                    <Card>
+                    <Card className="mt-4">
                         <CardHeader>
                             <CardTitle>Data Management</CardTitle>
                             <CardDescription>Manage and clean up old database records.</CardDescription>
@@ -509,5 +509,3 @@ export default function SettingsPage() {
     </Card>
   );
 }
-
-    

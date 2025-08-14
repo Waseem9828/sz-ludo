@@ -20,14 +20,21 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { MessageSquare, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { motion } from 'framer-motion';
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
-import Image from 'next/image';
 
 const defaultAvatar = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi_h6LUuqTTKYsn5TfUZwkI6Aib6Y0tOzQzcoZKstURqxyl-PJXW1DKTkF2cPPNNUbP3iuDNsOBVOYx7p-ZwrodI5w9fyqEwoabj8rU0mLzSbT5GCFUKpfCc4s_LrtHcWFDvvRstCghAfQi5Zfv2fipdZG8h4dU4vGt-eFRn-gS3QTg6_JJKhv0Yysr_ZY/s1600/82126.png";
 
+const SpeechBubble = ({ text }: { text: string }) => (
+    <div className="relative mb-2 ml-12">
+        <div className="bg-muted text-muted-foreground italic rounded-lg p-2 text-sm">
+            "{text}"
+        </div>
+        <div className="absolute left-[-8px] top-1/2 -translate-y-1/2 w-0 h-0 border-t-8 border-t-transparent border-r-8 border-r-muted border-b-8 border-b-transparent"></div>
+    </div>
+);
 
 export default function ChallengeList() {
     const [challenges, setChallenges] = useState<Game[]>([]);
@@ -37,7 +44,7 @@ export default function ChallengeList() {
 
     useEffect(() => {
         const unsubscribe = listenForGames((games) => {
-            const sortedGames = games.sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
+            const sortedGames = games.sort((a, b) => (b.createdAt?.toDate()?.getTime() || 0) - (a.createdAt?.toDate()?.getTime() || 0));
             setChallenges(sortedGames);
         }, 'challenge');
         return () => unsubscribe();
@@ -46,12 +53,10 @@ export default function ChallengeList() {
     const sortedChallenges = useMemo(() => {
         if (!user) return challenges;
         
-        // Then, bring user's own challenges to the top
         return [...challenges].sort((a, b) => {
             if (a.createdBy.uid === user.uid && b.createdBy.uid !== user.uid) return -1;
             if (a.createdBy.uid !== user.uid && b.createdBy.uid === user.uid) return 1;
-            // Fallback to original sort order if owners are the same or neither is the user
-            return 0;
+            return (b.createdAt?.toDate()?.getTime() || 0) - (a.createdAt?.toDate()?.getTime() || 0);
         });
     }, [challenges, user]);
 
@@ -63,7 +68,6 @@ export default function ChallengeList() {
             return;
         }
         
-        // Check if user is already in an ongoing game
         const gamesRef = collection(db, "games");
         const q = query(
             gamesRef,
@@ -135,7 +139,7 @@ export default function ChallengeList() {
     }
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-4">
         {sortedChallenges.map((challenge) => (
             <motion.div
                 key={challenge.id}
@@ -146,9 +150,7 @@ export default function ChallengeList() {
                 className="relative"
             >
                 {challenge.message && (
-                     <div className="speech-bubble mb-2">
-                        <p className="text-sm md:text-base text-muted-foreground italic">"{challenge.message}"</p>
-                    </div>
+                     <SpeechBubble text={challenge.message} />
                  )}
                 <Card className="bg-card shadow-sm cursor-pointer"
                     onClick={() => {
@@ -156,7 +158,7 @@ export default function ChallengeList() {
                             router.push(`/play/game?id=${challenge.id}`);
                         }
                     }}>
-                    <CardContent className="p-4">
+                    <CardContent className="p-3">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <Avatar className="h-10 w-10 border-2 border-primary">
@@ -165,20 +167,20 @@ export default function ChallengeList() {
                                 </Avatar>
                                 <div>
                                      <div className="flex items-center gap-1">
-                                        <span className="font-semibold">{challenge.createdBy.displayName}</span>
+                                        <span className="font-semibold text-sm">{challenge.createdBy.displayName}</span>
                                         {challenge.createdBy.isKycVerified && <ShieldCheck className="h-4 w-4 text-blue-500" />}
                                      </div>
-                                     <p className="text-xs text-muted-foreground">has created an open battle</p>
+                                     <p className="text-xs text-muted-foreground">has created a battle</p>
                                 </div>
                             </div>
                             <div className="text-right">
-                                <p className="text-xl text-red-600 font-bold font-sans">
+                                <p className="text-lg text-red-600 font-bold font-sans">
                                     ₹{challenge.amount}
                                 </p>
                             </div>
                         </div>
                         
-                        <div className="mt-4">
+                        <div className="mt-3">
                             {user?.uid === challenge.createdBy.uid ? (
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>
