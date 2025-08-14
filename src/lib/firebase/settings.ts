@@ -144,7 +144,7 @@ export const getSettings = async (): Promise<AppSettings> => {
             type: 'game',
             enabled: true,
             title: 'Classic Ludo',
-            description: 'Entry: ₹50 - ₹50,000',
+            description: 'Entry: 50 - 50,000',
             images: ['https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhB0r-oO8dVhvrf38QyLfm-51CbBGQpTf1vaodlbX-FTEwAoIRD1Erekk472T8ToyMbvpcYsbPk9w5p6dz9RyoSHp5ZR91ThRUe7yCebrAH445VkNJBXJXImhpJsBNpgyOXY_HUJIFErAPUQqtDyxZwoqi8zfjWYRpgeMM4U2EBOd7crErzdxFY_-KIDmw/s1600/74360.jpg'],
             aiHint: 'ludo game'
           },
@@ -153,7 +153,7 @@ export const getSettings = async (): Promise<AppSettings> => {
             type: 'game',
             enabled: true,
             title: 'Popular Ludo',
-            description: 'Entry: ₹50,000 - ₹1,00,000',
+            description: 'Entry: 50,000 - 1,00,000',
             images: ['https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhB0r-oO8dVhvrf38QyLfm-51CbBGQpTf1vaodlbX-FTEwAoIRD1Erekk472T8ToyMbvpcYsbPk9w5p6dz9RyoSHp5ZR91ThRUe7yCebrAH445VkNJBXJXImhpJsBNpgyOXY_HUJIFErAPUQqtDyxZwoqi8zfjWYRpgeMM4U2EBOd7crErzdxFY_-KIDmw/s1600/74360.jpg'],
             aiHint: 'ludo board'
           },
@@ -244,6 +244,10 @@ export const uploadBannerImage = async (file: File, folder: 'classic' | 'popular
 // Delete a banner image from storage
 export const deleteBannerImage = async (url: string): Promise<void> => {
     try {
+        // Do not try to delete non-firebase URLs (like blogger)
+        if (!url.includes('firebasestorage.googleapis.com')) {
+            return;
+        }
         const decodedUrl = decodeURIComponent(url);
         // Extract the path from the full URL.
         // e.g., from https://firebasestorage.googleapis.com/v0/b/project-id.appspot.com/o/path%2Fto%2Fimage.jpg?alt=media&token=...
