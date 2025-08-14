@@ -3,90 +3,82 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // --- Helper Functions ---
+  
     function isAuth() {
-      return request.auth != null && request.auth.uid != null;
-    }
-
-    function getUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return request.auth != null;
     }
     
-    function isAdmin() {
-      return isAuth() && getUserData().role in ['superadmin', 'finance', 'support'];
-    }
-
-    function isSuperAdmin() {
-        return isAuth() && getUserData().role == 'superadmin';
-    }
-
-    function isFinanceAgent() {
-        return isAuth() && getUserData().role in ['superadmin', 'finance'];
-    }
-
-    function isSupportAgent() {
-        return isAuth() && getUserData().role in ['superadmin', 'support'];
+    function isOwner(userId) {
+      return isAuth() && request.auth.uid == userId;
     }
     
-    // --- Collection Rules ---
+    function isRole(role) {
+      return isAuth() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
+    }
+    
+    function isAnyRole(roles) {
+      return isAuth() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in roles;
+    }
 
     match /users/{userId} {
-      allow read: if isAuth() && (request.auth.uid == userId || isAdmin());
-      allow list: if isAdmin();
-      allow create: if isAuth() && request.auth.uid == userId;
-      allow update: if isAuth() && (
-        (request.auth.uid == userId && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'photoURL', 'aadhaar', 'pan', 'bankAccount', 'ifsc', 'bankName', 'upiId', 'kycStatus'])) || 
-        isAdmin()
+      allow read: if isAuth();
+      allow list: if isAnyRole(['superadmin', 'support', 'finance']);
+      allow create: if isAuth() && isOwner(userId);
+      allow update: if isOwner(userId) || isAnyRole(['superadmin', 'finance']);
+    }
+
+    match /games/{gameId} {
+      allow read, get: if isAuth();
+      allow list: if isAuth();
+      allow create: if isAuth();
+      allow update: if isAuth() || isAnyRole(['superadmin', 'finance']);
+      allow delete: if isAuth() && (
+        resource.data.createdBy.uid == request.auth.uid || 
+        isAnyRole(['superadmin'])
       );
     }
     
-    match /games/{gameId} {
-      allow read: if isAuth();
-      allow list: if isAuth();
-      allow create: if isAuth() && request.resource.data.createdBy.uid == request.auth.uid;
-      allow update: if isAuth(); // Complex logic is handled in backend transactions
-      allow delete: if isAuth() && resource.data.createdBy.uid == request.auth.uid;
-    }
-
     match /transactions/{transactionId} {
-      allow read: if isAuth() && (request.auth.uid == resource.data.userId || isAdmin());
-      allow list: if isAdmin();
-      allow create: if isAuth() && request.resource.data.userId == request.auth.uid; // Allows user to create their own transaction log
-    }
-
-    match /withdrawals/{withdrawalId} {
-        allow read: if isAuth() && (request.auth.uid == resource.data.userId || isFinanceAgent());
-        allow list: if isFinanceAgent();
-        allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
-        allow update: if isFinanceAgent();
+      allow read: if isAuth() && (
+        isOwner(resource.data.userId) || 
+        isAnyRole(['superadmin', 'support', 'finance'])
+      );
+      allow list: if isAnyRole(['superadmin', 'support', 'finance']);
+      // Allow user to create their own initial signup transaction, and admins to create any.
+      allow create: if isAuth() && (isOwner(request.resource.data.userId) || isAnyRole(['superadmin', 'finance']));
     }
     
+    match /withdrawals/{withdrawalId} {
+        allow read, list: if isAnyRole(['superadmin', 'finance']);
+        allow create: if isAuth();
+        allow update: if isAnyRole(['superadmin', 'finance']);
+    }
+
     match /deposits/{depositId} {
-        allow read: if isAuth() && (request.auth.uid == resource.data.userId || isFinanceAgent());
-        allow list: if isFinanceAgent();
-        allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
-        allow update: if isFinanceAgent();
+        allow read, list: if isAnyRole(['superadmin', 'finance']);
+        allow create: if isAuth();
+        allow update: if isAnyRole(['superadmin', 'finance']);
+    }
+    
+    match /tournaments/{tournamentId} {
+        allow read, list: if isAuth();
+        allow create, update, delete: if isAnyRole(['superadmin']);
+    }
+    
+    // Notifications can be read by any authenticated user, but only created/managed by admin roles.
+    match /notifications/{notificationId} {
+      allow read, list: if isAuth();
+      allow create, update, delete: if isAnyRole(['superadmin', 'support']);
+    }
+    
+    // User-specific read status for notifications
+    match /users/{userId}/userNotifications/{notificationId} {
+        allow read, write: if isOwner(userId);
     }
 
     match /settings/{docId} {
-      allow read: if isAuth();
-      allow write: if isSuperAdmin();
-    }
-
-    match /notifications/{notificationId} {
-        allow read, list: if isAuth();
-        allow write: if isSuperAdmin();
-    }
-
-    // User's own notification read status subcollection
-    match /users/{userId}/userNotifications/{notificationId} {
-        allow read, write: if isAuth() && request.auth.uid == userId;
-    }
-
-    match /tournaments/{tournamentId} {
-      allow read, list: if isAuth();
-      allow create, update, delete: if isSuperAdmin();
+      allow read: if true; // All users can read settings
+      allow write: if isAnyRole(['superadmin']);
     }
   }
 }

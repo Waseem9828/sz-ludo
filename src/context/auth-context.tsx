@@ -4,9 +4,10 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, User, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, updateProfile, fetchSignInMethodsForEmail } from 'firebase/auth';
 import { auth, db, googleAuthProvider } from '@/lib/firebase/config';
-import { doc, setDoc, getDoc, onSnapshot, updateDoc, increment, collection, query, where, getDocs, limit, runTransaction } from 'firebase/firestore';
+import { doc, setDoc, getDoc, onSnapshot, updateDoc, increment, collection, query, where, getDocs, limit, runTransaction, Timestamp } from 'firebase/firestore';
 import { SplashScreen } from '@/components/ui/splash-screen';
 import type { AppUser } from '@/lib/firebase/users';
+import { createTransaction } from '@/lib/firebase/transactions';
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: Array<string>;
@@ -104,139 +105,145 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
   
   const signUp = async (email:string, password:string, name:string, phone:string, referralCode?: string) => {
-      const methods = await fetchSignInMethodsForEmail(auth, email);
-      if (methods.length > 0) {
-        throw new Error('This email address is already in use.');
-      }
-      
-      const usersRef = collection(db, "users");
-      const phoneQuery = query(usersRef, where("phone", "==", phone), limit(1));
-      const phoneQuerySnapshot = await getDocs(phoneQuery);
+    const methods = await fetchSignInMethodsForEmail(auth, email);
+    if (methods.length > 0) {
+      throw new Error('This email address is already in use.');
+    }
+    
+    const usersRef = collection(db, "users");
+    const phoneQuery = query(usersRef, where("phone", "==", phone), limit(1));
+    const phoneQuerySnapshot = await getDocs(phoneQuery);
 
-      if (!phoneQuerySnapshot.empty) {
-        throw new Error("This phone number is already registered.");
-      }
-      
-      // Step 1: Create the user in Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const newUser = userCredential.user;
-      
-      // Step 2: Update the new user's profile in Auth
-      await updateProfile(newUser, { displayName: name, photoURL: defaultAvatar });
-      
-      // Step 3: Create the user document and handle referrals in Firestore
-      const userRef = doc(db, "users", newUser.uid);
-      const newAppUser: AppUser = {
-          uid: newUser.uid,
-          email: newUser.email,
-          displayName: name,
-          phone: phone,
-          photoURL: defaultAvatar,
-          wallet: {
-              balance: 0,
-              winnings: 0,
-          },
-          kycStatus: 'Pending',
-          status: 'active',
-          gameStats: { played: 0, won: 0, lost: 0 },
-          lifetimeStats: { totalDeposits: 0, totalWithdrawals: 0, totalWinnings: 0 },
-          referralStats: { referredCount: 0, totalEarnings: 0 },
-      };
+    if (!phoneQuerySnapshot.empty) {
+      throw new Error("This phone number is already registered.");
+    }
+    
+    // Step 1: Create user in Firebase Auth
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const newUser = userCredential.user;
+    
+    // Step 2: Update Auth profile
+    await updateProfile(newUser, { displayName: name, photoURL: defaultAvatar });
+    
+    // Step 3: Create Firestore user document
+    const userRef = doc(db, "users", newUser.uid);
+    const newAppUser: AppUser = {
+        uid: newUser.uid,
+        email: newUser.email,
+        displayName: name,
+        phone: phone,
+        photoURL: defaultAvatar,
+        wallet: {
+            balance: 0,
+            winnings: 0,
+        },
+        kycStatus: 'Pending',
+        status: 'active',
+        gameStats: { played: 0, won: 0, lost: 0 },
+        lifetimeStats: { totalDeposits: 0, totalWithdrawals: 0, totalWinnings: 0 },
+        referralStats: { referredCount: 0, totalEarnings: 0 },
+    };
+    
+    if (email === 'admin@example.com' || email === 'super@admin.com') { // Example admin emails
+        newAppUser.role = 'superadmin';
+        newAppUser.lifetimeStats.totalRevenue = 0;
+    }
 
-      if (email === 'admin@example.com') {
-          newAppUser.role = 'superadmin';
-          newAppUser.lifetimeStats.totalRevenue = 0;
-      }
-
-      await runTransaction(db, async (transaction) => {
-        if (referralCode && referralCode.startsWith('SZLUDO')) {
-            const referrerUid = referralCode.replace('SZLUDO', '');
-            if (referrerUid && referrerUid !== newUser.uid) { 
-                 const referrerRef = doc(db, 'users', referrerUid);
-                 const referrerSnap = await transaction.get(referrerRef);
-                 if (referrerSnap.exists()) {
-                     newAppUser.referralStats.referredBy = referrerUid;
-                     transaction.update(referrerRef, {
-                         'referralStats.referredCount': increment(1),
-                     });
-                 }
+    await setDoc(userRef, newAppUser);
+    
+    // Handle Referral logic in a separate transaction after user creation
+    if (referralCode && referralCode.startsWith('SZLUDO')) {
+        const referrerCodeUid = referralCode.replace('SZLUDO', '');
+        if (referrerCodeUid && referrerCodeUid !== newUser.uid) {
+            const referrerRef = doc(db, 'users', referrerCodeUid);
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const referrerSnap = await transaction.get(referrerRef);
+                    if (referrerSnap.exists()) {
+                        transaction.update(userRef, { 'referralStats.referredBy': referrerCodeUid });
+                        transaction.update(referrerRef, { 'referralStats.referredCount': increment(1) });
+                    } else {
+                        console.warn(`Referrer with code ${referralCode} not found.`);
+                    }
+                });
+            } catch (e) {
+                console.error("Referral transaction failed: ", e);
             }
         }
-        transaction.set(userRef, newAppUser);
-      });
-      
-      // Step 4: Create a separate transaction log for the signup event
-      const transLogRef = doc(collection(db, 'transactions'));
-      await setDoc(transLogRef, {
-          userId: newUser.uid,
-          userName: name,
-          amount: 0,
-          type: 'Sign Up',
-          status: 'completed',
-          notes: 'User account created.',
-          createdAt: new Date(),
-      });
-      
-      setAppUser(newAppUser);
-      setUser(newUser);
-      return userCredential;
-  }
+    }
+
+    // Step 4: Create a separate transaction log for the signup event.
+    // This is done outside the initial creation to avoid complex transaction rules.
+    await createTransaction({
+        userId: newUser.uid,
+        userName: name,
+        amount: 0,
+        type: 'Sign Up',
+        status: 'completed',
+        notes: 'User account created.',
+        createdAt: Timestamp.now()
+    });
+
+    setAppUser(newAppUser);
+    setUser(newUser);
+    return userCredential;
+}
 
   const signIn = (email:string, password:string) => {
       return signInWithEmailAndPassword(auth, email, password);
   }
 
   const signInWithGoogle = async (referralCode?: string) => {
-    return runTransaction(db, async (transaction) => {
-        const result = await signInWithPopup(auth, googleAuthProvider);
-        const newUser = result.user;
-        const userRef = doc(db, 'users', newUser.uid);
-        const userSnap = await transaction.get(userRef);
+    const result = await signInWithPopup(auth, googleAuthProvider);
+    const newUser = result.user;
+    const userRef = doc(db, 'users', newUser.uid);
+    const userSnap = await getDoc(userRef);
 
-        if (!userSnap.exists()) {
-            const newAppUser: AppUser = {
-                uid: newUser.uid,
-                email: newUser.email,
-                displayName: newUser.displayName,
-                photoURL: newUser.photoURL || defaultAvatar,
-                wallet: { balance: 0, winnings: 0 },
-                kycStatus: 'Pending',
-                status: 'active',
-                gameStats: { played: 0, won: 0, lost: 0 },
-                lifetimeStats: { totalDeposits: 0, totalWithdrawals: 0, totalWinnings: 0 },
-                referralStats: { referredCount: 0, totalEarnings: 0 },
-            };
+    if (!userSnap.exists()) {
+        const newAppUser: AppUser = {
+            uid: newUser.uid,
+            email: newUser.email,
+            displayName: newUser.displayName,
+            photoURL: newUser.photoURL || defaultAvatar,
+            wallet: { balance: 0, winnings: 0 },
+            kycStatus: 'Pending',
+            status: 'active',
+            gameStats: { played: 0, won: 0, lost: 0 },
+            lifetimeStats: { totalDeposits: 0, totalWithdrawals: 0, totalWinnings: 0 },
+            referralStats: { referredCount: 0, totalEarnings: 0 },
+        };
 
-            if (referralCode && referralCode.startsWith('SZLUDO')) {
-                const referrerUid = referralCode.replace('SZLUDO', '');
-                 if (referrerUid && referrerUid !== newUser.uid) {
-                    const referrerRef = doc(db, 'users', referrerUid);
-                    const referrerSnap = await transaction.get(referrerRef);
-                    if (referrerSnap.exists()) {
-                        newAppUser.referralStats.referredBy = referrerUid;
-                        transaction.update(referrerRef, {
-                            'referralStats.referredCount': increment(1),
-                        });
-                    }
-                }
-            }
-            transaction.set(userRef, newAppUser);
+        await setDoc(userRef, newAppUser);
 
-            const transLogRef = doc(collection(db, 'transactions'));
-            await setDoc(transLogRef, {
-                userId: newUser.uid,
-                userName: newUser.displayName,
-                amount: 0,
-                type: 'Sign Up',
-                status: 'completed',
-                notes: 'User account created with Google.',
-                createdAt: new Date(),
-            });
-
-            setAppUser(newAppUser);
+        if (referralCode && referralCode.startsWith('SZLUDO')) {
+             const referrerCodeUid = referralCode.replace('SZLUDO', '');
+             if (referrerCodeUid && referrerCodeUid !== newUser.uid) {
+                const referrerRef = doc(db, 'users', referrerCodeUid);
+                 try {
+                    await runTransaction(db, async (transaction) => {
+                        const referrerSnap = await transaction.get(referrerRef);
+                        if (referrerSnap.exists()) {
+                            transaction.update(userRef, { 'referralStats.referredBy': referrerCodeUid });
+                            transaction.update(referrerRef, { 'referralStats.referredCount': increment(1) });
+                        }
+                    });
+                } catch(e) { console.error("Referral transaction failed: ", e) }
+             }
         }
-        return result;
-    });
+        
+        await createTransaction({
+            userId: newUser.uid,
+            userName: newUser.displayName || 'N/A',
+            amount: 0,
+            type: 'Sign Up',
+            status: 'completed',
+            notes: 'User account created with Google.',
+            createdAt: Timestamp.now()
+        });
+
+        setAppUser(newAppUser);
+    }
+    return result;
   }
 
 

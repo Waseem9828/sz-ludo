@@ -1,4 +1,5 @@
 
+
 import { collection, addDoc, serverTimestamp, where, query, onSnapshot, updateDoc, doc, writeBatch, orderBy, getDocs, limit, Timestamp, QueryConstraint } from 'firebase/firestore';
 import { db } from './config';
 
@@ -14,17 +15,14 @@ export interface Transaction {
     amount: number;
     type: TransactionType;
     status: TransactionStatus;
-    createdAt: any;
+    createdAt: Timestamp; // Using Firestore Timestamp for consistency
     relatedId?: string; // For deposits, withdrawals, games etc.
     notes?: string; // For manual adjustments
 }
 
 // For creating any transaction log
-export const createTransaction = async (data: Omit<Transaction, 'id' | 'createdAt'>) => {
-    return await addDoc(collection(db, TRANSACTIONS_COLLECTION), {
-        ...data,
-        createdAt: serverTimestamp(),
-    });
+export const createTransaction = async (data: Omit<Transaction, 'id'>) => {
+    return await addDoc(collection(db, TRANSACTIONS_COLLECTION), data);
 }
 
 

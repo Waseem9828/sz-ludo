@@ -3,41 +3,46 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    
+  
+    // Helper function to check if the user is authenticated.
     function isAuth() {
-      return request.auth != null && request.auth.uid != null;
+      return request.auth != null;
     }
     
-    // --- Profile Pictures ---
-    // Anyone authenticated can read, but only the user can write their own profile picture.
-    match /avatars/{userId}/{fileName} {
-      allow read: if isAuth();
-      allow write: if isAuth() && request.auth.uid == userId;
+    // Helper function to check if the user is the owner of the resource.
+    function isOwner(userId) {
+      return isAuth() && request.auth.uid == userId;
     }
-
-    // --- Deposit Screenshots ---
-    // Only the authenticated user can upload a screenshot for their own deposit request.
-    // The file path must match `deposits/{userId}/{timestamp}_{fileName}` from the client code.
-    match /deposits/{userId}/{fileName} {
-        allow read: if isAuth(); // Allows admin to view later.
-        allow write: if isAuth() && request.auth.uid == userId;
-    }
-
-    // --- Game Winning Screenshots ---
-    // Only an authenticated user can upload a screenshot for a game they are part of.
-    // The path should be like `screenshots/{gameId}/{timestamp}_{userId}`
+    
+    // Screenshots for game results. Only players in the game can upload.
+    // The game document must exist.
     match /screenshots/{gameId}/{fileName} {
       allow read: if isAuth();
-      allow write: if isAuth(); // Simplified: assume backend verifies user is in game.
+      allow write: if isAuth() && exists(/databases/$(database)/documents/games/$(gameId)) && 
+                      (request.auth.uid in get(/databases/$(database)/documents/games/$(gameId)).data.playerUids);
     }
     
-    // --- Admin Uploaded Banners (e.g., for tournaments, home page cards) ---
-    // Allow write access only to authenticated users (assuming only admins can trigger this upload via a secure function).
-    // The path is like `banners/{folder}/{timestamp}_{fileName}`
-    match /banners/{folder}/{fileName} {
-        allow read: true; // Banners are public
-        allow write: if isAuth(); // Admin uploads
+    // Deposit screenshots. Only the user themselves can upload to their own folder.
+    match /deposits/{userId}/{fileName} {
+      allow read: if isOwner(userId) || request.auth.token.role in ['superadmin', 'finance']; // Owner and admins can read.
+      allow write: if isOwner(userId); // Only the user can upload to their own deposit folder.
     }
-
+    
+    // Banner images for settings. Only admins can upload/delete.
+    match /banners/{folder}/{fileName} {
+       allow read: if true; // Banners are public
+       allow write, delete: if isAuth() && request.auth.token.role == 'superadmin';
+    }
+    
+     // Tournament images. Only admins can upload/delete.
+    match /tournaments/{fileName} {
+        allow read: if true; // Tournament images are public
+        allow write, delete: if isAuth() && request.auth.token.role == 'superadmin';
+    }
+    
+    // Default deny all other paths
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
   }
 }

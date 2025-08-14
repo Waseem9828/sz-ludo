@@ -92,8 +92,8 @@ export const createChallenge = async (data: { amount: number; createdBy: PlayerI
             player1: data.createdBy,
             playerUids: [data.createdBy.uid],
             status: 'challenge',
-            createdAt: new Date(),
-            lastUpdatedAt: new Date(),
+            createdAt: serverTimestamp(),
+            lastUpdatedAt: serverTimestamp(),
         });
         
         // 3. Create transaction log
@@ -106,7 +106,7 @@ export const createChallenge = async (data: { amount: number; createdBy: PlayerI
             status: 'completed',
             relatedId: challengeRef.id,
             notes: 'Battle created',
-            createdAt: new Date(),
+            createdAt: serverTimestamp(),
         });
         
         return challengeRef;
@@ -157,7 +157,7 @@ export const acceptChallenge = async (gameId: string, player2: PlayerInfo): Prom
             player2: player2,
             playerUids: [...gameData.playerUids, player2.uid],
             status: 'ongoing',
-            lastUpdatedAt: new Date(),
+            lastUpdatedAt: serverTimestamp(),
         });
     });
 
@@ -186,7 +186,7 @@ export const cancelAcceptedChallenge = async (gameId: string, player2Id: string)
             status: 'challenge',
             playerUids: [gameData.player1.uid],
             player2: deleteField(),
-            lastUpdatedAt: new Date(),
+            lastUpdatedAt: serverTimestamp(),
         });
     });
 };
