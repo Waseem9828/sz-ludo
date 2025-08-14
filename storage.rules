@@ -4,34 +4,40 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     
-    // Function to check if the user is authenticated
     function isAuth() {
-      return request.auth != null;
-    }
-
-    // Banners can be read by anyone, but only written/deleted by an admin (implicitly, as we don't have roles in storage rules, we check for auth)
-    // For stronger security, you'd use custom claims for roles.
-    match /banners/{folder}/{fileName} {
-      allow read: if true;
-      allow write, delete: if isAuth();
+      return request.auth != null && request.auth.uid != null;
     }
     
-    // Tournament images can be read by anyone, written by authenticated users (admins).
-    match /tournaments/{fileName} {
-        allow read: if true;
-        allow write: if isAuth();
+    // --- Profile Pictures ---
+    // Anyone authenticated can read, but only the user can write their own profile picture.
+    match /avatars/{userId}/{fileName} {
+      allow read: if isAuth();
+      allow write: if isAuth() && request.auth.uid == userId;
     }
 
-    // Deposit screenshots: A user can only write to their own folder.
+    // --- Deposit Screenshots ---
+    // Only the authenticated user can upload a screenshot for their own deposit request.
+    // The file path must match `deposits/{userId}/{timestamp}_{fileName}` from the client code.
     match /deposits/{userId}/{fileName} {
-      allow read, write, delete: if isAuth() && request.auth.uid == userId;
+        allow read: if isAuth(); // Allows admin to view later.
+        allow write: if isAuth() && request.auth.uid == userId;
     }
 
-    // Game result screenshots: A player involved in the game can write to the game's folder.
-    // The game document ID is part of the path.
+    // --- Game Winning Screenshots ---
+    // Only an authenticated user can upload a screenshot for a game they are part of.
+    // The path should be like `screenshots/{gameId}/{timestamp}_{userId}`
     match /screenshots/{gameId}/{fileName} {
-      allow read: if isAuth(); // Allow participants or admins to view, ideally checked via Firestore.
-      allow write: if isAuth(); // Simplified rule: any authenticated user can write. A stricter rule would check if user is a player in the game.
+      allow read: if isAuth();
+      allow write: if isAuth(); // Simplified: assume backend verifies user is in game.
     }
+    
+    // --- Admin Uploaded Banners (e.g., for tournaments, home page cards) ---
+    // Allow write access only to authenticated users (assuming only admins can trigger this upload via a secure function).
+    // The path is like `banners/{folder}/{timestamp}_{fileName}`
+    match /banners/{folder}/{fileName} {
+        allow read: true; // Banners are public
+        allow write: if isAuth(); // Admin uploads
+    }
+
   }
 }
