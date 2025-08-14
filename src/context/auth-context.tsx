@@ -117,29 +117,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         throw new Error("This phone number is already registered.");
       }
       
+      // Step 1: Create the user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const newUser = userCredential.user;
+      
+      // Step 2: Update the new user's profile in Auth
       await updateProfile(newUser, { displayName: name, photoURL: defaultAvatar });
       
-      return await runTransaction(db, async (transaction) => {
-        const userRef = doc(db, "users", newUser.uid);
-        const newAppUser: AppUser = {
-            uid: newUser.uid,
-            email: newUser.email,
-            displayName: name,
-            phone: phone,
-            photoURL: defaultAvatar,
-            wallet: {
-                balance: 0,
-                winnings: 0,
-            },
-            kycStatus: 'Pending',
-            status: 'active',
-            gameStats: { played: 0, won: 0, lost: 0 },
-            lifetimeStats: { totalDeposits: 0, totalWithdrawals: 0, totalWinnings: 0 },
-            referralStats: { referredCount: 0, totalEarnings: 0 },
-        };
-        
+      // Step 3: Create the user document and handle referrals in Firestore
+      const userRef = doc(db, "users", newUser.uid);
+      const newAppUser: AppUser = {
+          uid: newUser.uid,
+          email: newUser.email,
+          displayName: name,
+          phone: phone,
+          photoURL: defaultAvatar,
+          wallet: {
+              balance: 0,
+              winnings: 0,
+          },
+          kycStatus: 'Pending',
+          status: 'active',
+          gameStats: { played: 0, won: 0, lost: 0 },
+          lifetimeStats: { totalDeposits: 0, totalWithdrawals: 0, totalWinnings: 0 },
+          referralStats: { referredCount: 0, totalEarnings: 0 },
+      };
+
+      if (email === 'admin@example.com') {
+          newAppUser.role = 'superadmin';
+          newAppUser.lifetimeStats.totalRevenue = 0;
+      }
+
+      await runTransaction(db, async (transaction) => {
         if (referralCode && referralCode.startsWith('SZLUDO')) {
             const referrerUid = referralCode.replace('SZLUDO', '');
             if (referrerUid && referrerUid !== newUser.uid) { 
@@ -153,29 +162,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                  }
             }
         }
-
-        if (email === 'admin@example.com') {
-            newAppUser.role = 'superadmin';
-            newAppUser.lifetimeStats.totalRevenue = 0;
-        }
-        
         transaction.set(userRef, newAppUser);
-        
-        const transLogRef = doc(collection(db, 'transactions'));
-        transaction.set(transLogRef, {
-            userId: newUser.uid,
-            userName: name,
-            amount: 0,
-            type: 'Sign Up',
-            status: 'completed',
-            notes: 'User account created.',
-            createdAt: new Date(),
-        });
-        
-        setAppUser(newAppUser);
-        setUser(newUser);
-        return userCredential;
       });
+      
+      // Step 4: Create a separate transaction log for the signup event
+      const transLogRef = doc(collection(db, 'transactions'));
+      await setDoc(transLogRef, {
+          userId: newUser.uid,
+          userName: name,
+          amount: 0,
+          type: 'Sign Up',
+          status: 'completed',
+          notes: 'User account created.',
+          createdAt: new Date(),
+      });
+      
+      setAppUser(newAppUser);
+      setUser(newUser);
+      return userCredential;
   }
 
   const signIn = (email:string, password:string) => {
@@ -219,7 +223,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             transaction.set(userRef, newAppUser);
 
             const transLogRef = doc(collection(db, 'transactions'));
-            transaction.set(transLogRef, {
+            await setDoc(transLogRef, {
                 userId: newUser.uid,
                 userName: newUser.displayName,
                 amount: 0,
