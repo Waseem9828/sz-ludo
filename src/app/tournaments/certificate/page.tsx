@@ -174,7 +174,7 @@ const CertificatePage = () => {
                         background: linear-gradient(180deg, hsl(var(--background)), hsl(var(--secondary))) !important;
                     }
                     /* Base Wallpaper Styles */
-                    .wallpaper{position:relative;width:100%;height:100%;display:flex;flex-direction:column;padding:28px;gap:12px;color:white; overflow: hidden;}
+                    .wallpaper{position:relative;width:100%;height:100%;display:flex;flex-direction:column;padding:28px;gap:12px;color:white; overflow: hidden; font-family: 'Poppins', sans-serif;}
                     .wallpaper .bg-shape{position:absolute;filter:blur(40px);border-radius:50%}
                     .wallpaper .top-row{display:flex;align-items:center;justify-content:space-between;gap:12px;z-index: 1;}
                     .wallpaper .logo{width:64px;height:64px;border-radius:12px;display:grid;place-items:center;font-weight:900;font-size:20px;border:4px solid rgba(255,255,255,0.25)}
@@ -196,8 +196,9 @@ const CertificatePage = () => {
                     .wallpaper .stat{flex:1;padding:8px;border-radius:12px;text-align:center}
                     .wallpaper .stat b{display:block;font-size:14px;font-weight:900;}
                     .wallpaper .stat small{font-size:11px;}
-                    .wallpaper .confetti-piece{position:absolute;width:8px;height:18px;opacity:0.95;transform-origin:center;animation:fall 2.8s linear infinite;}
-                    @keyframes fall{0%{transform:translateY(-40vh) rotate(0) }100%{transform:translateY(110vh) rotate(360deg)}}
+                    .wallpaper .footer-ad{display:flex; align-items: center; justify-content:center; gap: 8px; margin-top:16px; padding: 8px; border-radius: 12px; z-index: 1;}
+                    .wallpaper .footer-ad img{width: 24px; height: 24px;}
+                    .wallpaper .footer-ad p{font-size: 10px; font-weight: 600; margin:0;}
 
                     /* Template: Classic Red */
                     .wallpaper.template-classic{background:linear-gradient(180deg, #ff3b3b, #ff7a7a); color: white;}
@@ -213,60 +214,66 @@ const CertificatePage = () => {
                     .wallpaper.template-classic .stat{background:rgba(255,255,255,0.08);}
                     .wallpaper.template-classic .stat b{color:#fff}
                     .wallpaper.template-classic .stat small{color:rgba(255,255,255,0.9)}
+                    .wallpaper.template-classic .footer-ad { background: rgba(0,0,0,0.2); }
 
                     /* Template: Dark Royal */
-                    .wallpaper.template-dark-royal{background:linear-gradient(180deg, #1D2B64, #000000); color: #FFD700;}
-                    .wallpaper.template-dark-royal .bg-shape{background: #FFD700; opacity: 0.05;}
-                    .wallpaper.template-dark-royal .logo{background:linear-gradient(180deg, #000, #111); color: #FFD700; border-color: #FFD700;}
-                    .wallpaper.template-dark-royal .tourney h1, .wallpaper.template-dark-royal .tourney p {color: #fff;}
-                    .wallpaper.template-dark-royal .congrats{background:rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.2)}
-                    .wallpaper.template-dark-royal .congrats .big, .wallpaper.template-dark-royal .congrats .sub{color:#fff}
-                    .wallpaper.template-dark-royal .token-wrap{background:linear-gradient(180deg,#333,#000); border-color: #FFD700;}
-                    .wallpaper.template-dark-royal .token-label{color:#FFD700}
-                    .wallpaper.template-dark-royal .player-name{color:#FFD700}
-                    .wallpaper.template-dark-royal .meta-badge{background:rgba(255,215,0,0.1); color:#FFD700; border: 1px solid rgba(255,215,0,0.2)}
-                    .wallpaper.template-dark-royal .stat{background:rgba(255,215,0,0.05);}
-                    .wallpaper.template-dark-royal .stat b, .wallpaper.template-dark-royal .stat small{color:#fff}
+                    .wallpaper.template-dark-royal { background: linear-gradient(160deg, #020024 0%, #090979 35%, #002d4b 100%); color: #FFD700; font-family: 'Trajan Pro', serif; }
+                    .wallpaper.template-dark-royal .bg-shape { background: #FFD700; opacity: 0.05; }
+                    .wallpaper.template-dark-royal .logo { background: linear-gradient(180deg, #000, #111); color: #FFD700; border: 2px solid #FFD700; box-shadow: 0 0 15px #FFD700; }
+                    .wallpaper.template-dark-royal .tourney h1, .wallpaper.template-dark-royal .tourney p { color: #fff; text-shadow: 0 2px 4px #000; }
+                    .wallpaper.template-dark-royal .congrats { background: rgba(255,215,0,0.05); border: 1px solid rgba(255,215,0,0.2); backdrop-filter: blur(2px); }
+                    .wallpaper.template-dark-royal .congrats .big, .wallpaper.template-dark-royal .congrats .sub { color: #fff; }
+                    .wallpaper.template-dark-royal .token-wrap { background: linear-gradient(180deg, #333, #000); border: 4px solid #FFD700; box-shadow: 0 0 20px rgba(255, 215, 0, 0.5); }
+                    .wallpaper.template-dark-royal .token-label { color: #FFD700; }
+                    .wallpaper.template-dark-royal .player-name { font-size: 24px; color: #FFD700; text-shadow: 0 0 10px #FFD700; }
+                    .wallpaper.template-dark-royal .meta-badge { background: rgba(255,215,0,0.1); color: #FFD700; border: 1px solid rgba(255,215,0,0.2); }
+                    .wallpaper.template-dark-royal .stat { background: rgba(255,215,0,0.05); }
+                    .wallpaper.template-dark-royal .stat b, .wallpaper.template-dark-royal .stat small { color: #fff; }
+                    .wallpaper.template-dark-royal .footer-ad { background: rgba(0,0,0,0.3); color: #FFD700; }
 
                     /* Template: Gamer's Edge */
-                    .wallpaper.template-gamers-edge{background: #0f0c29; font-family: 'Courier New', monospace;}
-                    .wallpaper.template-gamers-edge::before{content:''; position:absolute; inset:0; background:linear-gradient(transparent 70%, rgba(0,255,255,0.1) 70%), linear-gradient(90deg, transparent 98%, rgba(255,0,255,0.2) 98%); background-size: 100% 4px, 4px 100%;}
-                    .wallpaper.template-gamers-edge .logo{background:#0f0c29; color: #00ff00; border: 2px solid #00ff00; text-shadow: 0 0 5px #00ff00;}
-                    .wallpaper.template-gamers-edge .tourney h1{color:#f0f; text-shadow: 0 0 8px #f0f;}
-                    .wallpaper.template-gamers-edge .tourney p{color:#0ff; text-shadow: 0 0 5px #0ff;}
-                    .wallpaper.template-gamers-edge .congrats{background:rgba(0,255,0,0.05); border: 1px solid #0f0;}
-                    .wallpaper.template-gamers-edge .token-wrap{background:#0f0c29; border: 4px solid #f0f;}
-                    .wallpaper.template-gamers-edge .token-label{color:#f0f; text-shadow: 0 0 5px #f0f;}
-                    .wallpaper.template-gamers-edge .player-name{color:#0f0; text-shadow: 0 0 8px #0f0;}
-                    .wallpaper.template-gamers-edge .meta-badge{background:none; border: 1px solid #0ff; color: #0ff;}
-                    .wallpaper.template-gamers-edge .stat{background:none; border: 1px solid rgba(255,255,255,0.1)}
-                    .wallpaper.template-gamers-edge .stat b, .wallpaper.template-gamers-edge .stat small{color: #fff;}
-
+                    .wallpaper.template-gamers-edge { background: #0f0c29; font-family: 'Orbitron', sans-serif; }
+                    .wallpaper.template-gamers-edge::before { content: ''; position: absolute; inset: 0; background-image: linear-gradient(0deg, transparent 24%, rgba(0, 255, 255, 0.2) 25%, rgba(0, 255, 255, 0.2) 26%, transparent 27%, transparent 74%, rgba(255, 0, 255, 0.2) 75%, rgba(255, 0, 255, 0.2) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(0, 255, 255, 0.2) 25%, rgba(0, 255, 255, 0.2) 26%, transparent 27%, transparent 74%, rgba(255, 0, 255, 0.2) 75%, rgba(255, 0, 255, 0.2) 76%, transparent 77%, transparent); background-size: 50px 50px; background-position: 0 0; animation: grid-scroll 20s linear infinite; }
+                    @keyframes grid-scroll { from { background-position: 0 0; } to { background-position: 50px 50px; } }
+                    .wallpaper.template-gamers-edge .logo { background: #0f0c29; color: #00ff00; border: 2px solid #00ff00; text-shadow: 0 0 8px #00ff00; }
+                    .wallpaper.template-gamers-edge .tourney h1 { color: #f0f; text-shadow: 0 0 10px #f0f; }
+                    .wallpaper.template-gamers-edge .tourney p { color: #0ff; text-shadow: 0 0 8px #0ff; }
+                    .wallpaper.template-gamers-edge .congrats { background: rgba(0,255,0,0.05); border: 1px solid #0f0; backdrop-filter: blur(2px); }
+                    .wallpaper.template-gamers-edge .token-wrap { background: #0f0c29; border: 4px solid #f0f; border-radius: 50%; }
+                    .wallpaper.template-gamers-edge .token-label { color: #f0f; text-shadow: 0 0 5px #f0f; }
+                    .wallpaper.template-gamers-edge .player-name { font-size: 24px; color: #0f0; text-shadow: 0 0 12px #0f0; }
+                    .wallpaper.template-gamers-edge .meta-badge { background: none; border: 1px solid #0ff; color: #0ff; text-shadow: 0 0 5px #0ff; }
+                    .wallpaper.template-gamers-edge .stat { background: none; border: 1px solid rgba(255,255,255,0.1); }
+                    .wallpaper.template-gamers-edge .stat b, .wallpaper.template-gamers-edge .stat small { color: #fff; }
+                    .wallpaper.template-gamers-edge .footer-ad { background: rgba(0,0,0,0.4); color: #0ff; }
+                    
                     /* Template: Vintage Grandeur */
-                    .wallpaper.template-vintage{background: #fdf5e6; color: #5d4037; font-family: 'Times New Roman', serif; border: 10px solid #c0a080; border-image: linear-gradient(145deg, #d4af37, #b2842d) 1;}
-                    .wallpaper.template-vintage .logo{background: #eaddc7; color: #5d4037; border-color: #5d4037;}
-                    .wallpaper.template-vintage .tourney h1, .wallpaper.template-vintage .congrats .big, .wallpaper.template-vintage .player-name, .wallpaper.template-vintage .stat b {color: #5d4037; text-shadow: none;}
-                    .wallpaper.template-vintage .tourney p, .wallpaper.template-vintage .congrats .sub, .wallpaper.template-vintage .stat small, .wallpaper.template-vintage .token-label{color: #8d6e63; text-shadow: none;}
-                    .wallpaper.template-vintage .congrats{background: rgba(93,64,55,0.05);}
-                    .wallpaper.template-vintage .token-wrap{background: #eaddc7; border-color: #5d4037;}
-                    .wallpaper.template-vintage .meta-badge{background: #5d4037; color: #fdf5e6;}
-                    .wallpaper.template-vintage .stat{background: rgba(93,64,55,0.05);}
+                    .wallpaper.template-vintage { background: url('https://www.transparenttextures.com/patterns/old-wall.png'), #fdf5e6; color: #5d4037; font-family: 'Playfair Display', serif; border: 12px solid transparent; border-image: url('https://www.transparenttextures.com/patterns/wood-pattern.png') 30 round; box-shadow: inset 0 0 20px rgba(0,0,0,0.3); }
+                    .wallpaper.template-vintage .logo { background: #eaddc7; color: #5d4037; border: 2px solid #5d4037; }
+                    .wallpaper.template-vintage .tourney h1, .wallpaper.template-vintage .congrats .big, .wallpaper.template-vintage .player-name, .wallpaper.template-vintage .stat b { color: #5d4037; text-shadow: 1px 1px 1px #fff; }
+                    .wallpaper.template-vintage .tourney p, .wallpaper.template-vintage .congrats .sub, .wallpaper.template-vintage .stat small, .wallpaper.template-vintage .token-label { color: #8d6e63; text-shadow: 1px 1px 1px #fff; }
+                    .wallpaper.template-vintage .congrats { background: rgba(93,64,55,0.05); border: 1px solid rgba(93,64,55,0.1); }
+                    .wallpaper.template-vintage .token-wrap { background: #eaddc7; border: 4px solid #5d4037; }
+                    .wallpaper.template-vintage .meta-badge { background: #5d4037; color: #fdf5e6; }
+                    .wallpaper.template-vintage .stat { background: rgba(93,64,55,0.05); }
+                    .wallpaper.template-vintage .footer-ad { background: #eaddc7; color: #5d4037; }
 
                     /* Template: Minimalist Clean */
-                    .wallpaper.template-minimalist{background: #f8f9fa; color: #212529; align-items:center; justify-content:center; text-align:center;}
-                    .wallpaper.template-minimalist .logo{display:none;}
-                    .wallpaper.template-minimalist .tourney{margin-left:0;}
-                    .wallpaper.template-minimalist .congrats, .wallpaper.template-minimalist .stats, .wallpaper.template-minimalist .center-area, .wallpaper.template-minimalist .player-box{margin-top:20px;}
-                    .wallpaper.template-minimalist .player-name{font-size:32px; color: #212529;}
-                    .wallpaper.template-minimalist .meta-badge{background: #e9ecef; color: #495057;}
-                    .wallpaper.template-minimalist .token-wrap, .wallpaper.template-minimalist .congrats, .wallpaper.template-minimalist .stat {display: none;}
-
+                    .wallpaper.template-minimalist { background: #f8f9fa; color: #212529; align-items: center; justify-content: center; text-align: center; }
+                    .wallpaper.template-minimalist .logo, .wallpaper.template-minimalist .tourney, .wallpaper.template-minimalist .congrats, .wallpaper.template-minimalist .center-area, .wallpaper.template-minimalist .stats { display: none; }
+                    .wallpaper.template-minimalist .player-box { margin: auto; }
+                    .wallpaper.template-minimalist .player-name { font-size: 36px; color: #212529; font-weight: 900; }
+                    .wallpaper.template-minimalist .meta-badge { background: #e9ecef; color: #495057; font-size: 14px; padding: 10px 16px; }
+                    .wallpaper.template-minimalist .footer-ad { position: absolute; bottom: 20px; left: 20px; right: 20px; background: #e9ecef; color: #495057; }
+                    
                     /* Template: Vibrant Blast */
-                    .wallpaper.template-vibrant{background: linear-gradient(45deg, #f97794, #623aa2); color:white;}
-                    .wallpaper.template-vibrant .logo{background: rgba(255,255,255,0.2); color:white; border-color: rgba(255,255,255,0.5)}
-                    .wallpaper.template-vibrant .congrats, .wallpaper.template-vibrant .meta-badge, .wallpaper.template-vibrant .stat{background: rgba(255,255,255,0.1); backdrop-filter: blur(5px);}
-                    .wallpaper.template-vibrant .token-wrap{background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.5)}
-                    .wallpaper.template-vibrant .token-label{color: white; font-weight: bold;}
+                    .wallpaper.template-vibrant { background: linear-gradient(45deg, #f97794, #623aa2); color: white; }
+                    .wallpaper.template-vibrant .logo { background: rgba(255,255,255,0.2); color: white; border-color: rgba(255,255,255,0.5); }
+                    .wallpaper.template-vibrant .congrats, .wallpaper.template-vibrant .meta-badge, .wallpaper.template-vibrant .stat, .wallpaper.template-vibrant .footer-ad { background: rgba(255,255,255,0.1); backdrop-filter: blur(5px); }
+                    .wallpaper.template-vibrant .token-wrap { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.5); }
+                    .wallpaper.template-vibrant .token-label { color: white; font-weight: bold; }
+                    .wallpaper.template-vibrant .player-name { font-size: 24px; text-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+
                 `}</style>
                 <div className="w-full max-w-[420px] mx-auto flex flex-col gap-3 items-center">
                     <div ref={previewWrapRef} className="wallpaper-wrap aspect-[9/16] max-w-[360px] relative rounded-[22px] overflow-hidden shadow-lg">
@@ -306,6 +313,11 @@ const CertificatePage = () => {
                                 <div className="stat"><b>452</b><small>Score</small></div>
                                 <div className="stat"><b>12</b><small>Wins</small></div>
                                 <div className="stat"><b>{date}</b><small>Date</small></div>
+                            </div>
+
+                            <div className="footer-ad">
+                               <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg2oNx0s_EsUtQCxkYGCkEqHAcVCA4PAgVdyNX-mDF_KO228qsfmqMAOefbIFmb-yD98WpX7jVLor2AJzeDhfqG6wC8n7lWtxU9euuYIYhPWStqYgbGjkGp6gu1JrfKmXMwCn7I_KjLGu_GlGy3PMNmf9ljC8Yr__ZpsiGxHJRKbtH6MfTuG4ofViNRsAY/s1600/73555.png" alt="SZ Ludo Logo" />
+                               <p>Create your own winner story!</p>
                             </div>
                         </div>
                     </div>
