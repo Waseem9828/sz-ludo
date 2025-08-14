@@ -41,7 +41,7 @@ export interface LeaderboardPlayer {
 export interface Tournament {
   id: string;
   title: string;
-  imageUrl?: string;
+  imageUrl: string;
   entryFee: number;
   playerCap: number;
   adminCommission: number; // e.g., 10 for 10%
