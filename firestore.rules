@@ -3,120 +3,105 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Helper Functions
+  
     function isAuth() {
       return request.auth != null;
     }
 
-    function isOwner(userId) {
-      return isAuth() && request.auth.uid == userId;
-    }
-
     function isAdmin() {
-      // Ensure the user has a custom claim 'role' set by a trusted backend.
-      // This is more secure than checking a field in their user document.
-      // For now, we will rely on the user document field as the app is designed.
-      return isAuth() && request.auth.token.role in ['superadmin', 'finance', 'support'];
+      // Allows access for any defined admin role.
+      return isAuth() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['superadmin', 'finance', 'support'];
     }
 
     function isSuperAdmin() {
-      return isAuth() && request.auth.token.role == 'superadmin';
+      return isAuth() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin';
     }
 
-    // Settings can be read by anyone, but only written by admin
+    // Settings can be read by anyone, but only written by a superadmin.
     match /settings/{docId} {
       allow read: if true;
       allow write: if isSuperAdmin();
     }
     
-    // Notifications can be read by anyone, but only written by admin
+    // Notifications can be read by anyone, but only created/updated by a superadmin.
     match /notifications/{docId} {
       allow read: if true;
       allow write: if isSuperAdmin();
     }
     
-    // Users collection
+    // Users Collection
     match /users/{userId} {
-      // READ: A user can read their own document. An admin can read any document.
-      allow get: if isOwner(userId) || isAdmin();
-      // LIST: Only admins can list all users.
+      // A user can read their own document, or an admin can read any.
+      allow get: if isAuth() && (request.auth.uid == userId || isAdmin());
+      // Only admins can list all users.
       allow list: if isAdmin();
-
-      // CREATE: A new user can create their own document upon signup. An admin can also create users.
-      allow create: if isOwner(userId) || isAdmin();
-
-      // UPDATE: A user can update their own document. An admin can update any document.
-      allow update: if isOwner(userId) || isAdmin();
-
-      // DELETE: Only a superadmin can delete a user.
+      
+      // A new user can create their own document upon sign-up. Admins can also create users.
+      allow create: if isAuth() && (request.auth.uid == userId || isSuperAdmin());
+      
+      // A user can update their own document, or an admin can update any.
+      allow update: if isAuth() && (request.auth.uid == userId || isAdmin());
+      
+      // Only a superadmin can delete a user.
       allow delete: if isSuperAdmin();
 
-      // Subcollection: userNotifications
+      // Subcollection for user-specific notification read status.
       match /userNotifications/{notificationId} {
-        allow read, write: if isOwner(userId);
+        allow read, write: if isAuth() && request.auth.uid == userId;
       }
     }
 
-    // Transactions
+    // Transactions Collection
     match /transactions/{transactionId} {
-      // READ: A user can read their own transactions. Admins can read all transactions.
-      allow get: if isAuth() && (resource.data.userId == request.auth.uid || isAdmin());
+      // A user can create their own transactions. This is essential for sign-up and game fees.
+      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
+      // A user can read their own transactions, admins can read any.
+      allow read: if isAuth() && (resource.data.userId == request.auth.uid || isAdmin());
+      // Admins can list all transactions.
       allow list: if isAdmin();
-      
-      // CREATE: Any authenticated user can create a transaction record
-      // (e.g., on signup, game creation, withdrawal request).
-      // The `userId` field is validated by the application logic inside a transaction.
-      allow create: if isAuth();
-
-      // UPDATE/DELETE: Only admins can modify transaction records.
+      // Only admins can update or delete transaction logs.
       allow update, delete: if isAdmin();
     }
 
-    // Games
+    // Games Collection
     match /games/{gameId} {
-      // READ: Any authenticated user can read/list games (for lobbies).
-      allow get, list: if isAuth();
-      
-      // CREATE/UPDATE: Any authenticated user can create/update games
-      // (create challenge, accept challenge, submit result).
+      // Any authenticated user can see the list of games (challenges, ongoing battles).
+      allow read, list: if isAuth();
+      // Any authenticated user can create a game or update an existing one (e.g., accept challenge, submit result).
       allow create, update: if isAuth();
-      
-      // DELETE: Only admins can delete games (e.g., old records).
+      // Only admins can delete a game record.
       allow delete: if isAdmin();
     }
     
-    // Withdrawals
+    // Withdrawals Collection
     match /withdrawals/{withdrawalId} {
-      // READ: A user can read their own withdrawal requests. Admins can list/read all.
-      allow get: if isAuth() && (resource.data.userId == request.auth.uid || isAdmin());
+      // A user can create their own withdrawal request.
+      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
+      // A user can read their own requests, admins can read any.
+      allow read: if isAuth() && (resource.data.userId == request.auth.uid || isAdmin());
+      // Admins can list all withdrawal requests.
       allow list: if isAdmin();
-      
-      // CREATE: A user can create a withdrawal request for themselves.
-      allow create: if isOwner(request.resource.data.userId);
-      
-      // UPDATE/DELETE: Only admins can process withdrawals.
+      // Only admins can update (approve/reject) or delete withdrawal requests.
       allow update, delete: if isAdmin();
     }
     
-    // Deposits
+    // Deposits Collection
     match /deposits/{depositId} {
-      // READ: A user can read their own deposit requests. Admins can list/read all.
-      allow get: if isAuth() && (resource.data.userId == request.auth.uid || isAdmin());
+      // A user can create their own deposit request.
+      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
+       // A user can read their own requests, admins can read any.
+      allow read: if isAuth() && (resource.data.userId == request.auth.uid || isAdmin());
+      // Admins can list all deposit requests.
       allow list: if isAdmin();
-      
-      // CREATE: A user can create a deposit request for themselves.
-      allow create: if isOwner(request.resource.data.userId);
-      
-      // UPDATE/DELETE: Only admins can process deposits.
+      // Only admins can update (approve/reject) or delete deposit requests.
       allow update, delete: if isAdmin();
     }
     
-    // Tournaments
+    // Tournaments Collection
     match /tournaments/{tournamentId} {
-      // READ: Any authenticated user can read/list tournaments.
-      allow get, list: if isAuth();
-      // CREATE/UPDATE/DELETE: Only superadmins can manage tournaments.
+      // Anyone can read tournament info.
+      allow read: if true;
+      // Only superadmins can create, update, or delete tournaments.
       allow create, update, delete: if isSuperAdmin();
     }
   }

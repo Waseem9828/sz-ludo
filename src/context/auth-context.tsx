@@ -86,11 +86,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const unsubscribeFirestore = onSnapshot(userRef, (doc) => {
             if (doc.exists()) {
                 const data = doc.data() as AppUser;
-                // This logic should ideally be handled by a backend function that sets a custom claim.
-                // Doing it on the client-side is insecure.
-                if (data.email === 'admin@example.com' && !data.role) {
-                    data.role = 'superadmin';
-                }
                 setAppUser({ ...data, isKycVerified: data.kycStatus === 'Verified' });
             }
             setLoading(false); 
@@ -174,7 +169,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             type: 'Sign Up',
             status: 'completed',
             notes: 'User account created.',
-            createdAt: new Date(), // Use new Date() inside transaction instead of serverTimestamp()
+            createdAt: new Date(),
         });
         
         setAppUser(newAppUser);
@@ -231,7 +226,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 type: 'Sign Up',
                 status: 'completed',
                 notes: 'User account created with Google.',
-                createdAt: new Date(), // Use new Date() inside transaction instead of serverTimestamp()
+                createdAt: new Date(),
             });
 
             setAppUser(newAppUser);

@@ -92,8 +92,8 @@ export const createChallenge = async (data: { amount: number; createdBy: PlayerI
             player1: data.createdBy,
             playerUids: [data.createdBy.uid],
             status: 'challenge',
-            createdAt: serverTimestamp(),
-            lastUpdatedAt: serverTimestamp(),
+            createdAt: new Date(),
+            lastUpdatedAt: new Date(),
         });
         
         // 3. Create transaction log
@@ -106,7 +106,7 @@ export const createChallenge = async (data: { amount: number; createdBy: PlayerI
             status: 'completed',
             relatedId: challengeRef.id,
             notes: 'Battle created',
-            createdAt: serverTimestamp(),
+            createdAt: new Date(),
         });
         
         return challengeRef;
@@ -157,7 +157,7 @@ export const acceptChallenge = async (gameId: string, player2: PlayerInfo): Prom
             player2: player2,
             playerUids: [...gameData.playerUids, player2.uid],
             status: 'ongoing',
-            lastUpdatedAt: serverTimestamp(),
+            lastUpdatedAt: new Date(),
         });
     });
 
@@ -186,7 +186,7 @@ export const cancelAcceptedChallenge = async (gameId: string, player2Id: string)
             status: 'challenge',
             playerUids: [gameData.player1.uid],
             player2: deleteField(),
-            lastUpdatedAt: serverTimestamp(),
+            lastUpdatedAt: new Date(),
         });
     });
 };
@@ -225,7 +225,7 @@ export const submitPlayerResult = async (gameId: string, userId: string, result:
 
         // Upload screenshot if player won
         if (result === 'WON' && screenshotFile) {
-            const screenshotRef = ref(storage, `screenshots/${gameId}/${userId}_${screenshotFile.name}`);
+            const screenshotRef = ref(storage, `screenshots/${gameId}/${Date.now()}_${userId}`);
             const uploadResult = await uploadBytes(screenshotRef, screenshotFile);
             updateData.screenshotUrl = await getDownloadURL(uploadResult.ref);
         }

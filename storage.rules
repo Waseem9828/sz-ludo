@@ -4,47 +4,34 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     
-    // Helper function to check if the user is authenticated
+    // Function to check if the user is authenticated
     function isAuth() {
       return request.auth != null;
     }
+
+    // Banners can be read by anyone, but only written/deleted by an admin (implicitly, as we don't have roles in storage rules, we check for auth)
+    // For stronger security, you'd use custom claims for roles.
+    match /banners/{folder}/{fileName} {
+      allow read: if true;
+      allow write, delete: if isAuth();
+    }
     
-    // Helper function to check if the user is the owner of the data
-    function isOwner(userId) {
-      return isAuth() && request.auth.uid == userId;
+    // Tournament images can be read by anyone, written by authenticated users (admins).
+    match /tournaments/{fileName} {
+        allow read: if true;
+        allow write: if isAuth();
     }
 
-    // Default deny all reads and writes
-    match /{allPaths=**} {
-      allow read, write: if false;
-    }
-
-    // Allow admins to manage banners and tournament images freely.
-    // This allows the BannerManager component to work correctly.
-    match /banners/{folder}/{allPaths=**} {
-        // Assuming admin role is verified through a custom claim or secure check.
-        // For simplicity, we allow any authenticated user for now, but this should be tightened.
-        allow read, write: if isAuth();
-    }
-    match /tournaments/{allPaths=**} {
-        allow read, write: if isAuth();
-    }
-
-    // Users can only upload deposit screenshots to their own folder.
-    // e.g., deposits/USER_ID/filename.jpg
+    // Deposit screenshots: A user can only write to their own folder.
     match /deposits/{userId}/{fileName} {
-      allow read: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.size < 5 * 1024 * 1024; // 5MB limit
-      allow delete: if isOwner(userId);
+      allow read, write, delete: if isAuth() && request.auth.uid == userId;
     }
-    
-    // Users can upload game result screenshots.
-    // This path is less restrictive as it's keyed by gameId, not userId.
-    // The security is handled by Firestore rules which control who can update a game document
-    // with the resulting screenshot URL.
+
+    // Game result screenshots: A player involved in the game can write to the game's folder.
+    // The game document ID is part of the path.
     match /screenshots/{gameId}/{fileName} {
-      allow read: if isAuth(); // Allow participants to view
-      allow create: if isAuth() && request.resource.size < 5 * 1024 * 1024; // 5MB limit
+      allow read: if isAuth(); // Allow participants or admins to view, ideally checked via Firestore.
+      allow write: if isAuth(); // Simplified rule: any authenticated user can write. A stricter rule would check if user is a player in the game.
     }
   }
 }
