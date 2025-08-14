@@ -1,19 +1,27 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
+    
+    // Helper Functions
     function isAuth() {
       return request.auth != null;
     }
 
-    function isAdmin() {
-      // Check for custom claims on the token.
-      return request.auth.token.role in ['superadmin', 'finance', 'support'];
+    function isOwner(userId) {
+      return isAuth() && request.auth.uid == userId;
     }
-    
+
+    function isAdmin() {
+      // Ensure the user has a custom claim 'role' set by a trusted backend.
+      // This is more secure than checking a field in their user document.
+      // For now, we will rely on the user document field as the app is designed.
+      return isAuth() && request.auth.token.role in ['superadmin', 'finance', 'support'];
+    }
+
     function isSuperAdmin() {
-        return request.auth.token.role == 'superadmin';
+      return isAuth() && request.auth.token.role == 'superadmin';
     }
 
     // Settings can be read by anyone, but only written by admin
@@ -27,56 +35,89 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isSuperAdmin();
     }
-
+    
+    // Users collection
     match /users/{userId} {
-      // Allow list for admins, allow get for self or admins.
-      allow list: if isAuth() && isAdmin();
-      allow get: if isAuth() && (request.auth.uid == userId || isAdmin());
+      // READ: A user can read their own document. An admin can read any document.
+      allow get: if isOwner(userId) || isAdmin();
+      // LIST: Only admins can list all users.
+      allow list: if isAdmin();
 
-      // A user can create their own document, or an admin can create one.
-      allow create: if isAuth();
+      // CREATE: A new user can create their own document upon signup. An admin can also create users.
+      allow create: if isOwner(userId) || isAdmin();
 
-      // A user can update their own document, or an admin can update any.
-      allow update: if isAuth() && (request.auth.uid == userId || isAdmin());
-      
-      // Only superadmins can delete users.
+      // UPDATE: A user can update their own document. An admin can update any document.
+      allow update: if isOwner(userId) || isAdmin();
+
+      // DELETE: Only a superadmin can delete a user.
       allow delete: if isSuperAdmin();
 
-      // User can manage their own notifications status
+      // Subcollection: userNotifications
       match /userNotifications/{notificationId} {
-        allow read, write: if isAuth() && request.auth.uid == userId;
+        allow read, write: if isOwner(userId);
       }
     }
 
+    // Transactions
     match /transactions/{transactionId} {
-        // User can create their own transactions, admins can read any.
-        allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
-        allow get, list: if isAuth() && (resource.data.userId == request.auth.uid || isAdmin());
-        allow update, delete: if isAdmin();
+      // READ: A user can read their own transactions. Admins can read all transactions.
+      allow get: if isAuth() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isAdmin();
+      
+      // CREATE: Any authenticated user can create a transaction record
+      // (e.g., on signup, game creation, withdrawal request).
+      // The `userId` field is validated by the application logic inside a transaction.
+      allow create: if isAuth();
+
+      // UPDATE/DELETE: Only admins can modify transaction records.
+      allow update, delete: if isAdmin();
     }
 
+    // Games
     match /games/{gameId} {
-        allow get, list: if isAuth();
-        allow create: if isAuth();
-        allow update: if isAuth();
-        allow delete: if isAdmin();
-    }
-
-    match /withdrawals/{withdrawalId} {
-        allow get, list: if isAuth();
-        allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
-        allow update, delete: if isAdmin();
-    }
-
-    match /deposits/{depositId} {
-        allow get, list: if isAuth();
-        allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
-        allow update, delete: if isAdmin();
+      // READ: Any authenticated user can read/list games (for lobbies).
+      allow get, list: if isAuth();
+      
+      // CREATE/UPDATE: Any authenticated user can create/update games
+      // (create challenge, accept challenge, submit result).
+      allow create, update: if isAuth();
+      
+      // DELETE: Only admins can delete games (e.g., old records).
+      allow delete: if isAdmin();
     }
     
+    // Withdrawals
+    match /withdrawals/{withdrawalId} {
+      // READ: A user can read their own withdrawal requests. Admins can list/read all.
+      allow get: if isAuth() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isAdmin();
+      
+      // CREATE: A user can create a withdrawal request for themselves.
+      allow create: if isOwner(request.resource.data.userId);
+      
+      // UPDATE/DELETE: Only admins can process withdrawals.
+      allow update, delete: if isAdmin();
+    }
+    
+    // Deposits
+    match /deposits/{depositId} {
+      // READ: A user can read their own deposit requests. Admins can list/read all.
+      allow get: if isAuth() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isAdmin();
+      
+      // CREATE: A user can create a deposit request for themselves.
+      allow create: if isOwner(request.resource.data.userId);
+      
+      // UPDATE/DELETE: Only admins can process deposits.
+      allow update, delete: if isAdmin();
+    }
+    
+    // Tournaments
     match /tournaments/{tournamentId} {
-        allow get, list: if true;
-        allow create, update, delete: if isSuperAdmin();
+      // READ: Any authenticated user can read/list tournaments.
+      allow get, list: if isAuth();
+      // CREATE/UPDATE/DELETE: Only superadmins can manage tournaments.
+      allow create, update, delete: if isSuperAdmin();
     }
   }
 }

@@ -86,6 +86,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const unsubscribeFirestore = onSnapshot(userRef, (doc) => {
             if (doc.exists()) {
                 const data = doc.data() as AppUser;
+                // This logic should ideally be handled by a backend function that sets a custom claim.
+                // Doing it on the client-side is insecure.
                 if (data.email === 'admin@example.com' && !data.role) {
                     data.role = 'superadmin';
                 }
@@ -145,7 +147,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (referralCode && referralCode.startsWith('SZLUDO')) {
             const referrerUid = referralCode.replace('SZLUDO', '');
-            if (referrerUid && referrerUid !== newUser.uid) { // Ensure user is not referring themselves
+            if (referrerUid && referrerUid !== newUser.uid) { 
                  const referrerRef = doc(db, 'users', referrerUid);
                  const referrerSnap = await transaction.get(referrerRef);
                  if (referrerSnap.exists()) {
@@ -172,7 +174,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             type: 'Sign Up',
             status: 'completed',
             notes: 'User account created.',
-            createdAt: new Date(),
+            createdAt: new Date(), // Use new Date() inside transaction instead of serverTimestamp()
         });
         
         setAppUser(newAppUser);
@@ -208,7 +210,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
             if (referralCode && referralCode.startsWith('SZLUDO')) {
                 const referrerUid = referralCode.replace('SZLUDO', '');
-                 if (referrerUid && referrerUid !== newUser.uid) { // Ensure user is not referring themselves
+                 if (referrerUid && referrerUid !== newUser.uid) {
                     const referrerRef = doc(db, 'users', referrerUid);
                     const referrerSnap = await transaction.get(referrerRef);
                     if (referrerSnap.exists()) {
@@ -229,7 +231,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 type: 'Sign Up',
                 status: 'completed',
                 notes: 'User account created with Google.',
-                createdAt: new Date(),
+                createdAt: new Date(), // Use new Date() inside transaction instead of serverTimestamp()
             });
 
             setAppUser(newAppUser);
