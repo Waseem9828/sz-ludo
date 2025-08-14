@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { getUser, AppUser, updateUserKycStatus, updateUserStatus, updateUserWallet } from '@/lib/firebase/users';
+import { getUser, AppUser, updateUserKycStatus, updateUserStatus, updateUserWallet, generateUserReport } from '@/lib/firebase/users';
 import { listenForUserTransactions, Transaction, TransactionType } from '@/lib/firebase/transactions';
 import { SplashScreen } from '@/components/ui/splash-screen';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -17,8 +17,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { ChevronLeft, Edit, Wallet, ShieldCheck, User, Gamepad2, TrendingUp, TrendingDown, Check, X, Ban, VenetianMask, Plus, Minus, AlertTriangle, FileText } from 'lucide-react';
+import { ChevronLeft, Edit, Wallet, ShieldCheck, User, Gamepad2, TrendingUp, TrendingDown, Check, X, Ban, VenetianMask, Plus, Minus, AlertTriangle, FileText, Loader } from 'lucide-react';
 import Link from 'next/link';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
     <div className="flex items-center p-4 bg-muted rounded-lg">
@@ -181,6 +184,7 @@ export default function UserProfilePage() {
     const [loading, setLoading] = useState(true);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
     useEffect(() => {
         if (typeof uid !== 'string') return;
@@ -240,12 +244,21 @@ export default function UserProfilePage() {
         }
     }
 
-    const handleGenerateReport = () => {
-        // This is a placeholder for the future PDF generation logic
-        toast({
-            title: "Feature Coming Soon",
-            description: "PDF report generation is not yet implemented.",
-        });
+    const handleGenerateReport = async () => {
+        if (!user || transactions.length === 0) {
+            toast({ title: 'No Data', description: 'No transactions available to generate a report.' });
+            return;
+        }
+
+        setIsGeneratingReport(true);
+        try {
+            await generateUserReport(user, transactions);
+            toast({ title: 'Report Generated', description: 'The user transaction report has been downloaded.' });
+        } catch (error: any) {
+            toast({ title: 'Report Failed', description: error.message, variant: 'destructive' });
+        } finally {
+            setIsGeneratingReport(false);
+        }
     };
 
 
@@ -334,8 +347,9 @@ export default function UserProfilePage() {
                             )}
                             <WalletAdjustmentDialog user={user} onUpdate={setUser} />
                             <PenaltyDialog user={user} onUpdate={setUser} />
-                             <Button variant="secondary" onClick={handleGenerateReport}>
-                                <FileText className="mr-2 h-4 w-4" /> Generate Report
+                             <Button variant="secondary" onClick={handleGenerateReport} disabled={isGeneratingReport}>
+                                {isGeneratingReport ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
+                                Generate Report
                             </Button>
                         </CardContent>
                     </Card>
@@ -425,3 +439,5 @@ export default function UserProfilePage() {
         </div>
     );
 }
+
+    

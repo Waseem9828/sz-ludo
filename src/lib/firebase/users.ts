@@ -2,7 +2,9 @@
 
 import { doc, getDoc, updateDoc, increment, collection, onSnapshot, writeBatch, serverTimestamp, runTransaction, query, where, getDocs, DocumentReference, Transaction as FirestoreTransaction } from 'firebase/firestore';
 import { db } from './config';
-import { TransactionType } from './transactions';
+import { Transaction, TransactionType } from './transactions';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 export type UserRole = 'superadmin' | 'finance' | 'support';
 
@@ -232,3 +234,56 @@ export const listenForAllUsers = (
 
     return unsubscribe;
 }
+
+export const generateUserReport = async (user: AppUser, transactions: Transaction[]) => {
+    const doc = new jsPDF();
+    const totalBalance = (user.wallet?.balance || 0) + (user.wallet?.winnings || 0);
+
+    // Header
+    doc.setFontSize(22);
+    doc.text("User Transaction Report", 14, 22);
+    doc.setFontSize(12);
+    doc.text(`User: ${user.displayName} (${user.email})`, 14, 32);
+    doc.text(`Report Generated: ${new Date().toLocaleString()}`, 14, 38);
+    
+    // Summary
+    doc.setFontSize(16);
+    doc.text("Account Summary", 14, 50);
+    doc.autoTable({
+        startY: 55,
+        head: [['Metric', 'Value']],
+        body: [
+            ['Total Balance', `₹${totalBalance.toFixed(2)}`],
+            ['Deposit Balance', `₹${(user.wallet?.balance || 0).toFixed(2)}`],
+            ['Winnings Balance', `₹${(user.wallet?.winnings || 0).toFixed(2)}`],
+            ['KYC Status', user.kycStatus || 'N/A'],
+            ['Account Status', user.status || 'active'],
+        ],
+        theme: 'striped',
+    });
+
+    // Transactions Table
+    doc.addPage();
+    doc.setFontSize(16);
+    doc.text("Transaction History", 14, 22);
+
+    const tableData = transactions.map(tx => [
+        tx.createdAt?.toDate().toLocaleString() || 'N/A',
+        tx.type.replace(/_/g, ' '),
+        `₹${tx.amount.toFixed(2)}`,
+        tx.status,
+        tx.notes || tx.relatedId || 'N/A',
+    ]);
+    
+    doc.autoTable({
+        startY: 30,
+        head: [['Date', 'Type', 'Amount', 'Status', 'Notes']],
+        body: tableData,
+        theme: 'grid'
+    });
+    
+    // Save the PDF
+    doc.save(`report_${user.uid}_${new Date().toISOString().split('T')[0]}.pdf`);
+}
+
+    
