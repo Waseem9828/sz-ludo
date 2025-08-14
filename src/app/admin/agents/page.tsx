@@ -15,6 +15,7 @@ import { useAuth } from '@/context/auth-context';
 import { Withdrawal, listenForWithdrawalsByAgent, assignWithdrawalToAgent, confirmWithdrawalPayment, listenForPendingWithdrawals } from '@/lib/firebase/withdrawals';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const AddFundsDialog = ({ agent, onUpdate }: { agent: AppUser; onUpdate: () => void }) => {
     const [amount, setAmount] = useState('');
@@ -64,11 +65,9 @@ const AddFundsDialog = ({ agent, onUpdate }: { agent: AppUser; onUpdate: () => v
                 </div>
                 <DialogFooter>
                     <DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose>
-                    <DialogClose asChild>
-                        <Button onClick={handleFundAgent} disabled={isSubmitting}>
-                            {isSubmitting ? 'Adding...' : 'Confirm'}
-                        </Button>
-                    </DialogClose>
+                    <Button onClick={handleFundAgent} disabled={isSubmitting}>
+                        {isSubmitting ? 'Adding...' : 'Confirm'}
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -264,11 +263,9 @@ const ConfirmPaymentDialog = ({ withdrawal }: { withdrawal: Withdrawal }) => {
                 </div>
                 <DialogFooter>
                     <DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose>
-                    <DialogClose asChild>
-                        <Button onClick={handleConfirm} disabled={isSubmitting}>
-                            {isSubmitting ? 'Confirming...' : 'Confirm Payment'}
-                        </Button>
-                    </DialogClose>
+                    <Button onClick={handleConfirm} disabled={isSubmitting}>
+                        {isSubmitting ? 'Confirming...' : 'Confirm Payment'}
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -276,6 +273,7 @@ const ConfirmPaymentDialog = ({ withdrawal }: { withdrawal: Withdrawal }) => {
 };
 
 const AssignedPayoutsTable = ({ payouts }: { payouts: Withdrawal[] }) => (
+    <ScrollArea className="h-72">
     <Table>
         <TableHeader><TableRow><TableHead>User</TableHead><TableHead>Amount</TableHead><TableHead>UPI ID</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader>
         <TableBody>
@@ -290,9 +288,11 @@ const AssignedPayoutsTable = ({ payouts }: { payouts: Withdrawal[] }) => (
             ))}
         </TableBody>
     </Table>
+    </ScrollArea>
 );
 
 const PendingPayoutsTable = ({ payouts, onAssign, agentBalance }: { payouts: Withdrawal[], onAssign: (id: string) => void, agentBalance: number }) => (
+    <ScrollArea className="h-72">
      <Table>
         <TableHeader><TableRow><TableHead>User</TableHead><TableHead>Amount</TableHead><TableHead>Date</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader>
         <TableBody>
@@ -314,6 +314,7 @@ const PendingPayoutsTable = ({ payouts, onAssign, agentBalance }: { payouts: Wit
             })}
         </TableBody>
     </Table>
+    </ScrollArea>
 );
 
 export default function AgentsPage() {

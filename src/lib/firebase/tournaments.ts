@@ -134,14 +134,7 @@ export const joinTournament = async (tournamentId: string, userId: string) => {
 
         // --- Database Updates ---
         // 1. Deduct entry fee from user's wallet
-        const newBalance = (user.wallet?.balance || 0) - tournament.entryFee;
-        if(newBalance < 0){
-             const remainingDeduction = Math.abs(newBalance);
-             const newWinnings = (user.wallet?.winnings || 0) - remainingDeduction;
-             transaction.update(userRef, { 'wallet.balance': 0, 'wallet.winnings': newWinnings });
-        } else {
-            transaction.update(userRef, { 'wallet.balance': newBalance });
-        }
+        await updateUserWallet(userId, -tournament.entryFee, 'balance', 'game_fee', `Joined tournament: ${tournament.title}`);
 
         // 2. Add user to the tournament's players list and update prize pool and leaderboard
         const newLeaderboardPlayer: LeaderboardPlayer = {
@@ -155,19 +148,6 @@ export const joinTournament = async (tournamentId: string, userId: string) => {
             players: arrayUnion(userId),
             prizePool: increment(tournament.entryFee),
             leaderboard: arrayUnion(newLeaderboardPlayer),
-        });
-
-        // 3. Create a transaction log
-        const transRef = doc(collection(db, 'transactions'));
-        transaction.set(transRef, {
-            userId,
-            userName: user.displayName,
-            amount: tournament.entryFee,
-            type: 'game_fee',
-            status: 'completed',
-            notes: `Joined tournament: ${tournament.title}`,
-            relatedId: tournamentId,
-            createdAt: serverTimestamp(),
         });
     });
 };
@@ -278,3 +258,41 @@ export const hasJoinedLiveTournament = async (userId: string): Promise<boolean> 
     const snapshot = await getDocs(q);
     return !snapshot.empty;
 };
+
+
+// Distribute prizes for a completed tournament
+export const distributeTournamentPrizes = async (tournamentId: string) => {
+    const tournamentRef = doc(db, TOURNAMENTS_COLLECTION, tournamentId);
+
+    return runTransaction(db, async (transaction) => {
+        const tSnap = await transaction.get(tournamentRef);
+        if (!tSnap.exists()) throw new Error("Tournament not found.");
+        
+        const tournament = tSnap.data() as Tournament;
+        if (tournament.status !== 'live' && new Date() < tournament.endTime.toDate()) {
+            throw new Error("Tournament has not ended yet.");
+        }
+         if (tournament.status === 'completed') {
+            throw new Error("Prizes have already been distributed for this tournament.");
+        }
+
+        const leaderboard = tournament.leaderboard.sort((a, b) => b.points - a.points);
+        const prizePoolAfterCommission = tournament.prizePool * (1 - (tournament.adminCommission / 100));
+
+        for (const dist of tournament.prizeDistribution) {
+            const winnersInRange = leaderboard.slice(dist.rankStart - 1, dist.rankEnd);
+            if (winnersInRange.length === 0) continue;
+
+            const totalAmountForRange = prizePoolAfterCommission * (dist.percentage / 100);
+            const amountPerPlayer = totalAmountForRange / winnersInRange.length;
+
+            for (const winner of winnersInRange) {
+                // This will create its own transaction log internally.
+                await updateUserWallet(winner.uid, amountPerPlayer, 'winnings', 'winnings', `Prize from ${tournament.title}`);
+            }
+        }
+        
+        // Mark tournament as completed
+        transaction.update(tournamentRef, { status: 'completed' });
+    });
+}

@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { SplashScreen } from '@/components/ui/splash-screen';
-import { Tournament, listenForTournament } from '@/lib/firebase/tournaments';
+import { Tournament, listenForTournament, distributeTournamentPrizes } from '@/lib/firebase/tournaments';
 import { AppUser } from '@/lib/firebase/users';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -15,7 +15,7 @@ import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
-import { ChevronLeft, Users, Trophy, Percent, Calendar, UserPlus, Star } from 'lucide-react';
+import { ChevronLeft, Users, Trophy, Percent, Calendar, UserPlus, Star, Loader } from 'lucide-react';
 import Image from 'next/image';
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
@@ -38,6 +38,7 @@ export default function TournamentDetailPage() {
 
     const [tournament, setTournament] = useState<Tournament | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isDistributing, setIsDistributing] = useState(false);
 
     useEffect(() => {
         if (typeof id !== 'string') return;
@@ -58,6 +59,19 @@ export default function TournamentDetailPage() {
 
         return () => unsubscribe();
     }, [id, router, toast]);
+
+    const handleDistributePrizes = async () => {
+        if (!tournament) return;
+        setIsDistributing(true);
+        try {
+            await distributeTournamentPrizes(tournament.id);
+            toast({ title: "Success!", description: "Prizes have been successfully distributed to the winners." });
+        } catch (error: any) {
+            toast({ title: "Distribution Failed", description: error.message, variant: 'destructive' });
+        } finally {
+            setIsDistributing(false);
+        }
+    };
     
     const getStatusVariant = (status: Tournament['status']) => {
         switch (status) {
@@ -102,6 +116,7 @@ export default function TournamentDetailPage() {
     const getInitials = (name?: string | null) => name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U';
     
     const leaderboard = tournament.leaderboard?.sort((a, b) => b.points - a.points) || [];
+    const isTournamentOver = tournament.status === 'live' && new Date() > tournament.endTime.toDate();
 
     return (
         <div className="space-y-6">
@@ -113,7 +128,7 @@ export default function TournamentDetailPage() {
 
             <Card>
                 <CardHeader>
-                    <div className="flex justify-between items-start">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
                             <CardTitle className="text-3xl">{tournament.title}</CardTitle>
                             <CardDescription>
@@ -124,6 +139,16 @@ export default function TournamentDetailPage() {
                     </div>
                 </CardHeader>
                 <CardContent>
+                    {isTournamentOver && tournament.status !== 'completed' && (
+                        <div className="bg-blue-100 dark:bg-blue-900/50 border-l-4 border-blue-500 text-blue-800 dark:text-blue-200 p-4 rounded-r-lg mb-6" role="alert">
+                            <p className="font-bold">Tournament Ended</p>
+                            <p className="text-sm">This tournament has finished. Please distribute the prizes to the winners.</p>
+                            <Button onClick={handleDistributePrizes} disabled={isDistributing} className="mt-3">
+                                {isDistributing && <Loader className="mr-2 h-4 w-4 animate-spin" />}
+                                Distribute Prizes
+                            </Button>
+                        </div>
+                    )}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                         <StatCard title="Entry Fee" value={`₹${tournament.entryFee}`} icon={UserPlus} />
                         <StatCard title="Prize Pool" value={`₹${tournament.prizePool.toFixed(2)}`} icon={Trophy} />

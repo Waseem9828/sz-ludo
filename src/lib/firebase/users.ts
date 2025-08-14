@@ -1,5 +1,4 @@
 
-
 import { doc, getDoc, updateDoc, increment, collection, onSnapshot, writeBatch, serverTimestamp, runTransaction, query, where, getDocs, DocumentReference, Transaction as FirestoreTransaction } from 'firebase/firestore';
 import { db } from './config';
 import { Transaction, TransactionType } from './transactions';
@@ -179,7 +178,7 @@ export const updateUserWallet = async (uid: string, amount: number, walletType: 
         // Update lifetime stats for deposits or approved withdrawals
         if (transactionType === 'deposit' && (notes?.includes('Approved') || notes?.includes('Paytm'))) {
             transaction.update(userRef, { 'lifetimeStats.totalDeposits': increment(amount) });
-        } else if (transactionType === 'withdrawal' && (notes === 'Withdrawal Approved' || status === 'approved')) {
+        } else if (transactionType === 'withdrawal' && notes === 'Withdrawal Approved') {
             transaction.update(userRef, { 'lifetimeStats.totalWithdrawals': increment(Math.abs(amount)) });
         } else if (transactionType === 'winnings') {
             transaction.update(userRef, { 'lifetimeStats.totalWinnings': increment(amount) });
@@ -249,7 +248,7 @@ export const generateUserReport = async (user: AppUser, transactions: Transactio
     // Summary
     doc.setFontSize(16);
     doc.text("Account Summary", 14, 50);
-    doc.autoTable({
+    (doc as any).autoTable({
         startY: 55,
         head: [['Metric', 'Value']],
         body: [
@@ -263,9 +262,18 @@ export const generateUserReport = async (user: AppUser, transactions: Transactio
     });
 
     // Transactions Table
-    doc.addPage();
-    doc.setFontSize(16);
-    doc.text("Transaction History", 14, 22);
+    // Check if there's enough space, otherwise add a new page
+    // @ts-ignore
+    if (doc.lastAutoTable.finalY > 200) {
+      doc.addPage();
+      doc.setFontSize(16);
+      doc.text("Transaction History", 14, 22);
+    } else {
+      doc.setFontSize(16);
+      // @ts-ignore
+      doc.text("Transaction History", 14, doc.lastAutoTable.finalY + 15);
+    }
+    
 
     const tableData = transactions.map(tx => [
         tx.createdAt?.toDate().toLocaleString() || 'N/A',
@@ -275,8 +283,9 @@ export const generateUserReport = async (user: AppUser, transactions: Transactio
         tx.notes || tx.relatedId || 'N/A',
     ]);
     
-    doc.autoTable({
-        startY: 30,
+    (doc as any).autoTable({
+        // @ts-ignore
+        startY: doc.lastAutoTable.finalY ? doc.lastAutoTable.finalY + 25 : 30,
         head: [['Date', 'Type', 'Amount', 'Status', 'Notes']],
         body: tableData,
         theme: 'grid'
@@ -285,5 +294,3 @@ export const generateUserReport = async (user: AppUser, transactions: Transactio
     // Save the PDF
     doc.save(`report_${user.uid}_${new Date().toISOString().split('T')[0]}.pdf`);
 }
-
-    

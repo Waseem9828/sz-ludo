@@ -19,9 +19,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { ChevronLeft, Edit, Wallet, ShieldCheck, User, Gamepad2, TrendingUp, TrendingDown, Check, X, Ban, VenetianMask, Plus, Minus, AlertTriangle, FileText, Loader } from 'lucide-react';
 import Link from 'next/link';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
-
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
     <div className="flex items-center p-4 bg-muted rounded-lg">
@@ -102,7 +99,7 @@ const WalletAdjustmentDialog = ({ user, onUpdate }: { user: AppUser, onUpdate: (
                 </div>
                 <DialogFooter>
                     <DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose>
-                    <DialogClose asChild><Button onClick={handleWalletUpdate} disabled={isSubmitting}>Confirm Adjustment</Button></DialogClose>
+                    <Button onClick={handleWalletUpdate} disabled={isSubmitting}>Confirm Adjustment</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -165,7 +162,7 @@ const PenaltyDialog = ({ user, onUpdate }: { user: AppUser, onUpdate: (user: App
                 </div>
                 <DialogFooter>
                     <DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose>
-                    <DialogClose asChild><Button variant="destructive" onClick={handlePenalty} disabled={isSubmitting}>Confirm Penalty</Button></DialogClose>
+                    <Button variant="destructive" onClick={handlePenalty} disabled={isSubmitting}>Confirm Penalty</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -245,8 +242,8 @@ export default function UserProfilePage() {
     }
 
     const handleGenerateReport = async () => {
-        if (!user || transactions.length === 0) {
-            toast({ title: 'No Data', description: 'No transactions available to generate a report.' });
+        if (!user) {
+            toast({ title: 'No Data', description: 'User data not available.' });
             return;
         }
 
@@ -439,5 +436,3 @@ export default function UserProfilePage() {
         </div>
     );
 }
-
-    
