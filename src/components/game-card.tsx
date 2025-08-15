@@ -1,3 +1,4 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
@@ -7,9 +8,25 @@ import Autoplay from "embla-carousel-autoplay";
 import Link from 'next/link';
 import { cn } from "@/lib/utils";
 
+// Helper function to format the description string
+const formatDescription = (desc: string) => {
+  if (desc.toLowerCase().startsWith("entry:")) {
+    // Replace numbers with ₹number, but only if not already preceded by ₹
+    return desc.replace(/(\D|^)(\d[\d,]*)/g, (match, p1, p2) => {
+        if (p1.trim() === '₹') {
+            return match; // Already has a rupee symbol
+        }
+        return `${p1}₹${p2}`;
+    });
+  }
+  return desc;
+};
+
+
 export default function GameCard({ title, description, images, link, aiHint }: HomePageCard & {link: string}) {
 
   const hasMultipleImages = images.length > 1;
+  const formattedDescription = formatDescription(description);
 
   return (
     <Card className={cn(
@@ -54,7 +71,7 @@ export default function GameCard({ title, description, images, link, aiHint }: H
       </div>
       <CardContent className="p-3 text-center">
         <h3 className="text-lg font-bold font-headline text-primary">{title}</h3>
-        <p className="text-xs text-muted-foreground mb-3">{description}</p>
+        <p className="text-xs text-muted-foreground mb-3 font-sans">{formattedDescription}</p>
         <Link href={link}>
           <Button size="sm" className="w-full font-bold">Play Now</Button>
         </Link>
