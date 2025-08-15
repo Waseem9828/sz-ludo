@@ -1,103 +1,84 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check for admin roles
-    function isAdmin() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['superadmin', 'finance', 'support'];
-    }
-    
-    function isSuperAdmin() {
-       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin';
-    }
-
-    function isFinanceAgent() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['superadmin', 'finance'];
-    }
-
-    // Default Deny: Disallow all reads and writes by default.
-    match /{document=**} {
-      allow read, write: if false;
-    }
-
-    // Users Collection
     match /users/{userId} {
-      // Any authenticated user can read their own data.
-      // Admins can read any user's data.
-      allow read: if (request.auth != null && request.auth.uid == userId) || isAdmin();
+      // A user can only create their own user document.
+      allow create: if request.auth != null && request.auth.uid == userId;
+      
+      // A user can only read or update their own document.
+      allow read, update: if request.auth != null && request.auth.uid == userId;
+      
+      // No user should be able to delete their own account from the client.
+      allow delete: if false;
+    }
 
-      // Users can update their own data, but cannot change sensitive fields like wallet or role.
-      allow update: if request.auth != null && request.auth.uid == userId
-                    && !(request.resource.data.wallet.balance != resource.data.wallet.balance)
-                    && !(request.resource.data.wallet.winnings != resource.data.wallet.winnings)
-                    && !(request.resource.data.role != resource.data.role);
-
-      // Document creation is handled by a Cloud Function. No client-side creation allowed.
-      allow create: if false;
-      allow delete: if isSuperAdmin(); // Only superadmin can delete users
+    match /transactions/{transactionId} {
+      // A user can only create a transaction record for themselves.
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      
+      // A user can only read their own transactions.
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      
+      // Transactions are immutable from the client.
+      allow update, delete: if false;
     }
     
-    // Transactions Collection
-    match /transactions/{transactionId} {
-      // Users can read their own transactions. Admins can read all transactions.
-      allow read: if (request.auth != null && resource.data.userId == request.auth.uid) || isAdmin();
-      // Transactions are immutable from the client. They are only created by server-side logic (Cloud Functions or Admin SDK).
+    match /games/{gameId} {
+       // Anyone authenticated can read game challenges and ongoing games.
+       allow read: if request.auth != null;
+       
+       // Rules for creating, updating, and deleting games.
+       allow create, update, delete: if request.auth != null;
+    }
+    
+    match /deposits/{depositId} {
+       // A user can only create a deposit request for themselves.
+       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+
+       // Reading deposit requests should be an admin-only task.
+       allow read, update, delete: if false;
+    }
+
+    match /withdrawals/{withdrawalId} {
+        // A user can only create a withdrawal request for themselves.
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      
+      // Reading/updating withdrawal requests should be an admin-only task from the client.
+      allow read, update, delete: if false;
+    }
+
+    match /notifications/{notificationId} {
+      // All authenticated users can read notifications.
+      allow read: if request.auth != null;
+
+      // Only admins should create notifications (handled via admin panel/backend).
+      allow create, update, delete: if false; 
+    }
+    
+    match /users/{userId}/userNotifications/{notificationId} {
+        // A user can create/update their own notification read status.
+        allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    match /settings/{docId} {
+      // All authenticated users can read settings.
+      allow read: if request.auth != null;
+
+      // Only admins should write settings (handled via admin panel/backend).
       allow write: if false;
     }
 
-    // Games Collection
-    match /games/{gameId} {
-      // Anyone can read game listings.
-      allow read: if true;
-      // Users can create games (challenges).
-      allow create: if request.auth != null;
-      // Users can update games they are part of, but cannot change key fields themselves.
-      allow update: if request.auth != null && request.auth.uid in resource.data.playerUids;
-      // Only superadmin can delete games
-      allow delete: if isSuperAdmin();
-    }
-    
-    // Withdrawals Collection
-    match /withdrawals/{withdrawalId} {
-        // Users can read their own withdrawal requests.
-        allow read: if (request.auth != null && resource.data.userId == request.auth.uid) || isFinanceAgent();
-        // Users can create their own withdrawal requests.
-        allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-        // Only Finance agents can update (assign/approve) withdrawals.
-        allow update: if isFinanceAgent();
-    }
-
-    // Deposits Collection
-    match /deposits/{depositId} {
-        allow read: if (request.auth != null && resource.data.userId == request.auth.uid) || isFinanceAgent();
-        allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-        allow update: if isFinanceAgent();
-    }
-
-    // Notifications Collection (Global)
-    match /notifications/{notificationId} {
-        allow read: if true; // All users can read global notifications.
-        allow write: if isSuperAdmin(); // Only superadmin can create/update notifications.
-    }
-    
-    // User-specific notification status
-    match /users/{userId}/userNotifications/{notificationId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-
-    // Settings Collection
-    match /settings/{docId} {
-        // All users can read settings
-        allow read: if true;
-        // Only superadmin can write to settings
-        allow write: if isSuperAdmin();
-    }
-    
-    // Tournaments Collection
     match /tournaments/{tournamentId} {
-        allow read: if true;
-        allow write: if isSuperAdmin(); // Only superadmin can create/update/delete tournaments.
+        // Anyone authenticated can read tournament details.
+        allow read: if request.auth != null;
+
+        // Joining (update) is handled via backend logic, but we can restrict direct client updates if needed.
+        // For simplicity, allowing updates if authenticated. More complex logic can be added.
+        allow update: if request.auth != null;
+
+        // Creation/deletion should be admin only.
+        allow create, delete: if false;
     }
   }
 }
