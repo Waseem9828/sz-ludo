@@ -9,7 +9,6 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signInWithPopup,
-  updateProfile,
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase/config';
 import {
@@ -75,24 +74,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (authUser) => {
       setUser(authUser);
-      if (authUser) {
-        const userRef = doc(db, 'users', authUser.uid);
-        const unsubscribeFirestore = onSnapshot(
-          userRef,
-          (snapshot) => {
-            if (snapshot.exists()) {
-              const data = snapshot.data() as AppUser;
-              setAppUser({ ...data, isKycVerified: data.kycStatus === 'Verified' });
-            }
-            setLoading(false);
-          },
-          (error) => {
-            console.error('Firestore onSnapshot error:', error);
-            setLoading(false);
-          }
-        );
-        return () => unsubscribeFirestore();
-      } else {
+      if (!authUser) {
+        // If there's no authenticated user, we are done loading.
         setAppUser(null);
         setLoading(false);
       }
@@ -100,6 +83,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     return () => unsubscribeAuth();
   }, []);
+
+  useEffect(() => {
+    // This effect is responsible for loading the Firestore document (appUser)
+    // and managing the final loading state.
+    if (user) {
+      const userDocRef = doc(db, 'users', user.uid);
+      const unsubscribeFirestore = onSnapshot(userDocRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const userData = snapshot.data() as AppUser;
+          setAppUser({ ...userData, isKycVerified: userData.kycStatus === 'Verified' });
+          setLoading(false); // Stop loading only when we have the Firestore user data.
+        } else {
+          // This case can happen for a brief moment after signup before the cloud function runs.
+          // We keep loading until the document is created.
+          setAppUser(null);
+          setLoading(true);
+        }
+      }, (error) => {
+        console.error("Firestore onSnapshot error:", error);
+        setLoading(false); // Stop loading on error
+      });
+
+      return () => unsubscribeFirestore();
+    }
+  }, [user]); // This effect depends only on the auth user state.
 
   const signUp = async (
     email: string,
@@ -109,15 +117,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     referralCode?: string
   ) => {
     // Set cookies for the cloud function to pick up.
-    // This is the most reliable way to pass extra data to the onUserCreate trigger.
-    setCookie('newUserName', name, { maxAge: 60 * 5 }); // 5-minute expiry
+    setCookie('newUserName', name, { maxAge: 60 * 5 });
     setCookie('newUserPhone', phone, { maxAge: 60 * 5 });
     if (referralCode) {
-        setCookie('referralCode', referralCode, { maxAge: 60 * 5 });
+      setCookie('referralCode', referralCode, { maxAge: 60 * 5 });
     }
-    
-    // The onUserCreate cloud function will handle Firestore doc creation.
-    // We only need to create the user in Auth here.
     return await createUserWithEmailAndPassword(auth, email, password);
   };
 
@@ -127,20 +131,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signInWithGoogle = async (referralCode?: string) => {
     if (referralCode) {
-        setCookie('referralCode', referralCode, { maxAge: 60 * 5 });
+      setCookie('referralCode', referralCode, { maxAge: 60 * 5 });
     }
-    // The onUserCreate Cloud Function will handle document creation if it's a new user.
-    // No need to write to Firestore from the client.
     return signInWithPopup(auth, googleAuthProvider);
   };
 
   const logout = async () => {
-    setUser(null);
-    setAppUser(null);
     await signOut(auth);
   };
 
-  if (loading && !user) {
+  if (loading) {
     return <SplashScreen />;
   }
 
