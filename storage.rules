@@ -2,32 +2,37 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // Allow read access to all files by default. This is generally safe if URLs are not guessable.
-    match /{allPaths=**} {
+    // Rules for user profile pictures (if any, not explicitly defined but good practice)
+    match /users/{userId}/profile.jpg {
       allow read;
-    }
-    
-    // Secure the deposits folder.
-    // A user can only write to their own subfolder.
-    match /deposits/{userId}/{fileName} {
       allow write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Allow authenticated users (admins) to upload banners.
-    // You might want to restrict this further to specific admin roles using custom claims in the future.
-     match /banners/{allPaths=**} {
-      allow write: if request.auth != null;
+    // Rules for deposit screenshots
+    // Path: deposits/{userId}/{fileName}
+    // Allows a user to write only to their own deposit folder.
+    match /deposits/{userId}/{imageId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Rules for game result screenshots
+    // Path: screenshots/{gameId}/{fileName}
+    // Allows any authenticated user to write to a game's screenshot folder.
+    // This is necessary as both players in a game might need to upload a screenshot for the same gameId.
+    // The path is protected by the unguessable gameId.
+    match /screenshots/{gameId}/{screenshotId} {
+      allow read, write: if request.auth != null;
     }
     
-    // Rules for tournament images
-     match /tournaments/{allPaths=**} {
+    // Rules for tournament and other banner images uploaded by admin
+    match /banners/{folder}/{imageId} {
+      // Public read access for all banners
+      allow read; 
+      // Write access should be restricted to admin roles via server-side logic (Cloud Functions),
+      // but for client-side admin uploads, we can assume any authenticated user is an admin for now.
+      // For production, this should be locked down further with custom claims.
       allow write: if request.auth != null;
     }
-    
-    // Allow users to upload screenshots for games they are part of.
-    // The filename should contain the gameId to verify against.
-     match /screenshots/{gameId}/{fileName} {
-       allow write: if request.auth != null;
-     }
   }
 }
