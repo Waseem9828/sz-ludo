@@ -9,8 +9,8 @@ const db = admin.firestore();
 const defaultAvatar = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi_h6LUuqTTKYsn5TfUZwkI6Aib6Y0tOzQzcoZKstURqxyl-PJXW1DKTkF2cPPNNUbP3iuDNsOBVOYx7p-ZwrodI5w9fyqEwoabj8rU0mLzSbT5GCFUKpfCc4s_LrtHcWFDvvRstCghAfQi5Zfv2fipdZG8h4dU4vGt-eFRn-gS3QTg6_JJKhv0Yysr_ZY/s1600/82126.png";
 
 /**
- * Triggered when a new user is created in Firebase Authentication.
- * This function creates a corresponding user document in Firestore.
+ * A Callable Cloud Function triggered from the client after a user is created in Firebase Auth.
+ * This function securely creates the corresponding user document in Firestore.
  */
 export const onUserCreate = functions.https.onCall(async (data, context) => {
     if (!context.auth) {
@@ -19,11 +19,11 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
 
     const { uid } = context.auth;
     const { name, phone, referralCode } = data;
-    const { email } = context.auth.token;
+    const { email, photoURL } = context.auth.token;
 
     const userRef = db.doc(`users/${uid}`);
 
-    // Check if user document already exists
+    // Check if user document already exists to prevent accidental overwrites
     const userDoc = await userRef.get();
     if (userDoc.exists) {
         functions.logger.log(`User document for UID: ${uid} already exists.`);
@@ -34,7 +34,7 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
         uid: uid,
         email: email || "",
         displayName: name || "New User",
-        photoURL: defaultAvatar,
+        photoURL: photoURL || defaultAvatar,
         phone: phone || "",
         wallet: { balance: 10, winnings: 0 },
         kycStatus: "Pending" as const,
@@ -55,7 +55,7 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
     const batch = db.batch();
 
     // Handle referral if code is provided
-    if (referralCode && referralCode.startsWith('SZLUDO')) {
+    if (referralCode && typeof referralCode === 'string' && referralCode.startsWith('SZLUDO')) {
         const referrerId = referralCode.replace('SZLUDO', '');
         if (referrerId && referrerId !== uid) {
             const referrerRef = db.doc(`users/${referrerId}`);
