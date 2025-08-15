@@ -11,6 +11,7 @@ import {
   signInWithPopup,
   updateProfile,
   fetchSignInMethodsForEmail,
+  updatePhoneNumber,
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase/config';
 import {
@@ -25,7 +26,7 @@ import {
 import { SplashScreen } from '@/components/ui/splash-screen';
 import type { AppUser } from '@/lib/firebase/users';
 import { googleAuthProvider } from '@/lib/firebase/config';
-import { setCookie, getCookie } from 'cookies-next';
+import { setCookie } from 'cookies-next';
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: Array<string>;
@@ -41,7 +42,7 @@ interface AuthContextType {
   installPwa: () => void;
   signUp: (
     email: string,
-    password:string,
+    password: string,
     name: string,
     phone: string,
     referralCode?: string
@@ -125,18 +126,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const phoneQuerySnapshot = await getDocs(phoneQuery);
     if (!phoneQuerySnapshot.empty) throw new Error('This phone number is already registered.');
 
-    // Set referral code in a cookie for the Cloud Function to pick up
-    if (referralCode) {
-        setCookie('referralCode', referralCode, { maxAge: 60 * 5 }); // 5 minutes expiry
-    }
-     if (phone) {
-        setCookie('phone', phone, { maxAge: 60 * 5 });
-    }
-
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    // The onUserCreate cloud function will handle Firestore doc creation.
+    // We just need to update the profile on the client.
     await updateProfile(userCredential.user, { displayName: name, photoURL: defaultAvatar });
     
-    // The Cloud Function `onUserCreate` will handle Firestore document creation.
+    // We can't directly pass data to the cloud function, but we can update the user object
+    // after creation if needed, or rely on client-side state for immediate UI updates.
+    // For phone number, it's best to handle it via a separate verification step
+    // or pass it to a callable function right after sign up.
+    // For simplicity, we are letting the cloud function get phone number if it's
+    // available on the Auth object (e.g. from phone auth, which is not the case here).
+    
     return userCredential;
   };
 
@@ -145,9 +146,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signInWithGoogle = async (referralCode?: string) => {
-     if (referralCode) {
-        setCookie('referralCode', referralCode, { maxAge: 60 * 5 }); // 5 minutes expiry
-    }
     return signInWithPopup(auth, googleAuthProvider);
   };
 
