@@ -11,7 +11,6 @@ import {
   signInWithPopup,
   updateProfile,
   fetchSignInMethodsForEmail,
-  updatePhoneNumber,
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase/config';
 import {
@@ -118,6 +117,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     phone: string,
     referralCode?: string
   ) => {
+    // Set cookies for the cloud function to pick up
+    setCookie('newUserName', name);
+    setCookie('newUserPhone', phone);
+    if (referralCode) {
+        setCookie('referralCode', referralCode);
+    }
+      
     const methods = await fetchSignInMethodsForEmail(auth, email);
     if (methods.length > 0) throw new Error('This email address is already in use.');
 
@@ -127,16 +133,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!phoneQuerySnapshot.empty) throw new Error('This phone number is already registered.');
 
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    
     // The onUserCreate cloud function will handle Firestore doc creation.
     // We just need to update the profile on the client.
     await updateProfile(userCredential.user, { displayName: name, photoURL: defaultAvatar });
-    
-    // We can't directly pass data to the cloud function, but we can update the user object
-    // after creation if needed, or rely on client-side state for immediate UI updates.
-    // For phone number, it's best to handle it via a separate verification step
-    // or pass it to a callable function right after sign up.
-    // For simplicity, we are letting the cloud function get phone number if it's
-    // available on the Auth object (e.g. from phone auth, which is not the case here).
     
     return userCredential;
   };
@@ -146,6 +146,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signInWithGoogle = async (referralCode?: string) => {
+    if (referralCode) {
+        setCookie('referralCode', referralCode);
+    }
     return signInWithPopup(auth, googleAuthProvider);
   };
 
