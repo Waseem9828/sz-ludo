@@ -41,15 +41,8 @@ export const createDepositRequest = async (data: {
     const filePath = `deposits/${data.userId}/${Date.now()}_${data.screenshotFile.name}`;
     const screenshotRef = ref(storage, filePath);
     
-    // Add custom metadata to the file for security rule validation
-    const metadata = {
-      customMetadata: {
-        'userId': data.userId
-      }
-    };
-
     // This step must complete successfully before proceeding.
-    const uploadResult = await uploadBytes(screenshotRef, data.screenshotFile, metadata);
+    const uploadResult = await uploadBytes(screenshotRef, data.screenshotFile);
     const screenshotUrl = await getDownloadURL(uploadResult.ref);
 
     // 2. Now that the upload is successful and we have the URL, create the document.
