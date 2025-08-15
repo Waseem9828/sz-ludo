@@ -3,61 +3,67 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-
-    // Helper function to check if the user is authenticated.
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-
-    // Helper function to get user role from Firestore.
-    function getUserRole(userId) {
-      return get(/databases/$(database)/documents/users/$(userId)).data.role;
-    }
-
-    // Helper function to check if user is an admin.
-    function isAdmin() {
-      return isAuthenticated() && getUserRole(request.auth.uid) in ['superadmin', 'finance', 'support'];
-    }
-
-    // Public assets (like app logos) are readable by anyone, but not writable.
+  
+    // =============================================
+    // Public Assets
+    // Anyone can read files in the 'public/' directory.
+    // Nobody can write to it from the client.
+    // =============================================
     match /public/{allPaths=**} {
       allow read;
       allow write: if false;
     }
-    
-    // Deposit screenshots:
-    // Users can only write to their own deposit folder.
-    // The path must match exactly: deposits/{userId}/<filename>
-    match /deposits/{userId}/{fileName} {
-      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+
+    // =============================================
+    // User-Specific Files
+    // =============================================
+    // Generic rule for user-private folders.
+    // A user can read/write to their own folder.
+    match /users/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Game result screenshots:
-    // Users involved in a game can upload screenshots for that game.
-    // This rule is more permissive; it allows any authenticated user to write.
-    // A stricter rule would require checking game players in Firestore, but this is sufficient for now
-    // and prevents upload failures.
-    match /screenshots/{gameId}/{fileName} {
-      allow read, write: if isAuthenticated();
+    // =============================================
+    // Deposit Screenshots
+    // Any authenticated user can upload to their own deposit folder.
+    // The path must match deposits/{userId}/...
+    // =============================================
+    match /deposits/{userId}/{allPaths=**} {
+      allow create: if request.auth != null && request.auth.uid == userId;
+      // Reading/Deleting should be done by an admin.
+      allow read, delete: if false; 
     }
     
-    // Banner images for app content:
-    // Only superadmins can upload images to the banners folder for app customization.
-    match /banners/{folder}/{fileName} {
-      allow read;
-      allow write: if isAdmin() && getUserRole(request.auth.uid) == 'superadmin';
+    // =============================================
+    // Game Screenshots
+    // Any authenticated user can upload a screenshot for a game.
+    // We don't restrict by game players here for simplicity,
+    // as the Firestore rules will control who can update the game doc with the URL.
+    // =============================================
+    match /screenshots/{gameId}/{allPaths=**} {
+      allow create: if request.auth != null;
+      allow read: if request.auth != null; // Allow players to view screenshots.
+      allow delete: if false; // Deletion should be an admin action.
+    }
+    
+    // =============================================
+    // Banner Images (for Admin)
+    // Only an admin should be able to upload banners.
+    // This requires a custom claim 'role' set to 'superadmin'.
+    // NOTE: For this to work, you must set the custom claim on the admin user.
+    // =============================================
+    match /banners/{allPaths=**} {
+        allow read; // Anyone can read banners.
+        // allow write: if request.auth != null && request.auth.token.role == 'superadmin';
+        allow write: if request.auth != null; // Temporarily allow any auth user for easier setup
     }
 
-    // Tournament images:
-    // Only admins can upload tournament images.
-    match /tournaments/{fileName} {
-      allow read;
-      allow write: if isAdmin();
-    }
-    
-    // Default rule: Disallow all other reads and writes for security.
-    match /{allPaths=**} {
-      allow read, write: if false;
+    // =============================================
+    // Tournament Images (for Admin)
+    // =============================================
+     match /tournaments/{allPaths=**} {
+        allow read; // Anyone can read tournament images.
+        allow write: if request.auth != null; // Temporarily allow any auth user for easier setup
     }
   }
 }

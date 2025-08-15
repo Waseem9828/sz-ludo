@@ -1,5 +1,4 @@
 
-
 import { doc, getDoc, updateDoc, increment, collection, onSnapshot, writeBatch, serverTimestamp, runTransaction, query, where, getDocs, DocumentReference, Transaction as FirestoreTransaction, setDoc } from 'firebase/firestore';
 import { db } from './config';
 import { Transaction, TransactionType } from './transactions';
@@ -135,18 +134,16 @@ export const updateUserWallet = async (uid: string, amount: number, walletType: 
                 // Handle deduction from both wallets if necessary
                 const deductionAmount = Math.abs(amount);
                 const currentBalance = userData.wallet?.balance || 0;
-                const currentWinnings = userData.wallet?.winnings || 0;
                 
-                const fromBalance = Math.min(deductionAmount, currentBalance);
-                const fromWinnings = deductionAmount - fromBalance;
-
-                if (fromWinnings > currentWinnings) {
-                    throw new Error("Insufficient total balance for this action.");
-                }
-                
-                updates['wallet.balance'] = increment(-fromBalance);
-                if(fromWinnings > 0) {
+                if (currentBalance < deductionAmount) {
+                    const fromWinnings = deductionAmount - currentBalance;
+                    if ((userData.wallet?.winnings || 0) < fromWinnings) {
+                        throw new Error("Insufficient total balance for this action.");
+                    }
+                    updates['wallet.balance'] = increment(-currentBalance);
                     updates['wallet.winnings'] = increment(-fromWinnings);
+                } else {
+                    updates['wallet.balance'] = increment(-deductionAmount);
                 }
 
             } else {
@@ -156,32 +153,33 @@ export const updateUserWallet = async (uid: string, amount: number, walletType: 
             }
         }
 
-        // Update lifetime stats
+        // Update lifetime stats for specific transaction types
         if (transactionType === 'deposit') {
             updates['lifetimeStats.totalDeposits'] = increment(amount);
-            
-            // Check for referral and apply bonus
-            if (userData.referralStats?.referredBy) {
-                const referrerRef = doc(db, 'users', userData.referralStats.referredBy);
-                const referrerSnap = await transaction.get(referrerRef);
-                if (referrerSnap.exists()) {
-                    const bonusAmount = amount * 0.02; // 2% commission
-                    transaction.update(referrerRef, {
-                        'wallet.balance': increment(bonusAmount),
-                        'referralStats.totalEarnings': increment(bonusAmount)
-                    });
-                     createTransactionInBatch(transaction, referrerRef, referrerSnap.data() as AppUser, bonusAmount, 'Referral Bonus', `From ${userData.displayName}'s deposit`);
-                }
-            }
-
-        } else if (transactionType === 'withdrawal' && (notes === 'Withdrawal Approved' || status === 'approved')) {
-            updates['lifetimeStats.totalWithdrawals'] = increment(Math.abs(amount));
+        } else if (transactionType === 'withdrawal' && notes === 'Withdrawal Approved') {
+             updates['lifetimeStats.totalWithdrawals'] = increment(Math.abs(amount));
         } else if (transactionType === 'winnings') {
             updates['lifetimeStats.totalWinnings'] = increment(amount);
         }
 
         transaction.update(userRef, updates);
+        
+        // Always create a transaction log for the wallet update
         createTransactionInBatch(transaction, userRef, userData, amount, transactionType, notes, relatedId);
+
+        // Special handling for deposit referral bonus
+        if (transactionType === 'deposit' && userData.referralStats?.referredBy) {
+            const referrerRef = doc(db, 'users', userData.referralStats.referredBy);
+            const referrerSnap = await transaction.get(referrerRef);
+            if (referrerSnap.exists()) {
+                const bonusAmount = amount * 0.02; // 2% commission
+                transaction.update(referrerRef, {
+                    'wallet.balance': increment(bonusAmount),
+                    'referralStats.totalEarnings': increment(bonusAmount)
+                });
+                createTransactionInBatch(transaction, referrerRef, referrerSnap.data() as AppUser, bonusAmount, 'Referral Bonus', `From ${userData.displayName}'s deposit`);
+            }
+        }
     });
 };
 
