@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8">
+  <title>SZ LUDO – Monthly Statement</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+  <!-- Preheader (hidden preview text) -->
+  <style>
+    .preheader{display:none!important;visibility:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#fff;max-height:0;max-width:0;opacity:0;overflow:hidden;}
+    /* Mobile tweaks */
+    @media screen and (max-width:600px){
+      .container{width:100%!important}
+      .p-24{padding:16px!important}
+      .stack{display:block!important;width:100%!important}
+      .center{text-align:center!important}
+      .logo img{max-width:140px!important;height:auto!important}
+      .cta-btn{width:100%!important}
+    }
+    /* Dark-mode hint (supported in Apple Mail, iOS Mail) */
+    @media (prefers-color-scheme: dark) {
+      body, .email-bg{background:#0f0f0f!important}
+      .card, .table-wrap{background:#161616!important;color:#e8e8e8!important}
+      .muted{color:#bdbdbd!important}
+      .divider{border-color:#2a2a2a!important}
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background:#f5f5f7;">
+  <span class="preheader">Your SZ LUDO monthly statement is ready. View winnings, games, and bonuses.</span>
+
+  <!-- Full width background -->
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" class="email-bg" style="background:#f5f5f7;">
+    <tr>
+      <td align="center">
+        <!-- Container -->
+        <table role="presentation" width="640" cellspacing="0" cellpadding="0" border="0" class="container" style="width:640px;max-width:640px;margin:0 auto;">
+          <!-- Header -->
+          <tr>
+            <td class="p-24" style="padding:24px 24px 12px 24px;background:#b10016;background:linear-gradient(135deg,#c3001b 0%,#a80015 100%);">
+              <table role="presentation" width="100%">
+                <tr>
+                  <td class="logo">
+                    <!-- LOGO -->
+                    <a href="https://your-app-link.example" target="_blank" style="text-decoration:none;">
+                      <img src="https://via.placeholder.com/180x48/FFFFFF/CC9933?text=SZ+LUDO" width="180" height="48" alt="SZ LUDO" style="display:block;border:0;outline:none;">
+                    </a>
+                  </td>
+                  <td align="right" style="font:600 12px/1.2 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#ffd458;text-transform:uppercase;letter-spacing:.6px;">
+                    <!-- Statement month -->
+                    <!-- {{STATEMENT_MONTH}} -->
+                    Statement • <span style="color:#fff;">Aug 2025</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Hero -->
+          <tr>
+            <td style="background:#b10016;background-image:linear-gradient(180deg,rgba(255,255,255,.06),rgba(0,0,0,.1)),url('https://via.placeholder.com/1280x320/9b0012/ffffff?text=LUDO+BOARD+%7C+DICE+%7C+TROPHY');background-size:cover;background-position:center;padding:28px 24px;">
+              <table role="presentation" width="100%">
+                <tr>
+                  <td style="font:700 28px/1.2 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#ffffff;">
+                    SZ LUDO <span style="color:#ffd458;">Monthly Statement</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding-top:8px;font:400 14px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#ffe9ec;max-width:520px;">
+                    Hi <!-- {{USER_NAME}} --> Player, here’s a quick snapshot of your games, winnings and rewards. Keep rolling and climb the leaderboard!
+                  </td>
+                </tr>
+                <!-- CTA (uses VML for Outlook) -->
+                <tr>
+                  <td style="padding-top:16px;">
+                    <!--[if mso]>
+                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://your-app-link.example" style="height:44px;v-text-anchor:middle;width:190px;" arcsize="12%" stroke="f" fillcolor="#ffd458">
+                      <w:anchorlock/>
+                      <center style="color:#8b0010;font-family:Segoe UI, Arial, sans-serif;font-size:14px;font-weight:700;">Open SZ LUDO App</center>
+                    </v:roundrect>
+                    <![endif]-->
+                    <![if !mso]><a class="cta-btn" href="https://your-app-link.example" target="_blank"
+                      style="background:#ffd458;border-radius:8px;color:#8b0010;display:inline-block;font:700 14px/44px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;text-decoration:none;padding:0 18px;">
+                      Open SZ LUDO App
+                    </a><![endif]>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Summary Cards -->
+          <tr>
+            <td class="p-24" style="background:#ffffff;padding:20px 24px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <!-- Card 1 -->
+                  <td class="stack" width="33.33%" style="background:#fff;border:1px solid #eee;border-radius:12px;padding:16px;text-align:left;">
+                    <div style="font:700 12px/1.2 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#a30014;text-transform:uppercase;letter-spacing:.5px;">Total Winnings</div>
+                    <div style="font:800 22px/1.3 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#111;padding-top:6px;">₹ <!-- {{TOTAL_WINNINGS}} --> 12,450</div>
+                    <div class="muted" style="font:400 12px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#6b7280;padding-top:4px;">+ <!-- {{WINNINGS_DELTA}} --> ₹2,150 vs last month</div>
+                  </td>
+                  <td width="12" style="width:12px;"></td>
+                  <!-- Card 2 -->
+                  <td class="stack" width="33.33%" style="background:#fff;border:1px solid #eee;border-radius:12px;padding:16px;text-align:left;">
+                    <div style="font:700 12px/1.2 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#a30014;text-transform:uppercase;letter-spacing:.5px;">Games Played</div>
+                    <div style="font:800 22px/1.3 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#111;padding-top:6px;"><!-- {{GAMES_PLAYED}} --> 186</div>
+                    <div class="muted" style="font:400 12px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#6b7280;padding-top:4px;">Win rate <!-- {{WIN_RATE}} --> 56%</div>
+                  </td>
+                  <td width="12" style="width:12px;"></td>
+                  <!-- Card 3 -->
+                  <td class="stack" width="33.33%" style="background:#fff;border:1px solid #eee;border-radius:12px;padding:16px;text-align:left;">
+                    <div style="font:700 12px/1.2 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#a30014;text-transform:uppercase;letter-spacing:.5px;">Bonuses Earned</div>
+                    <div style="font:800 22px/1.3 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#111;padding-top:6px;">₹ <!-- {{BONUS_TOTAL}} --> 900</div>
+                    <div class="muted" style="font:400 12px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#6b7280;padding-top:4px;">Cashbacks & spins</div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Transactions Table -->
+          <tr>
+            <td class="p-24" style="background:#ffffff;padding:0 24px 8px 24px;">
+              <div style="font:700 16px/1.4 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#111;padding:8px 0;">Recent Activity</div>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" class="table-wrap" style="background:#fff;border:1px solid #eee;border-radius:12px;overflow:hidden;">
+                <thead>
+                  <tr>
+                    <th align="left" style="padding:12px;background:#fafafa;border-bottom:1px solid #eee;font:700 12px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#6b7280;text-transform:uppercase;letter-spacing:.4px;">Date</th>
+                    <th align="left" style="padding:12px;background:#fafafa;border-bottom:1px solid #eee;font:700 12px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#6b7280;text-transform:uppercase;letter-spacing:.4px;">Type</th>
+                    <th align="left" style="padding:12px;background:#fafafa;border-bottom:1px solid #eee;font:700 12px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#6b7280;text-transform:uppercase;letter-spacing:.4px;">Details</th>
+                    <th align="right" style="padding:12px;background:#fafafa;border-bottom:1px solid #eee;font:700 12px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#6b7280;text-transform:uppercase;letter-spacing:.4px;">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Repeat this <tr> for each item -->
+                  <tr>
+                    <td style="padding:12px;border-bottom:1px solid #eee;font:400 14px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#111;">2025-08-12</td>
+                    <td style="padding:12px;border-bottom:1px solid #eee;font:600 14px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#a30014;">Tournament Win</td>
+                    <td style="padding:12px;border-bottom:1px solid #eee;font:400 14px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#111;">Mega Cup – Rank #2</td>
+                    <td align="right" style="padding:12px;border-bottom:1px solid #eee;font:700 14px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#10b981;">+ ₹2,500</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:12px;border-bottom:1px solid #eee;font:400 14px;color:#111;">2025-08-10</td>
+                    <td style="padding:12px;border-bottom:1px solid #eee;font:600 14px;color:#a30014;">Deposit</td>
+                    <td style="padding:12px;border-bottom:1px solid #eee;font:400 14px;color:#111;">UPI • ****3421</td>
+                    <td align="right" style="padding:12px;border-bottom:1px solid #eee;font:700 14px;color:#111;">₹1,000</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:12px;border-bottom:1px solid #eee;font:400 14px;color:#111;">2025-08-08</td>
+                    <td style="padding:12px;border-bottom:1px solid #eee;font:600 14px;color:#a30014;">Game Reward</td>
+                    <td style="padding:12px;border-bottom:1px solid #eee;font:400 14px;color:#111;">Daily Spin Bonus</td>
+                    <td align="right" style="padding:12px;border-bottom:1px solid #eee;font:700 14px;color:#10b981;">+ ₹50</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:12px;border-bottom:1px solid #eee;font:400 14px;color:#111;">2025-08-06</td>
+                    <td style="padding:12px;border-bottom:1px solid #eee;font:600 14px;color:#a30014;">Withdrawal</td>
+                    <td style="padding:12px;border-bottom:1px solid #eee;font:400 14px;color:#111;">UPI • ****9012</td>
+                    <td align="right" style="padding:12px;border-bottom:1px solid #eee;font:700 14px;color:#ef4444;">− ₹500</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:12px;font:400 14px;color:#111;">2025-08-03</td>
+                    <td style="padding:12px;font:600 14px;color:#a30014;">Tournament Entry</td>
+                    <td style="padding:12px;font:400 14px;color:#111;">Weekend Blitz</td>
+                    <td align="right" style="padding:12px;font:700 14px;color:#111;">₹99</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="muted" style="font:400 12px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#6b7280;padding:10px 2px 0;">
+                Tip: Download your full statement anytime from the app profile &nbsp;→&nbsp; <a href="https://your-app-link.example" style="color:#a30014;text-decoration:underline;">Open App</a>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Promo / CTA -->
+          <tr>
+            <td style="background:#ffffff;padding:4px 24px 24px;">
+              <table role="presentation" width="100%" style="border:1px solid #eee;border-radius:12px;">
+                <tr>
+                  <td class="p-24 center" style="padding:16px 20px;">
+                    <div style="font:700 18px/1.3 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#111;">Join the <span style="color:#a30014;">SZ LUDO Mega Tournament</span> this weekend!</div>
+                    <div class="muted" style="font:400 13px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#6b7280;padding-top:6px;">
+                      Entry starts at ₹99 • Cash prizes • Live leaderboard
+                    </div>
+                    <div style="padding-top:12px;">
+                      <!--[if mso]>
+                      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" href="https://your-app-link.example/tournament" style="height:44px;v-text-anchor:middle;width:180px;" arcsize="12%" stroke="f" fillcolor="#a30014">
+                        <center style="color:#ffffff;font-family:Segoe UI, Arial, sans-serif;font-size:14px;font-weight:700;">Register Now</center>
+                      </v:roundrect>
+                      <![endif]-->
+                      <![if !mso]><a class="cta-btn" href="https://your-app-link.example/tournament" target="_blank"
+                        style="background:#a30014;border-radius:8px;color:#ffffff;display:inline-block;font:700 14px/44px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;text-decoration:none;padding:0 18px;">
+                        Register Now
+                      </a><![endif]>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background:#111111;padding:22px 24px;border-top:4px solid #a30014;">
+              <table role="presentation" width="100%">
+                <tr>
+                  <td style="font:700 14px/1.2 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#ffffff;">SZ LUDO</td>
+                </tr>
+                <tr>
+                  <td class="muted" style="font:400 12px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#b3b3b3;padding-top:6px;">
+                    © <!-- {{YEAR}} --> 2025 SZ LUDO. All rights reserved.<br>
+                    Sent to <!-- {{USER_EMAIL}} --> user@example.com
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding-top:10px;">
+                    <a href="https://your-privacy-link.example" style="color:#ffd458;text-decoration:none;">Privacy</a>
+                    &nbsp;•&nbsp;
+                    <a href="https://your-support-link.example" style="color:#ffd458;text-decoration:none;">Support</a>
+                    &nbsp;•&nbsp;
+                    <a href="%%unsubscribe_link%%" style="color:#ffd458;text-decoration:none;">Unsubscribe</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    
