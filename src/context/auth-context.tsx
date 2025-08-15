@@ -4,10 +4,11 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { onAuthStateChanged, User, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, updateProfile, fetchSignInMethodsForEmail, UserCredential } from 'firebase/auth';
 import { auth, db, googleAuthProvider } from '@/lib/firebase/config';
-import { doc, setDoc, getDoc, updateDoc, increment, collection, query, where, getDocs, limit, runTransaction, Timestamp, serverTimestamp, onSnapshot, DocumentReference, Transaction as FirestoreTransaction } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, limit, runTransaction, serverTimestamp, onSnapshot, DocumentReference, Transaction as FirestoreTransaction, setDoc } from 'firebase/firestore';
 import { SplashScreen } from '@/components/ui/splash-screen';
 import type { AppUser } from '@/lib/firebase/users';
-import { createTransaction } from '@/lib/firebase/transactions';
+import { createFirestoreUserDocument } from '@/lib/firebase/users';
+
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: Array<string>;
@@ -30,70 +31,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
 }
 
-const defaultAvatar = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi_h6LUuqTTKYsn5TfUZwkI6Aib6Y0tOzQzcoZKstURqxyl-PJXW1DKTkF2cPPNNUbP3iuDNsOBVOYx7p-ZwrodI5w9fyqEwoabj8rU0mLzSbT5GCFUKpfCc4s_LrtHcWFDvvRstCghAfQi5Zfv2fipdZG8h4dU4vGt-eFRn-gS3QTg6_JJKhv0Yysr_ZY/s1600/82126.png";
-
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-
-// This is a dedicated function to create the user document, ensuring separation of concerns.
-const createFirestoreUserDocument = async (user: User, additionalData: Partial<AppUser> = {}, referralCode?: string) => {
-    const userRef = doc(db, 'users', user.uid);
-    const { displayName, email, photoURL } = user;
-
-    const newAppUser: AppUser = {
-      uid: user.uid,
-      email: email,
-      displayName: displayName,
-      photoURL: photoURL || defaultAvatar,
-      wallet: { balance: 10, winnings: 0 },
-      kycStatus: 'Pending',
-      status: 'active',
-      gameStats: { played: 0, won: 0, lost: 0 },
-      lifetimeStats: { totalDeposits: 0, totalWithdrawals: 0, totalWinnings: 0 },
-      referralStats: { referredCount: 0, totalEarnings: 0 },
-      isKycVerified: false,
-      ...additionalData,
-    };
-    
-    if ((email?.toLowerCase() === 'admin@example.com' || email?.toLowerCase() === 'super@admin.com')) { 
-        newAppUser.role = 'superadmin';
-        newAppUser.lifetimeStats.totalRevenue = 0;
-    }
-
-    try {
-        await runTransaction(db, async (transaction) => {
-            // Check if referral code is valid and apply bonus
-            if (referralCode && referralCode.startsWith('SZLUDO')) {
-                const referrerId = referralCode.replace('SZLUDO', '');
-                if (referrerId && referrerId !== user.uid) {
-                    newAppUser.referralStats = { ...newAppUser.referralStats, referredBy: referrerId };
-                    const referrerRef = doc(db, 'users', referrerId);
-                    transaction.update(referrerRef, { 'referralStats.referredCount': increment(1) });
-                }
-            }
-            
-            // Set the new user document
-            transaction.set(userRef, newAppUser);
-
-            // Log the sign-up bonus transaction
-            const transLogRef = doc(collection(db, 'transactions'));
-            transaction.set(transLogRef, {
-                userId: user.uid,
-                userName: newAppUser.displayName || 'N/A',
-                amount: 10,
-                type: 'Sign Up',
-                status: 'completed',
-                notes: 'Welcome bonus',
-                createdAt: serverTimestamp(),
-            });
-        });
-        
-    } catch (error) {
-        console.error("Error creating user document or transaction: ", error);
-        throw error;
-    }
-};
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -152,7 +90,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               const docSnap = await getDoc(userRef);
               if (!docSnap.exists()) {
                   try {
-                      await createFirestoreUserDocument(user, { phone: user.phoneNumber || undefined });
+                       const referralCode = sessionStorage.getItem('referralCode');
+                       await createFirestoreUserDocument(user, { phone: user.phoneNumber || undefined }, referralCode || undefined);
+                       if (referralCode) {
+                           sessionStorage.removeItem('referralCode');
+                       }
                   } catch (error) {
                       console.error("Failed to create Firestore user doc for new user:", error);
                   }
@@ -171,14 +113,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const phoneQuery = query(usersRef, where("phone", "==", phone), limit(1));
     const phoneQuerySnapshot = await getDocs(phoneQuery);
     if (!phoneQuerySnapshot.empty) throw new Error("This phone number is already registered.");
+    
+    // Store referral code in session storage to be picked up by onAuthStateChanged
+    if (referralCode) {
+        sessionStorage.setItem('referralCode', referralCode);
+    }
       
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const newUser = userCredential.user;
 
-    await updateProfile(newUser, { displayName: name, photoURL: defaultAvatar });
+    await updateProfile(newUser, { displayName: name, photoURL: "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi_h6LUuqTTKYsn5TfUZwkI6Aib6Y0tOzQzcoZKstURqxyl-PJXW1DKTkF2cPPNNUbP3iuDNsOBVOYx7p-ZwrodI5w9fyqEwoabj8rU0mLzSbT5GCFUKpfCc4s_LrtHcWFDvvRstCghAfQi5Zfv2fipdZG8h4dU4vGt-eFRn-gS3QTg6_JJKhv0Yysr_ZY/s1600/82126.png" });
     
-    await createFirestoreUserDocument(newUser, { phone }, referralCode);
-
+    // The onAuthStateChanged listener will handle document creation.
     return userCredential;
   };
 
@@ -187,15 +133,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const signInWithGoogle = async (referralCode?: string) => {
-    const result = await signInWithPopup(auth, googleAuthProvider);
-    const newUser = result.user;
-    
-    const userRef = doc(db, 'users', newUser.uid);
-    const docSnap = await getDoc(userRef);
-    if (!docSnap.exists()) {
-        await createFirestoreUserDocument(newUser, {}, referralCode);
+    // Store referral code in session storage to be picked up by onAuthStateChanged
+    if (referralCode) {
+        sessionStorage.setItem('referralCode', referralCode);
     }
-    
+    const result = await signInWithPopup(auth, googleAuthProvider);
+    // The onAuthStateChanged listener will handle document creation if it's a new user.
     return result;
   }
 
