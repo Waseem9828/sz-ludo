@@ -1,33 +1,27 @@
-
 rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // Default deny all
+    // Default deny all access
     match /{allPaths=**} {
       allow read, write: if false;
     }
 
-    // Allow users to upload their own deposit screenshots
-    // Path: /deposits/{userId}/{fileName}
+    // Allow users to upload their own deposit screenshot
+    // The path contains the userId, so we can secure it.
     match /deposits/{userId}/{fileName} {
       allow write: if request.auth != null && request.auth.uid == userId;
+      // Only allow the user to read their own screenshots
       allow read: if request.auth != null && request.auth.uid == userId;
     }
-    
+
     // Allow authenticated users to upload game screenshots
-    // Path: /screenshots/{gameId}/{fileName}
+    // The gameId is not easily guessable, providing some security.
+    // Further rules could restrict reads to only players in the game if needed.
     match /screenshots/{gameId}/{fileName} {
       allow write: if request.auth != null;
-      // Reading screenshots should likely be restricted to game players or admins
-      // For now, allowing any authenticated user to read if needed by the app.
-      // A more secure rule would check against a game document in Firestore.
+      // Allow any authenticated user to read game screenshots, e.g., for review by admin or opponent.
       allow read: if request.auth != null;
-    }
-    
-    // Allow anyone to read tournament banners
-    match /banners/tournaments/{allPaths=**} {
-      allow read;
     }
   }
 }
