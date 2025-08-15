@@ -1,5 +1,6 @@
 
-import { doc, getDoc, updateDoc, increment, collection, onSnapshot, writeBatch, serverTimestamp, runTransaction, query, where, getDocs, DocumentReference, Transaction as FirestoreTransaction } from 'firebase/firestore';
+
+import { doc, getDoc, updateDoc, increment, collection, onSnapshot, writeBatch, serverTimestamp, runTransaction, query, where, getDocs, DocumentReference, Transaction as FirestoreTransaction, setDoc } from 'firebase/firestore';
 import { db } from './config';
 import { Transaction, TransactionType } from './transactions';
 import jsPDF from 'jspdf';
@@ -130,54 +131,38 @@ export const updateUserWallet = async (uid: string, amount: number, walletType: 
         const currentBalance = userData.wallet?.balance || 0;
         const currentWinnings = userData.wallet?.winnings || 0;
 
+        // This is a simple, direct wallet update. 
+        // The logic for complex deductions (balance vs winnings) should be handled before calling this function if needed.
         if (amount < 0) {
              const deductionAmount = Math.abs(amount);
-             if ((currentBalance + currentWinnings) < deductionAmount) {
-                 throw new Error('Insufficient total balance.');
+             if (walletType === 'balance' && currentBalance < deductionAmount) {
+                 throw new Error('Insufficient deposit balance.');
              }
-             
-             const balanceDeduction = Math.min(deductionAmount, currentBalance);
-             const winningsDeduction = deductionAmount - balanceDeduction;
-
-             if (balanceDeduction > 0) {
-                transaction.update(userRef, { 'wallet.balance': increment(-balanceDeduction) });
+             if (walletType === 'winnings' && currentWinnings < deductionAmount) {
+                 throw new Error('Insufficient winnings balance.');
              }
-             if (winningsDeduction > 0) {
-                transaction.update(userRef, { 'wallet.winnings': increment(-winningsDeduction) });
-             }
-
-        } else {
-            if (walletType === 'agent') {
-                transaction.update(userRef, {
-                    'agentWallet.balance': increment(amount),
-                    'agentWallet.totalIn': increment(amount)
-                });
-            } else {
-                const fieldToUpdate = walletType === 'balance' ? 'wallet.balance' : 'wallet.winnings';
-                transaction.update(userRef, { [fieldToUpdate]: increment(amount) });
-            }
         }
         
-        if (transactionType === 'deposit' && (notes?.includes('Approved') || notes?.includes('Paytm Gateway'))) {
+        if (walletType === 'agent') {
+            const fieldToUpdate = amount > 0 ? 'agentWallet.totalIn' : 'agentWallet.totalOut';
+            transaction.update(userRef, {
+                'agentWallet.balance': increment(amount),
+                [fieldToUpdate]: increment(Math.abs(amount))
+            });
+        } else {
+            const fieldToUpdate = walletType === 'balance' ? 'wallet.balance' : 'wallet.winnings';
+            transaction.update(userRef, { [fieldToUpdate]: increment(amount) });
+        }
+        
+        // Update lifetime stats
+        if (transactionType === 'deposit') {
             transaction.update(userRef, { 'lifetimeStats.totalDeposits': increment(amount) });
-            if (userData.referralStats?.referredBy) {
-                const referrerRef = doc(db, 'users', userData.referralStats.referredBy);
-                const referrerSnap = await transaction.get(referrerRef);
-                if (referrerSnap.exists()) {
-                    const commission = amount * 0.02;
-                    transaction.update(referrerRef, { 
-                        'wallet.balance': increment(commission),
-                        'referralStats.totalEarnings': increment(commission)
-                    });
-                    createTransactionInBatch(transaction, referrerRef, referrerSnap.data() as AppUser, commission, 'Referral Bonus', `From ${userData.displayName}'s deposit`);
-                }
-            }
-        } else if (transactionType === 'withdrawal' && notes === 'Withdrawal Approved') {
+        } else if (transactionType === 'withdrawal' && (notes === 'Withdrawal Approved' || status === 'approved')) {
             transaction.update(userRef, { 'lifetimeStats.totalWithdrawals': increment(Math.abs(amount)) });
         } else if (transactionType === 'winnings') {
             transaction.update(userRef, { 'lifetimeStats.totalWinnings': increment(amount) });
-        } else if (transactionType === 'Referral Earning') {
-            transaction.update(userRef, { 'referralStats.totalEarnings': increment(amount) });
+        } else if (transactionType === 'Referral Bonus') {
+             transaction.update(userRef, { 'referralStats.totalEarnings': increment(amount) });
         }
 
         createTransactionInBatch(transaction, userRef, userData, amount, transactionType, notes, relatedId);

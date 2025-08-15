@@ -2,9 +2,9 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthStateChanged, User, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, updateProfile, fetchSignInMethodsForEmail } from 'firebase/auth';
+import { onAuthStateChanged, User, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, updateProfile, fetchSignInMethodsForEmail, UserCredential } from 'firebase/auth';
 import { auth, db, googleAuthProvider } from '@/lib/firebase/config';
-import { doc, setDoc, getDoc, updateDoc, increment, collection, query, where, getDocs, limit, runTransaction, Timestamp, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, increment, collection, query, where, getDocs, limit, runTransaction, Timestamp, serverTimestamp, onSnapshot, DocumentReference, Transaction as FirestoreTransaction } from 'firebase/firestore';
 import { SplashScreen } from '@/components/ui/splash-screen';
 import type { AppUser } from '@/lib/firebase/users';
 import { createTransaction } from '@/lib/firebase/transactions';
@@ -32,9 +32,6 @@ interface AuthContextType {
 
 const defaultAvatar = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi_h6LUuqTTKYsn5TfUZwkI6Aib6Y0tOzQzcoZKstURqxyl-PJXW1DKTkF2cPPNNUbP3iuDNsOBVOYx7p-ZwrodI5w9fyqEwoabj8rU0mLzSbT5GCFUKpfCc4s_LrtHcWFDvvRstCghAfQi5Zfv2fipdZG8h4dU4vGt-eFRn-gS3QTg6_JJKhv0Yysr_ZY/s1600/82126.png";
 
-// This is a global variable to hold referral code temporarily during signup process.
-let tempReferralCode: string | undefined = undefined;
-
 const AuthContext = createContext<AuthContextType>({
   user: null,
   appUser: null,
@@ -47,70 +44,63 @@ const AuthContext = createContext<AuthContextType>({
   logout: async () => {},
 });
 
-const createFirestoreUserDocument = async (user: User, additionalData: Partial<AppUser> = {}) => {
+const createFirestoreUserDocument = async (user: User, additionalData: Partial<AppUser> = {}, referralCode?: string) => {
   const userRef = doc(db, 'users', user.uid);
   const userSnap = await getDoc(userRef);
 
   if (userSnap.exists()) {
-    // If the document already exists, we don't need to do anything.
     return;
   }
 
-  const { displayName, email, photoURL } = user;
-  const newAppUser: AppUser = {
-    uid: user.uid,
-    email: email,
-    displayName: displayName,
-    photoURL: photoURL || defaultAvatar,
-    wallet: { balance: 0, winnings: 0 },
-    kycStatus: 'Pending',
-    status: 'active',
-    gameStats: { played: 0, won: 0, lost: 0 },
-    lifetimeStats: { totalDeposits: 0, totalWithdrawals: 0, totalWinnings: 0 },
-    referralStats: { referredCount: 0, totalEarnings: 0 },
-    isKycVerified: false,
-    ...additionalData,
-  };
-  
-   if ((email?.toLowerCase() === 'admin@example.com' || email?.toLowerCase() === 'super@admin.com')) { 
-      newAppUser.role = 'superadmin';
-      newAppUser.lifetimeStats.totalRevenue = 0;
-  }
+  await runTransaction(db, async (transaction) => {
+      const { displayName, email, photoURL } = user;
+      const newAppUser: AppUser = {
+        uid: user.uid,
+        email: email,
+        displayName: displayName,
+        photoURL: photoURL || defaultAvatar,
+        wallet: { balance: 0, winnings: 0 },
+        kycStatus: 'Pending',
+        status: 'active',
+        gameStats: { played: 0, won: 0, lost: 0 },
+        lifetimeStats: { totalDeposits: 0, totalWithdrawals: 0, totalWinnings: 0 },
+        referralStats: { referredCount: 0, totalEarnings: 0 },
+        isKycVerified: false,
+        ...additionalData,
+      };
+      
+      if ((email?.toLowerCase() === 'admin@example.com' || email?.toLowerCase() === 'super@admin.com')) { 
+          newAppUser.role = 'superadmin';
+          newAppUser.lifetimeStats.totalRevenue = 0;
+      }
 
-  // Handle Referral logic
-  const referralCode = tempReferralCode;
-  if (referralCode && referralCode.startsWith('SZLUDO')) {
-      const referrerUid = referralCode.replace('SZLUDO', '');
-      if (referrerUid && referrerUid !== user.uid) {
-         newAppUser.referralStats = { referredBy: referrerUid, referredCount: 0, totalEarnings: 0 };
-         const referrerRef = doc(db, 'users', referrerUid);
-         try {
-           await runTransaction(db, async (transaction) => {
+      // Handle Referral logic
+      if (referralCode && referralCode.startsWith('SZLUDO')) {
+          const referrerUid = referralCode.replace('SZLUDO', '');
+          if (referrerUid && referrerUid !== user.uid) {
+             newAppUser.referralStats = { ...newAppUser.referralStats, referredBy: referrerUid };
+             const referrerRef = doc(db, 'users', referrerUid);
              const referrerSnap = await transaction.get(referrerRef);
              if (referrerSnap.exists()) {
                transaction.update(referrerRef, { 'referralStats.referredCount': increment(1) });
              }
-           });
-         } catch (e) {
-           console.error("Referral count update transaction failed, user might not exist: ", e);
-         }
+          }
       }
-  }
-  
-  await setDoc(userRef, newAppUser);
-  tempReferralCode = undefined; // Clear the temporary referral code
-  
-  await createTransaction({
-      userId: user.uid,
-      userName: newAppUser.displayName,
-      amount: 0,
-      type: 'Sign Up',
-      status: 'completed',
-      notes: 'User account created.',
-      createdAt: serverTimestamp() as Timestamp
+      
+      transaction.set(userRef, newAppUser);
+      
+      const transLogRef = doc(collection(db, 'transactions'));
+      transaction.set(transLogRef, {
+          userId: user.uid,
+          userName: newAppUser.displayName,
+          amount: 0,
+          type: 'Sign Up',
+          status: 'completed',
+          notes: 'User account created.',
+          createdAt: serverTimestamp(),
+      });
   });
 };
-
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -151,15 +141,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (authUser) => {
       setUser(authUser);
       if (authUser) {
-        // Create Firestore document if it doesn't exist. This is the key fix.
-        // This runs every time auth state changes, but `createFirestoreUserDocument` has a check to prevent overwriting.
-        await createFirestoreUserDocument(authUser);
-
+        // Just listen for the user doc. Creation is handled after signup/signin.
         const userRef = doc(db, 'users', authUser.uid);
-        const unsubscribeFirestore = onSnapshot(userRef, (doc) => {
-            if (doc.exists()) {
-                const data = doc.data() as AppUser;
+        const unsubscribeFirestore = onSnapshot(userRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data() as AppUser;
                 setAppUser({ ...data, isKycVerified: data.kycStatus === 'Verified' });
+            } else {
+                // This might happen on first login if creation is slow, handle gracefully
+                console.log("Waiting for user document to be created...");
             }
             setLoading(false); 
         }, (error) => {
@@ -176,47 +166,47 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => unsubscribeAuth();
   }, []);
   
-const signUp = async (email: string, password: string, name: string, phone: string, referralCode?: string) => {
-    const methods = await fetchSignInMethodsForEmail(auth, email);
-    if (methods.length > 0) {
-      throw new Error('This email address is already in use.');
-    }
-    
-    const usersRef = collection(db, "users");
-    const phoneQuery = query(usersRef, where("phone", "==", phone), limit(1));
-    const phoneQuerySnapshot = await getDocs(phoneQuery);
-    if (!phoneQuerySnapshot.empty) {
-      throw new Error("This phone number is already registered.");
-    }
+  const signUp = async (email: string, password: string, name: string, phone: string, referralCode?: string) => {
+      const methods = await fetchSignInMethodsForEmail(auth, email);
+      if (methods.length > 0) {
+        throw new Error('This email address is already in use.');
+      }
+      
+      const usersRef = collection(db, "users");
+      const phoneQuery = query(usersRef, where("phone", "==", phone), limit(1));
+      const phoneQuerySnapshot = await getDocs(phoneQuery);
+      if (!phoneQuerySnapshot.empty) {
+        throw new Error("This phone number is already registered.");
+      }
+      
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const newUser = userCredential.user;
 
-    // Set temporary referral code before creating user
-    tempReferralCode = referralCode;
-    
-    // Step 1: Create user in Auth
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const newUser = userCredential.user;
+      await updateProfile(newUser, { displayName: name, photoURL: defaultAvatar });
+      
+      // Now, securely create the Firestore document.
+      await createFirestoreUserDocument(newUser, { phone }, referralCode);
 
-    // Step 2: Update Auth Profile (name, photo)
-    await updateProfile(newUser, { displayName: name, photoURL: defaultAvatar });
-    
-    // The `onAuthStateChanged` listener will handle creating the Firestore document.
-
-    return userCredential;
-};
-
+      return userCredential;
+  };
 
   const signIn = (email:string, password:string) => {
       return signInWithEmailAndPassword(auth, email, password);
   }
 
  const signInWithGoogle = async (referralCode?: string) => {
-    // Set temporary referral code before sign-in
-    tempReferralCode = referralCode;
     const result = await signInWithPopup(auth, googleAuthProvider);
-    // The onAuthStateChanged listener will handle document creation
+    const newUser = result.user;
+    
+    // Check if user document exists, if not, create it.
+    const userRef = doc(db, 'users', newUser.uid);
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) {
+      await createFirestoreUserDocument(newUser, {}, referralCode);
+    }
+    
     return result;
   }
-
 
   const logout = async () => {
     setUser(null);
