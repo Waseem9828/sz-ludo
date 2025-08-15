@@ -24,7 +24,7 @@ const StatCard = ({ title, value, icon: Icon }: { title: string, value: string |
         <div>
             <p className="text-sm text-muted-foreground">{title}</p>
             <p className="text-2xl font-bold font-sans">
-                {typeof value === 'string' && value.startsWith('₹') ? value : typeof value === 'string' && value.endsWith('%') ? value : `₹${value}`}
+                {typeof value === 'string' ? value : `₹${value}`}
             </p>
         </div>
     </div>
@@ -84,20 +84,19 @@ export default function TournamentDetailPage() {
     };
 
     const calculatedPrizeData = useMemo(() => {
-        if (!tournament) return [];
+        if (!tournament || tournament.prizePool === 0 || !tournament.prizeDistribution) return [];
         
         const prizePoolAfterCommission = tournament.prizePool * (1 - (tournament.adminCommission / 100));
 
         return tournament.prizeDistribution.map(dist => {
-            const totalAmountForRange = prizePoolAfterCommission * (dist.percentage / 100);
-            
             let rank = `${dist.rankStart}`;
             if (dist.rankEnd > dist.rankStart) {
                 rank = `${dist.rankStart} - ${dist.rankEnd}`;
             }
 
             const totalWinnersInRange = Math.max(0, dist.rankEnd - dist.rankStart + 1);
-            const amountPerPlayer = totalWinnersInRange > 0 ? totalAmountForRange / totalWinnersInRange : 0;
+            const amountPerPlayer = totalWinnersInRange > 0 ? (prizePoolAfterCommission * (dist.percentage / 100)) / totalWinnersInRange : 0;
+            const totalAmountForRange = totalWinnersInRange > 0 ? prizePoolAfterCommission * (dist.percentage / 100) : 0;
 
             return {
                 rank,
@@ -225,14 +224,18 @@ export default function TournamentDetailPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {calculatedPrizeData.map((row, index) => (
+                                {calculatedPrizeData.length > 0 ? calculatedPrizeData.map((row, index) => (
                                     <TableRow key={index}>
                                         <TableCell className="font-medium">{row.rank}</TableCell>
                                         <TableCell>{row.percentage}</TableCell>
                                         <TableCell className="font-sans">{row.amountPerPlayer}</TableCell>
                                         <TableCell className="font-sans">{row.totalAmountForRange}</TableCell>
                                     </TableRow>
-                                ))}
+                                )) : (
+                                    <TableRow>
+                                        <TableCell colSpan={4} className="text-muted-foreground text-center py-4">Prize distribution will be calculated once players join.</TableCell>
+                                    </TableRow>
+                                )}
                             </TableBody>
                         </Table>
                     </CardContent>

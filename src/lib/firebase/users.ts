@@ -113,7 +113,6 @@ const createTransactionInBatch = (
 export const updateUserWallet = async (uid: string, amount: number, walletType: 'balance' | 'winnings' | 'agent', transactionType: TransactionType, notes?: string, relatedId?: string) => {
     const userRef = doc(db, 'users', uid);
     
-    // Special case for revenue, which is not a real transaction for a user wallet
     if (transactionType === 'revenue') {
         const adminUserRef = doc(db, 'users', uid);
         return await updateDoc(adminUserRef, {
@@ -131,39 +130,23 @@ export const updateUserWallet = async (uid: string, amount: number, walletType: 
         const currentBalance = userData.wallet?.balance || 0;
         const currentWinnings = userData.wallet?.winnings || 0;
 
-        // If deducting, check from which wallet to pull
         if (amount < 0) {
-             const totalBalance = currentBalance + currentWinnings;
              const deductionAmount = Math.abs(amount);
-
-             if (totalBalance < deductionAmount) {
+             if ((currentBalance + currentWinnings) < deductionAmount) {
                  throw new Error('Insufficient total balance.');
              }
-
-             // Prioritize deducting from deposit balance first, then winnings
-             let remainingDeduction = deductionAmount;
              
-             const balanceDeduction = Math.min(remainingDeduction, currentBalance);
+             const balanceDeduction = Math.min(deductionAmount, currentBalance);
+             const winningsDeduction = deductionAmount - balanceDeduction;
+
              if (balanceDeduction > 0) {
                 transaction.update(userRef, { 'wallet.balance': increment(-balanceDeduction) });
-                remainingDeduction -= balanceDeduction;
              }
-
-             if (remainingDeduction > 0) {
-                 const winningsDeduction = Math.min(remainingDeduction, currentWinnings);
-                 if (winningsDeduction > 0) {
-                    transaction.update(userRef, { 'wallet.winnings': increment(-winningsDeduction) });
-                    remainingDeduction -= winningsDeduction;
-                 }
-             }
-             
-             if (remainingDeduction > 0) {
-                 // This should not happen if total balance check is correct, but as a safeguard:
-                 throw new Error("Balance deduction calculation error.");
+             if (winningsDeduction > 0) {
+                transaction.update(userRef, { 'wallet.winnings': increment(-winningsDeduction) });
              }
 
         } else {
-            // If adding, add to the specified wallet type
             if (walletType === 'agent') {
                 transaction.update(userRef, {
                     'agentWallet.balance': increment(amount),
@@ -175,15 +158,13 @@ export const updateUserWallet = async (uid: string, amount: number, walletType: 
             }
         }
         
-        // Update lifetime stats for deposits or approved withdrawals
         if (transactionType === 'deposit' && (notes?.includes('Approved') || notes?.includes('Paytm Gateway'))) {
             transaction.update(userRef, { 'lifetimeStats.totalDeposits': increment(amount) });
-             // Handle referral bonus on deposit
             if (userData.referralStats?.referredBy) {
                 const referrerRef = doc(db, 'users', userData.referralStats.referredBy);
                 const referrerSnap = await transaction.get(referrerRef);
                 if (referrerSnap.exists()) {
-                    const commission = amount * 0.02; // 2% commission
+                    const commission = amount * 0.02;
                     transaction.update(referrerRef, { 
                         'wallet.balance': increment(commission),
                         'referralStats.totalEarnings': increment(commission)
@@ -196,12 +177,9 @@ export const updateUserWallet = async (uid: string, amount: number, walletType: 
         } else if (transactionType === 'winnings') {
             transaction.update(userRef, { 'lifetimeStats.totalWinnings': increment(amount) });
         } else if (transactionType === 'Referral Earning') {
-            // This is for manual credits, not the automatic one above.
             transaction.update(userRef, { 'referralStats.totalEarnings': increment(amount) });
         }
 
-
-        // Create a transaction log for the primary user action
         createTransactionInBatch(transaction, userRef, userData, amount, transactionType, notes, relatedId);
     });
 }
@@ -252,14 +230,12 @@ export const generateUserReport = async (user: AppUser, transactions: Transactio
     const doc = new jsPDF();
     const totalBalance = (user.wallet?.balance || 0) + (user.wallet?.winnings || 0);
 
-    // Header
     doc.setFontSize(22);
     doc.text("User Transaction Report", 14, 22);
     doc.setFontSize(12);
     doc.text(`User: ${user.displayName} (${user.email})`, 14, 32);
     doc.text(`Report Generated: ${new Date().toLocaleString()}`, 14, 38);
     
-    // Summary
     doc.setFontSize(16);
     doc.text("Account Summary", 14, 50);
     (doc as any).autoTable({
@@ -275,18 +251,11 @@ export const generateUserReport = async (user: AppUser, transactions: Transactio
         theme: 'striped',
     });
 
-    // Transactions Table
-    // Check if there's enough space, otherwise add a new page
     // @ts-ignore
-    if (doc.lastAutoTable.finalY > 200) {
-      doc.addPage();
-      doc.setFontSize(16);
-      doc.text("Transaction History", 14, 22);
-    } else {
-      doc.setFontSize(16);
-      // @ts-ignore
-      doc.text("Transaction History", 14, doc.lastAutoTable.finalY + 15);
-    }
+    const lastY = doc.lastAutoTable.finalY;
+    
+    doc.setFontSize(16);
+    doc.text("Transaction History", 14, lastY + 15);
     
 
     const tableData = transactions.map(tx => [
@@ -298,13 +267,11 @@ export const generateUserReport = async (user: AppUser, transactions: Transactio
     ]);
     
     (doc as any).autoTable({
-        // @ts-ignore
-        startY: doc.lastAutoTable.finalY ? doc.lastAutoTable.finalY + 25 : 30,
+        startY: lastY + 25,
         head: [['Date', 'Type', 'Amount', 'Status', 'Notes']],
         body: tableData,
         theme: 'grid'
     });
     
-    // Save the PDF
     doc.save(`report_${user.uid}_${new Date().toISOString().split('T')[0]}.pdf`);
 }
