@@ -7,6 +7,8 @@ import { Home, Swords, Gift, User, Dices } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/auth-context';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const navItems = [
   { href: '/', label: 'Home', icon: Home },
@@ -19,8 +21,14 @@ const navItems = [
 export default function BottomNav() {
   const pathname = usePathname();
   const { user, loading } = useAuth();
-  
-  if (loading || !user || pathname.startsWith('/login') || pathname.startsWith('/admin')) {
+  const [isClient, setIsClient] = useState(false);
+  const isMobile = useIsMobile();
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient || !isMobile || loading || !user || pathname.startsWith('/login') || pathname.startsWith('/admin')) {
     return null;
   }
   
