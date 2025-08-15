@@ -51,9 +51,6 @@ interface AuthContextType {
   logout: () => Promise<void>;
 }
 
-const defaultAvatar =
-  'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi_h6LUuqTTKYsn5TfUZwkI6Aib6Y0tOzQzcoZKstURqxyl-PJXW1DKTkF2cPPNNUbP3iuDNsOBVOYx7p-ZwrodI5w9fyqEwoabj8rU0mLzSbT5GCFUKpfCc4s_LrtHcWFDvvRstCghAfQi5Zfv2fipdZG8h4dU4vGt-eFRn-gS3QTg6_JJKhv0Yysr_ZY/s1600/82126.png';
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -117,13 +114,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     phone: string,
     referralCode?: string
   ) => {
-    // Set cookies for the cloud function to pick up
-    setCookie('newUserName', name);
-    setCookie('newUserPhone', phone);
-    if (referralCode) {
-        setCookie('referralCode', referralCode);
-    }
-      
+    
     const methods = await fetchSignInMethodsForEmail(auth, email);
     if (methods.length > 0) throw new Error('This email address is already in use.');
 
@@ -132,13 +123,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const phoneQuerySnapshot = await getDocs(phoneQuery);
     if (!phoneQuerySnapshot.empty) throw new Error('This phone number is already registered.');
 
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    // Set cookies for the cloud function to pick up.
+    // This is the most reliable way to pass extra data to the onUserCreate trigger.
+    setCookie('newUserName', name, { maxAge: 60 * 5 }); // 5-minute expiry
+    setCookie('newUserPhone', phone, { maxAge: 60 * 5 });
+    if (referralCode) {
+        setCookie('referralCode', referralCode, { maxAge: 60 * 5 });
+    }
     
     // The onUserCreate cloud function will handle Firestore doc creation.
-    // We just need to update the profile on the client.
-    await updateProfile(userCredential.user, { displayName: name, photoURL: defaultAvatar });
-    
-    return userCredential;
+    // We only need to create the user in Auth here.
+    return await createUserWithEmailAndPassword(auth, email, password);
   };
 
   const signIn = (email: string, password: string) => {
@@ -147,7 +142,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signInWithGoogle = async (referralCode?: string) => {
     if (referralCode) {
-        setCookie('referralCode', referralCode);
+        setCookie('referralCode', referralCode, { maxAge: 60 * 5 });
     }
     return signInWithPopup(auth, googleAuthProvider);
   };

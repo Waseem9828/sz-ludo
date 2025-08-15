@@ -1,7 +1,6 @@
 
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import { getCookie } from 'cookies-next';
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -13,24 +12,30 @@ const defaultAvatar = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvX
  * Triggered when a new user is created in Firebase Authentication.
  * This function creates a corresponding user document in Firestore.
  */
-export const onUserCreate = functions.auth.user().onCreate(async (user) => {
-    const { uid, email, displayName, photoURL } = user;
-    
+export const onUserCreate = functions.https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.');
+    }
+
+    const { uid } = context.auth;
+    const { name, phone, referralCode } = data;
+    const { email } = context.auth.token;
+
     const userRef = db.doc(`users/${uid}`);
 
-    // The `cookies-next` library doesn't work in Cloud Functions environment.
-    // We will retrieve these values from the request if needed, or rely on Auth object.
-    // For this use case, we'll assume the client sets the data on the Auth object.
-    // If referral/phone need to be passed, it must be done via a callable function
-    // right after sign-up, as we cannot access client-side cookies here.
-    // For simplicity, we are removing the cookie logic from here.
+    // Check if user document already exists
+    const userDoc = await userRef.get();
+    if (userDoc.exists) {
+        functions.logger.log(`User document for UID: ${uid} already exists.`);
+        return { success: true, message: "User document already exists." };
+    }
     
     const newAppUser = {
         uid: uid,
-        email: email,
-        displayName: displayName || "New User",
-        photoURL: photoURL || defaultAvatar,
-        phone: user.phoneNumber || "", // Get phone from Auth if available
+        email: email || "",
+        displayName: name || "New User",
+        photoURL: defaultAvatar,
+        phone: phone || "",
         wallet: { balance: 10, winnings: 0 },
         kycStatus: "Pending",
         status: "active",
@@ -48,6 +53,16 @@ export const onUserCreate = functions.auth.user().onCreate(async (user) => {
     }
     
     const batch = db.batch();
+
+    // Handle referral if code is provided
+    if (referralCode && referralCode.startsWith('SZLUDO')) {
+        const referrerId = referralCode.replace('SZLUDO', '');
+        if (referrerId && referrerId !== uid) {
+            const referrerRef = db.doc(`users/${referrerId}`);
+            (newAppUser.referralStats as any).referredBy = referrerId;
+            batch.update(referrerRef, { 'referralStats.referredCount': admin.firestore.FieldValue.increment(1) });
+        }
+    }
 
     // 1. Create the user document
     batch.set(userRef, newAppUser);
@@ -67,7 +82,9 @@ export const onUserCreate = functions.auth.user().onCreate(async (user) => {
     try {
         await batch.commit();
         functions.logger.log(`Successfully created user document and bonus transaction for UID: ${uid}`);
+        return { success: true, message: "User created successfully." };
     } catch (error) {
         functions.logger.error(`Error creating user document for UID: ${uid}`, error);
+        throw new functions.https.HttpsError('internal', 'Could not create user document.');
     }
 });
