@@ -9,6 +9,8 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signInWithPopup,
+  updateProfile,
+  fetchSignInMethodsForEmail,
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase/config';
 import {
@@ -18,7 +20,7 @@ import {
 import { SplashScreen } from '@/components/ui/splash-screen';
 import type { AppUser } from '@/lib/firebase/users';
 import { googleAuthProvider } from '@/lib/firebase/config';
-import { getCookie, setCookie } from 'cookies-next';
+import { setCookie } from 'cookies-next';
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: Array<string>;
@@ -72,11 +74,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    // This is the master listener for auth state and Firestore data.
-    const unsubscribe = onAuthStateChanged(auth, (authUser) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (authUser) => {
+      setUser(authUser); // Set Firebase Auth user immediately
+
       if (authUser) {
-        setUser(authUser);
-        // User is logged in, now listen for their Firestore document.
+        // If there's an auth user, listen for their Firestore document.
+        // setLoading(true) is not needed here as it's true by default and only set to false once appUser is loaded.
         const userDocRef = doc(db, 'users', authUser.uid);
         const unsubscribeFirestore = onSnapshot(userDocRef, (snapshot) => {
           if (snapshot.exists()) {
@@ -84,28 +87,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setAppUser({ ...userData, isKycVerified: userData.kycStatus === 'Verified' });
             setLoading(false); // Stop loading ONLY when we have the Firestore user data.
           } else {
-            // This case can happen for a brief moment after signup.
-            // We keep loading until the doc is created by the cloud function.
+            // Document doesn't exist yet, keep loading.
+            // The Cloud Function will create it, and this listener will pick it up.
+            setAppUser(null);
             setLoading(true);
           }
         }, (error) => {
           console.error("Firestore onSnapshot error:", error);
           setLoading(false); // Stop loading on error
+          setAppUser(null);
         });
 
-        // Return the firestore listener so it gets cleaned up when auth state changes.
-        return unsubscribeFirestore;
-
+        return () => unsubscribeFirestore(); // Cleanup Firestore listener
       } else {
         // No authenticated user.
-        setUser(null);
         setAppUser(null);
-        setLoading(false);
+        setLoading(false); // Stop loading as there is no user to wait for.
       }
     });
 
-    // Cleanup the auth listener on component unmount.
-    return () => unsubscribe();
+    return () => unsubscribeAuth(); // Cleanup auth listener
   }, []);
 
 
@@ -116,12 +117,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     phone: string,
     referralCode?: string
   ) => {
+    const methods = await fetchSignInMethodsForEmail(auth, email);
+    if (methods.length > 0) throw new Error('This email address is already in use.');
+
+    const usersRef = collection(db, "users");
+    const phoneQuery = query(usersRef, where("phone", "==", phone), limit(1));
+    const phoneQuerySnapshot = await getDocs(phoneQuery);
+    if (!phoneQuerySnapshot.empty) throw new Error("This phone number is already registered.");
+    
     // Set cookies for the cloud function to pick up.
+    // Cloud function will read these and create the Firestore user doc.
     setCookie('newUserName', name, { maxAge: 60 * 5 });
     setCookie('newUserPhone', phone, { maxAge: 60 * 5 });
     if (referralCode) {
       setCookie('referralCode', referralCode, { maxAge: 60 * 5 });
     }
+    
+    // The onUserCreate cloud function will handle Firestore document creation.
     return await createUserWithEmailAndPassword(auth, email, password);
   };
 
@@ -133,6 +145,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (referralCode) {
       setCookie('referralCode', referralCode, { maxAge: 60 * 5 });
     }
+    // The onUserCreate cloud function will handle Firestore document creation.
     return signInWithPopup(auth, googleAuthProvider);
   };
 
