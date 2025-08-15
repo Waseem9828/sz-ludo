@@ -176,18 +176,32 @@ export const updateUserWallet = async (uid: string, amount: number, walletType: 
         }
         
         // Update lifetime stats for deposits or approved withdrawals
-        if (transactionType === 'deposit' && (notes?.includes('Approved') || notes?.includes('Paytm'))) {
+        if (transactionType === 'deposit' && (notes?.includes('Approved') || notes?.includes('Paytm Gateway'))) {
             transaction.update(userRef, { 'lifetimeStats.totalDeposits': increment(amount) });
+             // Handle referral bonus on deposit
+            if (userData.referralStats?.referredBy) {
+                const referrerRef = doc(db, 'users', userData.referralStats.referredBy);
+                const referrerSnap = await transaction.get(referrerRef);
+                if (referrerSnap.exists()) {
+                    const commission = amount * 0.02; // 2% commission
+                    transaction.update(referrerRef, { 
+                        'wallet.balance': increment(commission),
+                        'referralStats.totalEarnings': increment(commission)
+                    });
+                    createTransactionInBatch(transaction, referrerRef, referrerSnap.data() as AppUser, commission, 'Referral Bonus', `From ${userData.displayName}'s deposit`);
+                }
+            }
         } else if (transactionType === 'withdrawal' && notes === 'Withdrawal Approved') {
             transaction.update(userRef, { 'lifetimeStats.totalWithdrawals': increment(Math.abs(amount)) });
         } else if (transactionType === 'winnings') {
             transaction.update(userRef, { 'lifetimeStats.totalWinnings': increment(amount) });
         } else if (transactionType === 'Referral Earning') {
+            // This is for manual credits, not the automatic one above.
             transaction.update(userRef, { 'referralStats.totalEarnings': increment(amount) });
         }
 
 
-        // Create a transaction log
+        // Create a transaction log for the primary user action
         createTransactionInBatch(transaction, userRef, userData, amount, transactionType, notes, relatedId);
     });
 }

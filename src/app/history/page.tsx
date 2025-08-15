@@ -33,7 +33,7 @@ const getStatusBadgeVariant = (status: Transaction['status']) => {
 };
 
 const isCredit = (type: TransactionType) => {
-    const creditTypes: TransactionType[] = ['deposit', 'winnings', 'Admin Credit', 'refund', 'Referral Earning'];
+    const creditTypes: TransactionType[] = ['deposit', 'winnings', 'Admin Credit', 'refund', 'Referral Bonus'];
     return creditTypes.includes(type);
 }
 

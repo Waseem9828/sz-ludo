@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/context/auth-context';
 import { SplashScreen } from '@/components/ui/splash-screen';
 import { getSettings, AppSettings } from '@/lib/firebase/settings';
-import { Share2, Swords, Wallet } from 'lucide-react';
+import { Share2, Swords, Wallet, Landmark } from 'lucide-react';
 
 const WhatsAppIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-white">
@@ -149,11 +149,11 @@ export default function ReferPage() {
                         </div>
                         <div className="flex items-start gap-4">
                             <div className="bg-primary/10 text-primary p-3 rounded-full">
-                                <Swords className="h-6 w-6" />
+                                <Landmark className="h-6 w-6" />
                             </div>
                             <div>
-                                <h3 className="font-bold">स्टेप 2: दोस्त गेम खेलें और जीतें</h3>
-                                <p className="text-sm text-muted-foreground">जब आपका दोस्त आपके कोड का इस्तेमाल करके साइन अप करता है और कोई बैटल जीतता है।</p>
+                                <h3 className="font-bold">स्टेप 2: दोस्त पैसे जमा करें</h3>
+                                <p className="text-sm text-muted-foreground">जब आपका दोस्त आपके कोड का इस्तेमाल करके साइन अप करता है और अपने वॉलेट में पैसे जमा करता है।</p>
                             </div>
                         </div>
                          <div className="flex items-start gap-4">
@@ -162,12 +162,12 @@ export default function ReferPage() {
                             </div>
                             <div>
                                 <h3 className="font-bold">स्टेप 3: आप कमीशन कमाएँ</h3>
-                                <p className="text-sm text-muted-foreground">आपको उनके द्वारा जीती गई राशि का 2% कमीशन तुरंत आपके वॉलेट में मिलेगा, हर बार!</p>
+                                <p className="text-sm text-muted-foreground">आपको उनके द्वारा जमा की गई राशि का 2% कमीशन तुरंत आपके डिपॉजिट वॉलेट में मिलेगा, हर बार!</p>
                             </div>
                         </div>
                         <Card className="bg-muted/50 p-4">
                             <p className="text-center text-sm font-semibold">उदाहरण के लिए:</p>
-                            <p className="text-center text-xs text-muted-foreground mt-1 font-sans">अगर आपका दोस्त ₹1000 के बेट वाला गेम जीतता है, तो प्राइज पूल ₹2000 होता है। आपको उस जीत का 2% यानी ₹40 आपके विनिंग वॉलेट में तुरंत मिल जाएगा।</p>
+                            <p className="text-center text-xs text-muted-foreground mt-1 font-sans">अगर आपका दोस्त ₹1000 जमा करता है, तो आपको तुरंत आपके डिपॉजिट वॉलेट में ₹20 का बोनस मिल जाएगा।</p>
                         </Card>
                     </CardContent>
                 </Card>
