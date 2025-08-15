@@ -221,7 +221,7 @@ function GamePageComponent() {
                                 <Copy className="h-6 w-6"/>
                             </Button>
                         </div>
-                        <a href="https://play.google.com/store/apps/details?id=com.ludo.king" target="_blank" rel="noopener noreferrer" className="inline-block">
+                        <a href={`ludoking://?room_code=${game.roomCode}`} target="_blank" rel="noopener noreferrer" className="inline-block">
                             <Image 
                                 src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgoZZmcBoW0TCUW_GBV0y6geNF5cxhpZX1dzBSwgve-9WoDxPBmOYnQGHtzf48FRyNwKH0U0Yd_qHiHhldRdbLY5IWLu7llJsdAfC9L2nh_rjOYHDfCh0AcMltEKWfn5fin1TY5NfKL-RXC5qcR81Xdix4BTJO42BY8edSIkmUP5lNKTOgzAeowrsx8LVc/s180/76984.webp"
                                 alt="Open Ludo King" 
@@ -249,8 +249,11 @@ function GamePageComponent() {
                                 id="room-code-input"
                                 value={roomCode}
                                 onChange={(e) => setRoomCode(e.target.value)}
-                                placeholder="Enter your room code"
+                                placeholder="Enter 8-digit code"
                                 disabled={isSubmitting}
+                                maxLength={8}
+                                type="text"
+                                pattern="\d*"
                             />
                             <Button onClick={handleRoomCodeSubmit} disabled={isSubmitting || !roomCode} size="icon">
                                 {isSubmitting ? <Loader className="animate-spin" /> : <Send />}
