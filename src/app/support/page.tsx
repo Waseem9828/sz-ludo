@@ -1,4 +1,3 @@
-
 'use client';
 
 import Header from "@/components/header";
@@ -48,7 +47,7 @@ export default function SupportPage() {
                         <p className="text-muted-foreground">
                             Have questions? We're here to help!
                         </p>
-                        <a href="https://wa.me/YOUR_WHATSAPP_NUMBER" target="_blank" rel="noopener noreferrer">
+                        <a href="https://wa.me/919351993756" target="_blank" rel="noopener noreferrer">
                             <Button className="w-full bg-green-500 hover:bg-green-600">
                                 <WhatsAppIcon />
                                 Contact on WhatsApp
