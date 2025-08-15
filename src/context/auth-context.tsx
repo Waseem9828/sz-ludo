@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { onAuthStateChanged, User, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, updateProfile, fetchSignInMethodsForEmail, UserCredential } from 'firebase/auth';
 import { auth, db, googleAuthProvider } from '@/lib/firebase/config';
 import { doc, setDoc, getDoc, updateDoc, increment, collection, query, where, getDocs, limit, runTransaction, Timestamp, serverTimestamp, onSnapshot, DocumentReference, Transaction as FirestoreTransaction } from 'firebase/firestore';
@@ -31,6 +31,10 @@ interface AuthContextType {
 }
 
 const defaultAvatar = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi_h6LUuqTTKYsn5TfUZwkI6Aib6Y0tOzQzcoZKstURqxyl-PJXW1DKTkF2cPPNNUbP3iuDNsOBVOYx7p-ZwrodI5w9fyqEwoabj8rU0mLzSbT5GCFUKpfCc4s_LrtHcWFDvvRstCghAfQi5Zfv2fipdZG8h4dU4vGt-eFRn-gS3QTg6_JJKhv0Yysr_ZY/s1600/82126.png";
+
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
 
 // This is a dedicated function to create the user document, ensuring separation of concerns.
 const createFirestoreUserDocument = async (user: User, additionalData: Partial<AppUser> = {}, referralCode?: string) => {
@@ -91,7 +95,7 @@ const createFirestoreUserDocument = async (user: User, additionalData: Partial<A
     }
 };
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [appUser, setAppUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -126,8 +130,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const data = snapshot.data() as AppUser;
             setAppUser({ ...data, isKycVerified: data.kycStatus === 'Verified' });
           }
-          // The creation part is handled by the onAuthStateChanged listener below,
-          // ensuring we don't create documents prematurely.
           setLoading(false);
         }, (error) => {
           console.error("Firestore onSnapshot error:", error);
@@ -143,16 +145,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => unsubscribeAuth();
   }, []);
 
-  // Separate effect to handle new user document creation reliably.
   useEffect(() => {
       const unsubscribe = onAuthStateChanged(auth, async (user) => {
           if (user) {
               const userRef = doc(db, 'users', user.uid);
               const docSnap = await getDoc(userRef);
               if (!docSnap.exists()) {
-                  // This is a new user, create their document.
-                  // We can pass referral code if we temporarily store it during the sign-up flow.
-                  // For simplicity here, we assume it's handled or not required after this point.
                   try {
                       await createFirestoreUserDocument(user, { phone: user.phoneNumber || undefined });
                   } catch (error) {
@@ -166,7 +164,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   
   const signUp = async (email: string, password: string, name: string, phone: string, referralCode?: string) => {
-    // Check if email or phone already exist
     const methods = await fetchSignInMethodsForEmail(auth, email);
     if (methods.length > 0) throw new Error('This email address is already in use.');
       
@@ -175,16 +172,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const phoneQuerySnapshot = await getDocs(phoneQuery);
     if (!phoneQuerySnapshot.empty) throw new Error("This phone number is already registered.");
       
-    // Step 1: Create the user in Auth.
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const newUser = userCredential.user;
 
-    // Step 2: Update Auth profile. Firestore document creation is now handled by the onAuthStateChanged listener.
     await updateProfile(newUser, { displayName: name, photoURL: defaultAvatar });
     
-    // We explicitly call the creation function here as well, with the referral code.
-    // The function itself should be idempotent or the onAuthStateChanged listener should handle this.
-    // To be safe, we'll create it here ensuring all data is passed.
     await createFirestoreUserDocument(newUser, { phone }, referralCode);
 
     return userCredential;
@@ -201,7 +193,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const userRef = doc(db, 'users', newUser.uid);
     const docSnap = await getDoc(userRef);
     if (!docSnap.exists()) {
-        // If the document doesn't exist, it's a first-time Google sign-in. Create it.
         await createFirestoreUserDocument(newUser, {}, referralCode);
     }
     
@@ -217,12 +208,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   if (loading && !user) {
     return <SplashScreen />;
   }
+  
+  const value = {
+      user,
+      appUser,
+      loading,
+      installable,
+      installPwa,
+      signUp,
+      signIn,
+      signInWithGoogle,
+      logout
+  };
 
   return (
-    <AuthContext.Provider value={{ user, appUser, loading, installable, installPwa, signUp, signIn, signInWithGoogle, logout }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = (): AuthContextType => {
+    const context = useContext(AuthContext);
+    if (context === undefined) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
+};
