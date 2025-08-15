@@ -112,62 +112,78 @@ const createTransactionInBatch = (
 
 
 export const updateUserWallet = async (uid: string, amount: number, walletType: 'balance' | 'winnings' | 'agent', transactionType: TransactionType, notes?: string, relatedId?: string) => {
-    const userRef = doc(db, 'users', uid);
-    
-    if (transactionType === 'revenue') {
-        const adminUserRef = doc(db, 'users', uid);
-        return await updateDoc(adminUserRef, {
-            'lifetimeStats.totalRevenue': increment(amount)
-        });
-    }
+    const userRef = doc(db, "users", uid);
 
-    return await runTransaction(db, async (transaction) => {
+    return runTransaction(db, async (transaction) => {
         const userSnap = await transaction.get(userRef);
         if (!userSnap.exists()) {
             throw new Error("User not found");
         }
         const userData = userSnap.data() as AppUser;
 
-        const currentBalance = userData.wallet?.balance || 0;
-        const currentWinnings = userData.wallet?.winnings || 0;
+        const updates: { [key: string]: any } = {};
 
-        // This is a simple, direct wallet update. 
-        // The logic for complex deductions (balance vs winnings) should be handled before calling this function if needed.
-        if (amount < 0) {
-             const deductionAmount = Math.abs(amount);
-             if (walletType === 'balance' && currentBalance < deductionAmount) {
-                 throw new Error('Insufficient deposit balance.');
-             }
-             if (walletType === 'winnings' && currentWinnings < deductionAmount) {
-                 throw new Error('Insufficient winnings balance.');
-             }
-        }
-        
         if (walletType === 'agent') {
-            const fieldToUpdate = amount > 0 ? 'agentWallet.totalIn' : 'agentWallet.totalOut';
-            transaction.update(userRef, {
-                'agentWallet.balance': increment(amount),
-                [fieldToUpdate]: increment(Math.abs(amount))
-            });
+            updates['agentWallet.balance'] = increment(amount);
+            if (amount > 0) {
+                updates['agentWallet.totalIn'] = increment(amount);
+            } else {
+                updates['agentWallet.totalOut'] = increment(Math.abs(amount));
+            }
         } else {
-            const fieldToUpdate = walletType === 'balance' ? 'wallet.balance' : 'wallet.winnings';
-            transaction.update(userRef, { [fieldToUpdate]: increment(amount) });
+            if (amount < 0) {
+                // Handle deduction from both wallets if necessary
+                const deductionAmount = Math.abs(amount);
+                const currentBalance = userData.wallet?.balance || 0;
+                const currentWinnings = userData.wallet?.winnings || 0;
+                
+                const fromBalance = Math.min(deductionAmount, currentBalance);
+                const fromWinnings = deductionAmount - fromBalance;
+
+                if (fromWinnings > currentWinnings) {
+                    throw new Error("Insufficient total balance for this action.");
+                }
+                
+                updates['wallet.balance'] = increment(-fromBalance);
+                if(fromWinnings > 0) {
+                    updates['wallet.winnings'] = increment(-fromWinnings);
+                }
+
+            } else {
+                // Handle addition to a specific wallet
+                const fieldToUpdate = walletType === 'balance' ? 'wallet.balance' : 'wallet.winnings';
+                updates[fieldToUpdate] = increment(amount);
+            }
         }
-        
+
         // Update lifetime stats
         if (transactionType === 'deposit') {
-            transaction.update(userRef, { 'lifetimeStats.totalDeposits': increment(amount) });
+            updates['lifetimeStats.totalDeposits'] = increment(amount);
+            
+            // Check for referral and apply bonus
+            if (userData.referralStats?.referredBy) {
+                const referrerRef = doc(db, 'users', userData.referralStats.referredBy);
+                const referrerSnap = await transaction.get(referrerRef);
+                if (referrerSnap.exists()) {
+                    const bonusAmount = amount * 0.02; // 2% commission
+                    transaction.update(referrerRef, {
+                        'wallet.balance': increment(bonusAmount),
+                        'referralStats.totalEarnings': increment(bonusAmount)
+                    });
+                     createTransactionInBatch(transaction, referrerRef, referrerSnap.data() as AppUser, bonusAmount, 'Referral Bonus', `From ${userData.displayName}'s deposit`);
+                }
+            }
+
         } else if (transactionType === 'withdrawal' && (notes === 'Withdrawal Approved' || status === 'approved')) {
-            transaction.update(userRef, { 'lifetimeStats.totalWithdrawals': increment(Math.abs(amount)) });
+            updates['lifetimeStats.totalWithdrawals'] = increment(Math.abs(amount));
         } else if (transactionType === 'winnings') {
-            transaction.update(userRef, { 'lifetimeStats.totalWinnings': increment(amount) });
-        } else if (transactionType === 'Referral Bonus') {
-             transaction.update(userRef, { 'referralStats.totalEarnings': increment(amount) });
+            updates['lifetimeStats.totalWinnings'] = increment(amount);
         }
 
+        transaction.update(userRef, updates);
         createTransactionInBatch(transaction, userRef, userData, amount, transactionType, notes, relatedId);
     });
-}
+};
 
 export const updateUserKycStatus = async (uid: string, status: AppUser['kycStatus']) => {
     const userRef = doc(db, 'users', uid);
