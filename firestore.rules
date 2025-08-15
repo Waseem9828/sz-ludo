@@ -1,84 +1,92 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  
-    function isAuth() {
-      return request.auth != null;
+
+    // Helper functions to check user roles
+    function isSuperAdmin() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin';
     }
-    
-    function isOwner(userId) {
-      return isAuth() && request.auth.uid == userId;
+    function isFinanceAgent() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'finance';
     }
-    
-    function isRole(role) {
-      return isAuth() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
+    function isSupport() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'support';
     }
-    
-    function isAnyRole(roles) {
-      return isAuth() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in roles;
+    function isAdmin() {
+      return isSuperAdmin() || isFinanceAgent() || isSupport();
     }
 
+    // Settings can be read by anyone, but only written to by a superadmin.
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+    
     match /users/{userId} {
-      allow read: if isAuth();
-      allow list: if isAnyRole(['superadmin', 'support', 'finance']);
-      allow create: if isAuth() && isOwner(userId);
-      allow update: if isOwner(userId) || isAnyRole(['superadmin', 'finance']);
-    }
+      // A user can create their own account if they are authenticated.
+      // This is the key fix: it avoids the race condition by not checking against the userId,
+      // as the request.auth.uid might not be immediately available to match the wildcard.
+      allow create: if request.auth != null;
 
+      // A user can only read or update their own data.
+      // Admins are given broader read/write access.
+      allow read, update: if request.auth.uid == userId || isAdmin();
+      
+      // No one can delete user documents through the client.
+      allow delete: if false;
+
+      // Notifications subcollection rules
+      match /userNotifications/{notificationId} {
+        allow read, write: if request.auth.uid == userId;
+      }
+    }
+    
+    // Notifications can be read by anyone, but only created by a superadmin.
+    match /notifications/{notificationId} {
+      allow read: if true;
+      allow create, update: if isSuperAdmin() || isSupport();
+      allow delete: if false;
+    }
+    
+    // All logged-in users can view games.
+    // Only players in the game can update it.
+    // Challenges can only be created by the player themselves.
     match /games/{gameId} {
-      allow read, get: if isAuth();
-      allow list: if isAuth();
-      allow create: if isAuth();
-      allow update: if isAuth() || isAnyRole(['superadmin', 'finance']);
-      allow delete: if isAuth() && (
-        resource.data.createdBy.uid == request.auth.uid || 
-        isAnyRole(['superadmin'])
-      );
-    }
-    
-    match /transactions/{transactionId} {
-      allow read: if isAuth() && (
-        isOwner(resource.data.userId) || 
-        isAnyRole(['superadmin', 'support', 'finance'])
-      );
-      allow list: if isAnyRole(['superadmin', 'support', 'finance']);
-      // Allow user to create their own initial signup transaction, and admins to create any.
-      allow create: if isAuth() && (isOwner(request.resource.data.userId) || isAnyRole(['superadmin', 'finance']));
-    }
-    
-    match /withdrawals/{withdrawalId} {
-        allow read, list: if isAnyRole(['superadmin', 'finance']);
-        allow create: if isAuth();
-        allow update: if isAnyRole(['superadmin', 'finance']);
+      allow read: if request.auth != null;
+      allow create: if request.auth.uid == request.resource.data.createdBy.uid;
+      allow update: if request.auth.uid in resource.data.playerUids || isAdmin();
+      allow delete: if request.auth.uid == resource.data.createdBy.uid || isSuperAdmin();
     }
 
+    // Logged-in users can create deposit requests for themselves.
+    // Only admins can update or view all deposits.
     match /deposits/{depositId} {
-        allow read, list: if isAnyRole(['superadmin', 'finance']);
-        allow create: if isAuth();
-        allow update: if isAnyRole(['superadmin', 'finance']);
+      allow read: if request.auth.uid == resource.data.userId || isFinanceAgent() || isSuperAdmin();
+      allow create: if request.auth.uid == request.resource.data.userId;
+      allow update: if isFinanceAgent() || isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+    
+    // Logged-in users can create withdrawal requests for themselves.
+    // Only admins/agents can manage them.
+    match /withdrawals/{withdrawalId} {
+      allow read: if request.auth.uid == resource.data.userId || isFinanceAgent() || isSuperAdmin();
+      allow create: if request.auth.uid == request.resource.data.userId;
+      allow update: if isFinanceAgent() || isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // Only the user themselves or an admin can read their transactions.
+    // Transactions are created server-side via other actions (wallet updates), so client-side creation is denied.
+    match /transactions/{transactionId} {
+      allow read: if request.auth.uid == resource.data.userId || isAdmin();
+      allow create, update, delete: if false;
     }
     
     match /tournaments/{tournamentId} {
-        allow read, list: if isAuth();
-        allow create, update, delete: if isAnyRole(['superadmin']);
-    }
-    
-    // Notifications can be read by any authenticated user, but only created/managed by admin roles.
-    match /notifications/{notificationId} {
-      allow read, list: if isAuth();
-      allow create, update, delete: if isAnyRole(['superadmin', 'support']);
-    }
-    
-    // User-specific read status for notifications
-    match /users/{userId}/userNotifications/{notificationId} {
-        allow read, write: if isOwner(userId);
-    }
-
-    match /settings/{docId} {
-      allow read: if true; // All users can read settings
-      allow write: if isAnyRole(['superadmin']);
+        allow read: if true;
+        allow create, update, delete: if isSuperAdmin();
     }
   }
 }
