@@ -10,17 +10,11 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   updateProfile,
-  fetchSignInMethodsForEmail,
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase/config';
 import {
   doc,
   onSnapshot,
-  collection,
-  query,
-  where,
-  getDocs,
-  limit,
 } from 'firebase/firestore';
 import { SplashScreen } from '@/components/ui/splash-screen';
 import type { AppUser } from '@/lib/firebase/users';
@@ -114,15 +108,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     phone: string,
     referralCode?: string
   ) => {
-    
-    const methods = await fetchSignInMethodsForEmail(auth, email);
-    if (methods.length > 0) throw new Error('This email address is already in use.');
-
-    const usersRef = collection(db, 'users');
-    const phoneQuery = query(usersRef, where('phone', '==', phone), limit(1));
-    const phoneQuerySnapshot = await getDocs(phoneQuery);
-    if (!phoneQuerySnapshot.empty) throw new Error('This phone number is already registered.');
-
     // Set cookies for the cloud function to pick up.
     // This is the most reliable way to pass extra data to the onUserCreate trigger.
     setCookie('newUserName', name, { maxAge: 60 * 5 }); // 5-minute expiry
@@ -144,6 +129,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (referralCode) {
         setCookie('referralCode', referralCode, { maxAge: 60 * 5 });
     }
+    // The onUserCreate Cloud Function will handle document creation if it's a new user.
+    // No need to write to Firestore from the client.
     return signInWithPopup(auth, googleAuthProvider);
   };
 
