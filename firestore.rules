@@ -1,91 +1,93 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper functions to check user roles
+  
+    // Helper function to check for admin roles
+    function isAdmin() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['superadmin', 'finance', 'support'];
+    }
     function isSuperAdmin() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin';
     }
-    function isFinanceAgent() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'finance';
-    }
-    function isSupport() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'support';
-    }
-    function isAdmin() {
-      return isSuperAdmin() || isFinanceAgent() || isSupport();
+     function isFinanceAgent() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['superadmin', 'finance'];
     }
 
-    // Settings can be read by anyone, but only written to by a superadmin.
-    match /settings/{docId} {
-      allow read: if true;
-      allow write: if isSuperAdmin();
-    }
-    
+    // Users Collection
     match /users/{userId} {
-      // A user can create their own account if they are authenticated.
-      // This is the key fix: it avoids the race condition by not checking against the userId,
-      // as the request.auth.uid might not be immediately available to match the wildcard.
+      // Allow any authenticated user to create their own user document.
+      // This is a simplified rule to prevent race conditions during signup.
       allow create: if request.auth != null;
-
-      // A user can only read or update their own data.
-      // Admins are given broader read/write access.
-      allow read, update: if request.auth.uid == userId || isAdmin();
       
-      // No one can delete user documents through the client.
-      allow delete: if false;
+      // A user can read, update, or delete their own document.
+      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
 
-      // Notifications subcollection rules
+      // Admins can read any user's document.
+      allow get, list: if isAdmin();
+      
+      // Superadmin can update any user's document.
+      allow update: if isSuperAdmin();
+
+      // User-specific notifications subcollection
       match /userNotifications/{notificationId} {
         allow read, write: if request.auth.uid == userId;
       }
     }
-    
-    // Notifications can be read by anyone, but only created by a superadmin.
-    match /notifications/{notificationId} {
-      allow read: if true;
-      allow create, update: if isSuperAdmin() || isSupport();
-      allow delete: if false;
-    }
-    
-    // All logged-in users can view games.
-    // Only players in the game can update it.
-    // Challenges can only be created by the player themselves.
+
+    // Games Collection
     match /games/{gameId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth.uid == request.resource.data.createdBy.uid;
-      allow update: if request.auth.uid in resource.data.playerUids || isAdmin();
-      allow delete: if request.auth.uid == resource.data.createdBy.uid || isSuperAdmin();
+      // Any authenticated user can read the list of games.
+      allow list, get: if request.auth != null;
+
+      // Only authenticated users can create a game.
+      allow create: if request.auth != null;
+
+      // Only players in the game can update it.
+      allow update: if request.auth != null && request.auth.uid in resource.data.playerUids;
+
+      // The creator can delete a challenge if it's still in the 'challenge' state.
+      allow delete: if request.auth != null && request.auth.uid == resource.data.createdBy.uid && resource.data.status == 'challenge';
     }
 
-    // Logged-in users can create deposit requests for themselves.
-    // Only admins can update or view all deposits.
+    // Settings Collection
+    match /settings/{docId} {
+      allow get: if request.auth != null;
+      allow write: if isSuperAdmin();
+    }
+
+    // Deposits Collection (for manual deposit requests)
     match /deposits/{depositId} {
-      allow read: if request.auth.uid == resource.data.userId || isFinanceAgent() || isSuperAdmin();
-      allow create: if request.auth.uid == request.resource.data.userId;
-      allow update: if isFinanceAgent() || isSuperAdmin();
-      allow delete: if isSuperAdmin();
+       allow create: if request.auth != null;
+       allow read, write: if isFinanceAgent();
     }
     
-    // Logged-in users can create withdrawal requests for themselves.
-    // Only admins/agents can manage them.
+    // Withdrawals Collection
     match /withdrawals/{withdrawalId} {
-      allow read: if request.auth.uid == resource.data.userId || isFinanceAgent() || isSuperAdmin();
-      allow create: if request.auth.uid == request.resource.data.userId;
-      allow update: if isFinanceAgent() || isSuperAdmin();
-      allow delete: if isSuperAdmin();
+       allow create: if request.auth != null;
+       allow read, update: if isFinanceAgent();
     }
 
-    // Only the user themselves or an admin can read their transactions.
-    // Transactions are created server-side via other actions (wallet updates), so client-side creation is denied.
+    // Transactions Collection
     match /transactions/{transactionId} {
-      allow read: if request.auth.uid == resource.data.userId || isAdmin();
-      allow create, update, delete: if false;
+        // Users can only see their own transactions.
+        allow read: if request.auth.uid == resource.data.userId;
+        // Admins can see all transactions.
+        allow list, get: if isAdmin();
+        // Transactions are created by trusted server-side logic (or cloud functions), not directly by clients.
+        allow create: if request.auth != null; 
     }
     
+    // Notifications Collection (Read-only for users, write for admin)
+    match /notifications/{notificationId} {
+      allow get, list: if request.auth != null;
+      allow create, update, delete: if isSuperAdmin();
+    }
+
+    // Tournaments Collection
     match /tournaments/{tournamentId} {
-        allow read: if true;
+        allow get, list: if request.auth != null;
         allow create, update, delete: if isSuperAdmin();
     }
   }

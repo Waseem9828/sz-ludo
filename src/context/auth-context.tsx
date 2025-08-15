@@ -86,17 +86,19 @@ const createFirestoreUserDocument = async (user: User, additionalData: Partial<A
             }
             
             transaction.set(userRef, newAppUser);
+
+            const transLogRef = doc(collection(db, 'transactions'));
+            transaction.set(transLogRef, {
+                userId: user.uid,
+                userName: newAppUser.displayName || 'N/A',
+                amount: 10,
+                type: 'Sign Up',
+                status: 'completed',
+                notes: 'Welcome bonus',
+                createdAt: serverTimestamp(),
+            });
         });
         
-        await createTransaction({
-            userId: user.uid,
-            userName: newAppUser.displayName || 'N/A',
-            amount: 10,
-            type: 'Sign Up',
-            status: 'completed',
-            notes: 'Welcome bonus'
-        });
-
     } catch (error) {
         console.error("Error creating user document or transaction: ", error);
         throw error;
@@ -133,21 +135,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(authUser);
       if (authUser) {
         const userRef = doc(db, 'users', authUser.uid);
-        const docSnap = await getDoc(userRef);
-
-        if (!docSnap.exists()) {
-           console.log(`User document for ${authUser.uid} not found. Creating...`);
-           try {
-             await createFirestoreUserDocument(authUser, { phone: authUser.phoneNumber || '' });
-           } catch (error) {
-             console.error("Error creating Firestore document on-the-fly:", error);
-           }
-        }
         
-        const unsubscribeFirestore = onSnapshot(userRef, (snapshot) => {
+        const unsubscribeFirestore = onSnapshot(userRef, async (snapshot) => {
             if (snapshot.exists()) {
                 const data = snapshot.data() as AppUser;
                 setAppUser({ ...data, isKycVerified: data.kycStatus === 'Verified' });
+            } else {
+                 console.log(`User document for ${authUser.uid} not found. Creating...`);
+                 try {
+                    // It's safe to call this here because onAuthStateChanged guarantees auth is ready.
+                    await createFirestoreUserDocument(authUser, { phone: authUser.phoneNumber || '' });
+                 } catch (error) {
+                    console.error("Error creating Firestore document on-the-fly:", error);
+                 }
             }
             setLoading(false); 
         }, (error) => {
@@ -165,6 +165,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
   
   const signUp = async (email: string, password: string, name: string, phone: string, referralCode?: string) => {
+    // Check if email or phone already exist
     const methods = await fetchSignInMethodsForEmail(auth, email);
     if (methods.length > 0) throw new Error('This email address is already in use.');
       
@@ -173,12 +174,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const phoneQuerySnapshot = await getDocs(phoneQuery);
     if (!phoneQuerySnapshot.empty) throw new Error("This phone number is already registered.");
       
+    // Step 1: Just create the user in Auth
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const newUser = userCredential.user;
+
+    // Step 2: Update Auth profile
     await updateProfile(newUser, { displayName: name, photoURL: defaultAvatar });
     
-    // Document creation will be handled by the onAuthStateChanged listener to avoid race conditions.
-    // We can still trigger it here with additional data.
+    // Step 3: Create Firestore document securely
+    // This is now handled by the onAuthStateChanged listener, but we can call it here too.
+    // The listener logic will prevent duplicate creation.
     await createFirestoreUserDocument(newUser, { phone }, referralCode);
 
     return userCredential;
@@ -192,9 +197,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const result = await signInWithPopup(auth, googleAuthProvider);
     const newUser = result.user;
     
-    // Document creation is handled by the onAuthStateChanged listener.
-    // If the doc doesn't exist, it will be created there.
-    // This makes the logic consistent and reliable.
+    // The onAuthStateChanged listener will handle document creation if needed.
+    // This ensures we don't have a race condition.
     const userRef = doc(db, 'users', newUser.uid);
     const docSnap = await getDoc(userRef);
     if (!docSnap.exists()) {
