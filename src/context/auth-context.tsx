@@ -69,40 +69,48 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
   
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (authUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (authUser) => {
       setUser(authUser);
     });
-    return () => unsubscribeAuth();
+    return () => unsubscribe();
   }, []);
-  
+
   useEffect(() => {
-    // Start with loading true
-    setLoading(true);
+    setLoading(true); // Always start in a loading state when authUser changes.
 
     if (user) {
-        // If we have an authenticated user, start listening to their Firestore document.
-        const userDocRef = doc(db, 'users', user.uid);
-        const unsubscribeFirestore = onSnapshot(userDocRef, (snapshot) => {
-            if (snapshot.exists()) {
-                // If the document exists, set appUser and finish loading.
-                const userData = snapshot.data() as AppUser;
-                setAppUser({ ...userData, isKycVerified: userData.kycStatus === 'Verified' });
-                setLoading(false);
-            }
-            // If doc doesn't exist (new signup), loading remains true until the doc is created and this listener fires again.
-        }, (error) => {
-            console.error("Firestore onSnapshot error:", error);
-            setAppUser(null);
-            setLoading(false); // Stop loading on error
-        });
-
-        return () => unsubscribeFirestore();
+      // If there's an authenticated user, set up a listener for their Firestore document.
+      const userDocRef = doc(db, 'users', user.uid);
+      const unsubscribeFirestore = onSnapshot(
+        userDocRef,
+        (snapshot) => {
+          if (snapshot.exists()) {
+            // Document found, map data to AppUser type and stop loading.
+            const userData = snapshot.data() as AppUser;
+            setAppUser({ ...userData, isKycVerified: userData.kycStatus === 'Verified' });
+            setLoading(false);
+          } else {
+            // Document not found yet. This can happen for new sign-ups.
+            // We KEEP loading true and wait for the Cloud Function to create the doc.
+            // The onSnapshot listener will fire again when the doc is created.
+             setAppUser(null);
+          }
+        },
+        (error) => {
+          // In case of an error (e.g., permissions), stop loading and log the error.
+          console.error("Firestore onSnapshot error:", error);
+          setAppUser(null);
+          setLoading(false);
+        }
+      );
+      
+      return () => unsubscribeFirestore();
     } else {
-        // If there's no auth user, we are not expecting an appUser. Stop loading.
-        setAppUser(null);
-        setLoading(false);
+      // If there's no authenticated user, there's nothing to load from Firestore.
+      setAppUser(null);
+      setLoading(false); // Stop loading.
     }
-  }, [user]); // This effect depends only on the auth user state
+  }, [user]); // This effect ONLY runs when the `user` object changes.
 
 
   const signUp = async (
@@ -115,6 +123,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const functions = getFunctions();
     const onUserCreate = httpsCallable(functions, 'onUserCreate');
+    // We explicitly call the function to create the user document in Firestore.
+    // The onSnapshot listener in the useEffect hook will then pick up the new document.
     await onUserCreate({ name, phone, referralCode });
     return userCredential;
   };

@@ -22,6 +22,9 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
 
     const userRef = db.doc(`users/${uid}`);
     
+    // The callable function is expected to be called only for new users,
+    // so we don't need to check if the document exists. We just create it.
+    
     const newAppUser = {
         uid: uid,
         email: email || "",
