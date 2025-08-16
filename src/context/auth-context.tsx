@@ -69,15 +69,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
   
   useEffect(() => {
+    setLoading(true);
     const unsubscribe = onAuthStateChanged(auth, (authUser) => {
       setUser(authUser);
+      if (!authUser) {
+        // If there's no authenticated user, stop loading.
+        setAppUser(null);
+        setLoading(false);
+      }
     });
     return () => unsubscribe();
   }, []);
 
   useEffect(() => {
-    setLoading(true); // Always start in a loading state when authUser changes.
-
     if (user) {
       // If there's an authenticated user, set up a listener for their Firestore document.
       const userDocRef = doc(db, 'users', user.uid);
@@ -89,12 +93,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             const userData = snapshot.data() as AppUser;
             setAppUser({ ...userData, isKycVerified: userData.kycStatus === 'Verified' });
             setLoading(false);
-          } else {
-            // Document not found yet. This can happen for new sign-ups.
-            // We KEEP loading true and wait for the Cloud Function to create the doc.
-            // The onSnapshot listener will fire again when the doc is created.
-             setAppUser(null);
           }
+          // IMPORTANT: If the document doesn't exist (e.g., for a new user),
+          // we do NOTHING. We keep `loading` as `true` and wait for the Cloud Function
+          // to create the document, which will trigger this listener again.
         },
         (error) => {
           // In case of an error (e.g., permissions), stop loading and log the error.
@@ -105,12 +107,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       );
       
       return () => unsubscribeFirestore();
-    } else {
-      // If there's no authenticated user, there's nothing to load from Firestore.
-      setAppUser(null);
-      setLoading(false); // Stop loading.
     }
-  }, [user]); // This effect ONLY runs when the `user` object changes.
+    // If there is no user, onAuthStateChanged handles setting loading to false.
+  }, [user]);
 
 
   const signUp = async (
