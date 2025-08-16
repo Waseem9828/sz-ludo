@@ -46,7 +46,8 @@ const getStatusBadgeVariant = (status: TransactionStatus) => {
 };
 
 const getTypeBadgeVariant = (type: TransactionType) => {
-    return type === 'deposit' ? 'secondary' : 'default';
+    const creditTypes: TransactionType[] = ['deposit', 'winnings', 'Admin Credit', 'refund', 'Referral Bonus', 'Sign Up'];
+    return creditTypes.includes(type) ? 'secondary' : 'default';
 }
 
 export default function AdminDashboardPage() {

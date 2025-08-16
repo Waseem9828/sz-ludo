@@ -63,65 +63,6 @@ export interface KycDetails {
     upiId: string;
 }
 
-// This is a dedicated function to create the user document, ensuring separation of concerns.
-export const createFirestoreUserDocument = async (user: User, additionalData: Partial<AppUser> = {}, referralCode?: string) => {
-    const userRef = doc(db, 'users', user.uid);
-    const { displayName, email, photoURL } = user;
-
-    const newAppUser: AppUser = {
-      uid: user.uid,
-      email: email,
-      displayName: displayName,
-      photoURL: photoURL || "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi_h6LUuqTTKYsn5TfUZwkI6Aib6Y0tOzQzcoZKstURqxyl-PJXW1DKTkF2cPPNNUbP3iuDNsOBVOYx7p-ZwrodI5w9fyqEwoabj8rU0mLzSbT5GCFUKpfCc4s_LrtHcWFDvvRstCghAfQi5Zfv2fipdZG8h4dU4vGt-eFRn-gS3QTg6_JJKhv0Yysr_ZY/s1600/82126.png",
-      wallet: { balance: 10, winnings: 0 },
-      kycStatus: 'Pending',
-      status: 'active',
-      gameStats: { played: 0, won: 0, lost: 0 },
-      lifetimeStats: { totalDeposits: 0, totalWithdrawals: 0, totalWinnings: 0 },
-      referralStats: { referredCount: 0, totalEarnings: 0 },
-      isKycVerified: false,
-      ...additionalData,
-    };
-    
-    if ((email?.toLowerCase() === 'admin@example.com' || email?.toLowerCase() === 'super@admin.com')) { 
-        newAppUser.role = 'superadmin';
-        newAppUser.lifetimeStats.totalRevenue = 0;
-    }
-
-    try {
-        await runTransaction(db, async (transaction) => {
-            // Check if referral code is valid and apply bonus
-            if (referralCode && referralCode.startsWith('SZLUDO')) {
-                const referrerId = referralCode.replace('SZLUDO', '');
-                if (referrerId && referrerId !== user.uid) {
-                    newAppUser.referralStats = { ...newAppUser.referralStats, referredBy: referrerId };
-                    const referrerRef = doc(db, 'users', referrerId);
-                    transaction.update(referrerRef, { 'referralStats.referredCount': increment(1) });
-                }
-            }
-            
-            // Set the new user document
-            transaction.set(userRef, newAppUser);
-
-            // Log the sign-up bonus transaction
-            const transLogRef = doc(collection(db, 'transactions'));
-            transaction.set(transLogRef, {
-                userId: user.uid,
-                userName: newAppUser.displayName || 'N/A',
-                amount: 10,
-                type: 'Sign Up',
-                status: 'completed',
-                notes: 'Welcome bonus',
-                createdAt: serverTimestamp(),
-            });
-        });
-        
-    } catch (error) {
-        console.error("Error creating user document or transaction: ", error);
-        throw error;
-    }
-};
-
 export const getUser = async (uid: string): Promise<AppUser | null> => {
     if (!uid) return null;
     const docRef = doc(db, "users", uid);
@@ -292,7 +233,7 @@ export const generateUserReport = async (user: AppUser, transactions: Transactio
     doc.setFontSize(22);
     doc.text("User Transaction Report", 14, 22);
     doc.setFontSize(12);
-    doc.text(`User: ${user.displayName} (${user.email})`, 14, 32);
+    doc.text(`User: ${user.displayName || 'N/A'} (${user.email || 'N/A'})`, 14, 32);
     doc.text(`Report Generated: ${new Date().toLocaleString()}`, 14, 38);
     
     doc.setFontSize(16);
@@ -311,7 +252,7 @@ export const generateUserReport = async (user: AppUser, transactions: Transactio
     });
 
     // @ts-ignore
-    const lastY = doc.lastAutoTable.finalY;
+    const lastY = doc.lastAutoTable.finalY || 60;
     
     doc.setFontSize(16);
     doc.text("Transaction History", 14, lastY + 15);
@@ -319,14 +260,14 @@ export const generateUserReport = async (user: AppUser, transactions: Transactio
 
     const tableData = transactions.map(tx => [
         tx.createdAt?.toDate().toLocaleString() || 'N/A',
-        tx.type.replace(/_/g, ' '),
+        tx.type ? tx.type.replace(/_/g, ' ') : 'N/A',
         `₹${tx.amount.toFixed(2)}`,
-        tx.status,
+        tx.status || 'N/A',
         tx.notes || tx.relatedId || 'N/A',
     ]);
     
     (doc as any).autoTable({
-        startY: lastY + 25,
+        startY: lastY + 20,
         head: [['Date', 'Type', 'Amount', 'Status', 'Notes']],
         body: tableData,
         theme: 'grid'
