@@ -69,39 +69,46 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
   
   useEffect(() => {
-    setLoading(true);
-    const unsubscribeAuth = onAuthStateChanged(auth, (authUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (authUser) => {
       setUser(authUser);
-      if (authUser) {
-        // If we have a user, listen for their Firestore document
-        const userDocRef = doc(db, 'users', authUser.uid);
-        const unsubscribeFirestore = onSnapshot(userDocRef, (snapshot) => {
-          if (snapshot.exists()) {
-            const userData = snapshot.data() as AppUser;
-            setAppUser({ ...userData, isKycVerified: userData.kycStatus === 'Verified' });
-          } else {
-             // This might happen briefly during sign-up. The callable function will create it.
-             // We keep appUser null until the doc is created.
-             setAppUser(null);
-          }
-           // Only stop loading once we have a definitive answer from Firestore
-          setLoading(false);
-        }, (error) => {
-          console.error("Firestore onSnapshot error:", error);
-          setAppUser(null);
-          setLoading(false);
-        });
-
-        return () => unsubscribeFirestore();
-      } else {
-        // No authenticated user
+      if (!authUser) {
+        // If there's no authenticated user, stop listening, clear appUser, and finish loading.
         setAppUser(null);
         setLoading(false);
       }
+      // The logic to fetch appUser and set loading to false is now handled
+      // in the snapshot listener below, which depends on `user`.
     });
-
-    return () => unsubscribeAuth();
+    return () => unsubscribe();
   }, []);
+  
+  useEffect(() => {
+    if (user) {
+        // If we have an authenticated user, start listening to their Firestore document.
+        const userDocRef = doc(db, 'users', user.uid);
+        const unsubscribeFirestore = onSnapshot(userDocRef, (snapshot) => {
+            if (snapshot.exists()) {
+                // If the document exists, set appUser and finish loading.
+                const userData = snapshot.data() as AppUser;
+                setAppUser({ ...userData, isKycVerified: userData.kycStatus === 'Verified' });
+                setLoading(false);
+            } else {
+                // This case handles new sign-ups. The document doesn't exist yet.
+                // We keep loading true and wait for the onUserCreate function to create it.
+                // The snapshot listener will then fire again with the new data.
+                setAppUser(null);
+                setLoading(true); 
+            }
+        }, (error) => {
+            console.error("Firestore onSnapshot error:", error);
+            setAppUser(null);
+            setLoading(false);
+        });
+
+        return () => unsubscribeFirestore();
+    }
+  }, [user]);
+
 
   const signUp = async (
     email: string,
@@ -110,20 +117,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     phone: string,
     referralCode?: string
   ) => {
-    // 1. Create user in Firebase Auth
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-
-    // 2. Call the Cloud Function to create the Firestore document
-    try {
-        const functions = getFunctions();
-        const onUserCreate = httpsCallable(functions, 'onUserCreate');
-        await onUserCreate({ name, phone, referralCode });
-    } catch (error) {
-        await userCredential.user.delete();
-        console.error('Cloud Function call failed, rolling back Auth user creation.', error);
-        throw new Error('Could not complete your registration. Please try again.');
-    }
-
+    const functions = getFunctions();
+    const onUserCreate = httpsCallable(functions, 'onUserCreate');
+    await onUserCreate({ name, phone, referralCode });
     return userCredential;
   };
 
@@ -139,19 +136,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const userDoc = await getDoc(userDocRef);
 
     if (!userDoc.exists()) {
-        try {
-            const functions = getFunctions();
-            const onUserCreate = httpsCallable(functions, 'onUserCreate');
-            await onUserCreate({ 
-                name: user.displayName, 
-                phone: user.phoneNumber || '', 
-                referralCode 
-            });
-        } catch (error) {
-            await user.delete();
-            console.error('Cloud Function call failed for Google Sign-In.', error);
-            throw new Error('Could not complete your registration with Google. Please try again.');
-        }
+        const functions = getFunctions();
+        const onUserCreate = httpsCallable(functions, 'onUserCreate');
+        await onUserCreate({ 
+            name: user.displayName, 
+            phone: user.phoneNumber || '', 
+            referralCode 
+        });
     }
     
     return result;
