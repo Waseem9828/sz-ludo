@@ -69,20 +69,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
   
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (authUser) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (authUser) => {
       setUser(authUser);
-      if (!authUser) {
-        // If there's no authenticated user, stop listening, clear appUser, and finish loading.
-        setAppUser(null);
-        setLoading(false);
-      }
-      // The logic to fetch appUser and set loading to false is now handled
-      // in the snapshot listener below, which depends on `user`.
     });
-    return () => unsubscribe();
+    return () => unsubscribeAuth();
   }, []);
   
   useEffect(() => {
+    // Start with loading true
+    setLoading(true);
+
     if (user) {
         // If we have an authenticated user, start listening to their Firestore document.
         const userDocRef = doc(db, 'users', user.uid);
@@ -92,22 +88,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 const userData = snapshot.data() as AppUser;
                 setAppUser({ ...userData, isKycVerified: userData.kycStatus === 'Verified' });
                 setLoading(false);
-            } else {
-                // This case handles new sign-ups. The document doesn't exist yet.
-                // We keep loading true and wait for the onUserCreate function to create it.
-                // The snapshot listener will then fire again with the new data.
-                setAppUser(null);
-                setLoading(true); 
             }
+            // If doc doesn't exist (new signup), loading remains true until the doc is created and this listener fires again.
         }, (error) => {
             console.error("Firestore onSnapshot error:", error);
             setAppUser(null);
-            setLoading(false);
+            setLoading(false); // Stop loading on error
         });
 
         return () => unsubscribeFirestore();
+    } else {
+        // If there's no auth user, we are not expecting an appUser. Stop loading.
+        setAppUser(null);
+        setLoading(false);
     }
-  }, [user]);
+  }, [user]); // This effect depends only on the auth user state
 
 
   const signUp = async (
