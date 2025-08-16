@@ -12,6 +12,7 @@ import { useAuth } from '@/context/auth-context';
 import { SplashScreen } from '@/components/ui/splash-screen';
 import { getSettings, AppSettings } from '@/lib/firebase/settings';
 import { Share2, Swords, Wallet, Landmark } from 'lucide-react';
+import { Remarkable } from 'remarkable';
 
 const WhatsAppIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-white">
@@ -30,7 +31,20 @@ const TelegramIcon = () => (
 const defaultSettings = {
     imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEigtvhhJRucPCHR_BWwPVLk335J3yeFT8CTExF13JYJbogG0IOrplIRwu2FzgAca1G8ssvc83saCCnC7NdVFP15FnIOppoCDc0pa31pziFzf6hGq8qCo7yZa2K9_92MtBQet6Ii0wgVFYMEyfUn8R3s6vOgo2aavCvuzdNcsYX0YizIEy9xzVB_mBt5o_4/s320/77621.png',
     shareText: "Hey! I'm playing on SZ LUDO and earning real cash. You should join too! Use my code {{referralCode}} to sign up and get a bonus. Let's play! Link: {{referralLink}}",
-    howItWorksText: "You can refer and earn 2% of your referral winning, every time. Like if your player plays for 10000 and wins, You will get 200 as referral amount."
+    howItWorksText: `
+### हमारा रेफरल प्लान (Our Referral Plan)
+
+**स्टेप 1: दोस्तों को शेयर करें**
+अपना यूनिक रेफरल कोड या लिंक अपने दोस्तों के साथ शेयर करें।
+
+**स्टेप 2: दोस्त पैसे जमा करें**
+जब आपका दोस्त आपके कोड का इस्तेमाल करके साइन अप करता है और अपने वॉलेट में पैसे जमा करता है।
+
+**स्टेप 3: आप कमीशन कमाएँ**
+आपको उनके द्वारा जमा की गई राशि का 2% कमीशन तुरंत आपके डिपॉजिट वॉलेट में मिलेगा, हर बार!
+
+**उदाहरण के लिए:**
+अगर आपका दोस्त ₹1000 जमा करता है, तो आपको तुरंत आपके डिपॉजिट वॉलेट में ₹20 का बोनस मिल जाएगा।`
 };
 
 
@@ -54,6 +68,8 @@ export default function ReferPage() {
     const shareText = (referralSettings.shareText || defaultSettings.shareText)
         .replace('{{referralCode}}', referralCode)
         .replace('{{referralLink}}', referralLink);
+
+    const howItWorksHtml = new Remarkable().render(referralSettings.howItWorksText || defaultSettings.howItWorksText);
 
     const handleCopyToClipboard = () => {
         navigator.clipboard.writeText(referralLink);
@@ -134,41 +150,11 @@ export default function ReferPage() {
                 </Card>
 
                 <Card>
-                    <CardHeader>
-                        <CardTitle className="text-center text-lg font-semibold text-red-600"> हमारा रेफरल प्लान (Our Referral Plan)</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                        <div className="flex items-start gap-4">
-                            <div className="bg-primary/10 text-primary p-3 rounded-full">
-                                <Share2 className="h-6 w-6" />
-                            </div>
-                            <div>
-                                <h3 className="font-bold">स्टेप 1: दोस्तों को शेयर करें</h3>
-                                <p className="text-sm text-muted-foreground">अपना यूनिक रेफरल कोड या लिंक अपने दोस्तों के साथ शेयर करें।</p>
-                            </div>
-                        </div>
-                        <div className="flex items-start gap-4">
-                            <div className="bg-primary/10 text-primary p-3 rounded-full">
-                                <Landmark className="h-6 w-6" />
-                            </div>
-                            <div>
-                                <h3 className="font-bold">स्टेप 2: दोस्त पैसे जमा करें</h3>
-                                <p className="text-sm text-muted-foreground">जब आपका दोस्त आपके कोड का इस्तेमाल करके साइन अप करता है और अपने वॉलेट में पैसे जमा करता है।</p>
-                            </div>
-                        </div>
-                         <div className="flex items-start gap-4">
-                            <div className="bg-primary/10 text-primary p-3 rounded-full">
-                                <Wallet className="h-6 w-6" />
-                            </div>
-                            <div>
-                                <h3 className="font-bold">स्टेप 3: आप कमीशन कमाएँ</h3>
-                                <p className="text-sm text-muted-foreground">आपको उनके द्वारा जमा की गई राशि का 2% कमीशन तुरंत आपके डिपॉजिट वॉलेट में मिलेगा, हर बार!</p>
-                            </div>
-                        </div>
-                        <Card className="bg-muted/50 p-4">
-                            <p className="text-center text-sm font-semibold">उदाहरण के लिए:</p>
-                            <p className="text-center text-xs text-muted-foreground mt-1 font-sans">अगर आपका दोस्त ₹1000 जमा करता है, तो आपको तुरंत आपके डिपॉजिट वॉलेट में ₹20 का बोनस मिल जाएगा।</p>
-                        </Card>
+                    <CardContent className="p-6">
+                        <div
+                           className="prose dark:prose-invert max-w-none [&_h3]:text-center [&_h3]:text-red-600"
+                           dangerouslySetInnerHTML={{ __html: howItWorksHtml }}
+                        />
                     </CardContent>
                 </Card>
 

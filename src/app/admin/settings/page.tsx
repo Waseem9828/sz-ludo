@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { getSettings, updateSettings, UpiId, AppSettings, uploadBannerImage, deleteBannerImage, deleteOldGameRecords, HomePageCard } from '@/lib/firebase/settings';
+import { getSettings, updateSettings, UpiId, AppSettings, uploadBannerImage, deleteBannerImage, deleteOldGameRecords, HomePageCard, ReferralSettings } from '@/lib/firebase/settings';
 import { Loader, Trash2, PlusCircle, Upload, Archive, Link as LinkIcon } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -29,7 +29,7 @@ import {
 import { Dialog, DialogClose, DialogFooter, DialogHeader, DialogTitle, DialogDescription, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 
 
-const BannerManager = ({ title, bannerUrls, onUpdate, singleImage = false }: { title: string, bannerUrls: string[], onUpdate: (urls: string[]) => void, singleImage?: boolean }) => {
+const BannerManager = ({ title, bannerUrls, onUpdate, singleImage = false, folder }: { title: string, bannerUrls: string[], onUpdate: (urls: string[]) => void, singleImage?: boolean, folder: string }) => {
     const [isUploading, setIsUploading] = useState(false);
     const [newImageUrl, setNewImageUrl] = useState('');
     const { toast } = useToast();
@@ -40,7 +40,7 @@ const BannerManager = ({ title, bannerUrls, onUpdate, singleImage = false }: { t
 
         setIsUploading(true);
         try {
-            const newUrl = await uploadBannerImage(file, 'classic'); 
+            const newUrl = await uploadBannerImage(file, folder);
             onUpdate(singleImage ? [newUrl] : [...bannerUrls, newUrl]);
             toast({ title: 'Success', description: 'Image uploaded!' });
         } catch (error: any) {
@@ -173,6 +173,10 @@ export default function SettingsPage() {
   
   const handleContentChange = (field: keyof AppSettings, value: string) => {
       setSettings(prev => ({ ...prev, [field]: value }));
+  }
+  
+  const handleReferralChange = (field: keyof ReferralSettings, value: any) => {
+      setSettings(prev => ({ ...prev, referralSettings: { ...prev.referralSettings!, [field]: value } }));
   }
 
   const handleFestiveGreetingChange = (field: keyof NonNullable<AppSettings['festiveGreeting']>, value: string | boolean) => {
@@ -399,7 +403,7 @@ export default function SettingsPage() {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 {(settings.homePageCards || []).map((card, index) => (
-                                    <Card key={index} className="p-4 border-2">
+                                    <Card key={card.id} className="p-4 border-2">
                                         <div className="flex justify-between items-center mb-4">
                                             <CardTitle className="text-lg">{card.type === 'game' ? 'Game Card' : 'Tournament Card'}</CardTitle>
                                             <div className="flex items-center space-x-2">
@@ -426,12 +430,41 @@ export default function SettingsPage() {
                                                 title="Card Images" 
                                                 bannerUrls={card.images}
                                                 onUpdate={(urls) => handleHomePageCardChange(index, 'images', urls)}
+                                                folder="homecards"
                                             />
                                         </div>
                                     </Card>
                                 ))}
                             </CardContent>
                         </Card>
+                        
+                         <Card>
+                            <CardHeader>
+                                <CardTitle>Referral Page Content</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label>Referral Image</Label>
+                                    <BannerManager 
+                                        title="Referral Image" 
+                                        bannerUrls={settings.referralSettings?.imageUrl ? [settings.referralSettings.imageUrl] : []}
+                                        onUpdate={(urls) => handleReferralChange('imageUrl', urls[0] || '')}
+                                        singleImage={true}
+                                        folder="referral"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="referral-share-text">Share Text</Label>
+                                    <Textarea id="referral-share-text" value={settings.referralSettings?.shareText || ''} onChange={(e) => handleReferralChange('shareText', e.target.value)} rows={4} placeholder="e.g. Hey! I'm playing on SZ LUDO... Use my code {{referralCode}}"/>
+                                     <p className="text-xs text-muted-foreground">Use `{{referralCode}}` and `{{referralLink}}` as placeholders.</p>
+                                </div>
+                                 <div className="space-y-2">
+                                    <Label htmlFor="referral-how-text">"How It Works" Text</Label>
+                                    <Textarea id="referral-how-text" value={settings.referralSettings?.howItWorksText || ''} onChange={(e) => handleReferralChange('howItWorksText', e.target.value)} rows={4} placeholder="e.g. You can refer and earn 2%..."/>
+                                </div>
+                            </CardContent>
+                        </Card>
+
 
                         <Card>
                             <CardHeader>

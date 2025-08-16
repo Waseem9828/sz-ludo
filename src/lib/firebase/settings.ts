@@ -175,7 +175,12 @@ export const getSettings = async (): Promise<AppSettings> => {
             images: ['https://placehold.co/600x400.png'],
             aiHint: 'gold prize'
           }
-        ]
+        ],
+        referralSettings: {
+            imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEigtvhhJRucPCHR_BWwPVLk335J3yeFT8CTExF13JYJbogG0IOrplIRwu2FzgAca1G8ssvc83saCCnC7NdVFP15FnIOppoCDc0pa31pziFzf6hGq8qCo7yZa2K9_92MtBQet6Ii0wgVFYMEyfUn8R3s6vOgo2aavCvuzdNcsYX0YizIEy9xzVB_mBt5o_4/s320/77621.png',
+            shareText: "Hey! I'm playing on SZ LUDO and earning real cash. You should join too! Use my code {{referralCode}} to sign up and get a bonus. Let's play! Link: {{referralLink}}",
+            howItWorksText: "You can refer and earn 2% of your referral winning, every time. Like if your player plays for 10000 and wins, You will get 200 as referral amount."
+        }
     };
 
   if (docSnap.exists()) {
@@ -184,12 +189,13 @@ export const getSettings = async (): Promise<AppSettings> => {
     const upiIds = (data.upiIds || []).map(upi => ({ name: '', currentAmount: 0, limit: 50000, ...upi }));
     const festiveGreeting = data.festiveGreeting || defaults.festiveGreeting;
     const homePageCards = data.homePageCards && data.homePageCards.length > 0 ? data.homePageCards : defaults.homePageCards;
+    const referralSettings = data.referralSettings || defaults.referralSettings;
     
     // Ensure content fields have defaults if they are empty or null
     const gstContent = data.gstContent || defaults.gstContent;
     const refundContent = data.refundContent || defaults.refundContent;
 
-    return { ...defaults, ...data, upiIds, festiveGreeting, homePageCards, gstContent, refundContent };
+    return { ...defaults, ...data, upiIds, festiveGreeting, homePageCards, gstContent, refundContent, referralSettings };
   } else {
     // If the document doesn't exist, create it with default values
     await setDoc(docRef, defaults);
@@ -234,7 +240,7 @@ export const incrementUpiAmount = async (upiId: string, amount: number) => {
 };
 
 // Upload a banner image to storage
-export const uploadBannerImage = async (file: File, folder: 'classic' | 'popular' | 'tournaments'): Promise<string> => {
+export const uploadBannerImage = async (file: File, folder: string): Promise<string> => {
     const filePath = `banners/${folder}/${Date.now()}_${file.name}`;
     const storageRef = ref(storage, filePath);
     await uploadBytes(storageRef, file);
