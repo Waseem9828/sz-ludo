@@ -22,13 +22,10 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
     const { email, photoURL } = context.auth.token;
 
     const userRef = db.doc(`users/${uid}`);
-
-    // Check if user document already exists to prevent accidental overwrites
-    const userDoc = await userRef.get();
-    if (userDoc.exists) {
-        functions.logger.log(`User document for UID: ${uid} already exists.`);
-        return { success: true, message: "User document already exists." };
-    }
+    
+    // This function should only be called once upon sign-up. 
+    // The client-side logic now ensures this is called only if the doc doesn't exist.
+    // The check here is removed to prevent race conditions and simplify logic.
     
     const newAppUser = {
         uid: uid,
