@@ -114,7 +114,7 @@ export default function AdminDashboardPage() {
             { limitCount: 10 }
         );
         
-        // Fetch all relevant transactions and filter on client
+        // Fetch only completed/approved transactions for chart to reduce load
         const unsubscribeChartTransactions = listenForAllTransactions(
             processTransactionDataForChart,
             (error) => toast({ title: "Error", description: `Could not fetch chart data: ${error.message}`, variant: "destructive" }),

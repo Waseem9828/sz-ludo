@@ -31,10 +31,18 @@ function getFirebaseApp() {
 function getDb() {
   if (!db) {
      const app = getFirebaseApp();
-     db = initializeFirestore(app, {
-         cache: typeof window !== 'undefined' ? persistentLocalCache({}) : memoryLocalCache({}),
-     });
-     console.log("Firestore initialized with new settings.");
+     // Use persistent cache for web to enable offline data access and faster loads.
+     // Memory cache is a fallback for environments where persistent cache is not supported.
+     try {
+        db = initializeFirestore(app, {
+            localCache: persistentLocalCache({}),
+        });
+     } catch (e) {
+        console.warn("Persistent cache not available, falling back to memory cache.", e);
+        db = initializeFirestore(app, {
+            localCache: memoryLocalCache({}),
+        });
+     }
   }
   return db;
 }

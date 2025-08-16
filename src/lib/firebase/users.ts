@@ -28,7 +28,7 @@ export interface AppUser {
     }
     // KYC Details
     kycStatus?: 'Pending' | 'Verified' | 'Rejected';
-    isKycVerified?: boolean; // Derived field for easy access
+    isKycVerified: boolean; // Derived field for easy access
     aadhaar?: string;
     pan?: string;
     bankAccount?: string;
@@ -127,7 +127,7 @@ export const getUser = async (uid: string): Promise<AppUser | null> => {
     const docRef = doc(db, "users", uid);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-        const data = docSnap.data() as AppUser;
+        const data = docSnap.data() as Omit<AppUser, 'isKycVerified' | 'uid'>;
         return { 
             uid: docSnap.id, 
             ...data,
@@ -243,7 +243,7 @@ export const updateUserWallet = async (uid: string, amount: number, walletType: 
     });
 };
 
-export const updateUserKycStatus = async (uid: string, status: AppUser['kycStatus']) => {
+export const updateUserKycStatus = async (uid: string, status: 'Pending' | 'Verified' | 'Rejected') => {
     const userRef = doc(db, 'users', uid);
     const isVerified = status === 'Verified';
     return await updateDoc(userRef, { kycStatus: status, isKycVerified: isVerified });
@@ -267,7 +267,7 @@ export const listenForAllUsers = (
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const users: AppUser[] = [];
         querySnapshot.forEach((doc) => {
-            const data = doc.data() as AppUser;
+            const data = doc.data() as Omit<AppUser, 'isKycVerified' | 'uid'>;
             users.push({ 
                 uid: doc.id, 
                 ...data,

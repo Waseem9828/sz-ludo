@@ -207,7 +207,7 @@ export default function UserProfilePage() {
 
         const unsubscribe = listenForUserTransactions(uid, (userTransactions) => {
             setTransactions(userTransactions);
-        });
+        }, 20); // Limit to last 20 transactions for performance
 
         return () => unsubscribe();
 
@@ -219,7 +219,7 @@ export default function UserProfilePage() {
         try {
             await updateUserKycStatus(user.uid, status);
             toast({ title: "Success", description: `KYC status updated to ${status}.` });
-            setUser(prevUser => prevUser ? { ...prevUser, kycStatus: status } : null);
+            setUser(prevUser => prevUser ? { ...prevUser, kycStatus: status, isKycVerified: status === 'Verified' } : null);
         } catch (error: any) {
             toast({ title: "Error", description: error.message, variant: 'destructive' });
         } finally {

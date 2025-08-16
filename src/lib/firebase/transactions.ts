@@ -30,9 +30,15 @@ export const createTransaction = async (data: Omit<Transaction, 'id'>) => {
 export const listenForUserTransactions = (
     userId: string,
     callback: (transactions: Transaction[]) => void,
+    limitCount: number = 20, // Default limit to 20
     onError?: (error: Error) => void
 ) => {
-    const q = query(collection(db, TRANSACTIONS_COLLECTION), where("userId", "==", userId), orderBy("createdAt", "desc"), limit(20));
+    const q = query(
+        collection(db, TRANSACTIONS_COLLECTION), 
+        where("userId", "==", userId), 
+        orderBy("createdAt", "desc"), 
+        limit(limitCount)
+    );
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const transactions: Transaction[] = [];
