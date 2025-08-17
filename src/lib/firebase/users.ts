@@ -227,51 +227,59 @@ export const listenForAllUsers = (
 }
 
 export const generateUserReport = async (user: AppUser, transactions: Transaction[]) => {
-    const doc = new jsPDF();
-    const totalBalance = (user.wallet?.balance || 0) + (user.wallet?.winnings || 0);
+    try {
+        const { jsPDF } = await import('jspdf');
+        await import('jspdf-autotable');
+        
+        const doc = new jsPDF();
+        const totalBalance = (user.wallet?.balance || 0) + (user.wallet?.winnings || 0);
 
-    doc.setFontSize(22);
-    doc.text("User Transaction Report", 14, 22);
-    doc.setFontSize(12);
-    doc.text(`User: ${user.displayName || 'N/A'} (${user.email || 'N/A'})`, 14, 32);
-    doc.text(`Report Generated: ${new Date().toLocaleString()}`, 14, 38);
-    
-    doc.setFontSize(16);
-    doc.text("Account Summary", 14, 50);
-    const tableBody = [
-        ['Total Balance', `₹${totalBalance.toFixed(2)}`],
-        ['Deposit Balance', `₹${(user.wallet?.balance || 0).toFixed(2)}`],
-        ['Winnings Balance', `₹${(user.wallet?.winnings || 0).toFixed(2)}`],
-        ['KYC Status', user.kycStatus || 'N/A'],
-        ['Account Status', user.status || 'active'],
-    ];
-    (doc as any).autoTable({
-        startY: 55,
-        head: [['Metric', 'Value']],
-        body: tableBody,
-        theme: 'striped',
-    });
+        doc.setFontSize(22);
+        doc.text("User Transaction Report", 14, 22);
+        doc.setFontSize(12);
+        doc.text(`User: ${user.displayName || 'N/A'} (${user.email || 'N/A'})`, 14, 32);
+        doc.text(`Report Generated: ${new Date().toLocaleString()}`, 14, 38);
+        
+        doc.setFontSize(16);
+        doc.text("Account Summary", 14, 50);
+        const summaryBody = [
+            ['Total Balance', `₹${totalBalance.toFixed(2)}`],
+            ['Deposit Balance', `₹${(user.wallet?.balance || 0).toFixed(2)}`],
+            ['Winnings Balance', `₹${(user.wallet?.winnings || 0).toFixed(2)}`],
+            ['KYC Status', user.kycStatus || 'N/A'],
+            ['Account Status', user.status || 'active'],
+        ];
+        (doc as any).autoTable({
+            startY: 55,
+            head: [['Metric', 'Value']],
+            body: summaryBody,
+            theme: 'striped',
+        });
 
-    const lastY = (doc as any).lastAutoTable?.finalY ?? 100;
-    
-    doc.setFontSize(16);
-    doc.text("Transaction History", 14, lastY + 15);
-    
+        const lastY = (doc as any).lastAutoTable?.finalY ?? 100;
+        
+        doc.setFontSize(16);
+        doc.text("Transaction History", 14, lastY + 15);
+        
 
-    const tableData = transactions.map(tx => [
-        tx.createdAt?.toDate().toLocaleString() || 'N/A',
-        tx.type ? tx.type.replace(/_/g, ' ') : 'N/A',
-        `₹${tx.amount.toFixed(2)}`,
-        tx.status || 'N/A',
-        tx.notes || tx.relatedId || 'N/A',
-    ]);
-    
-    (doc as any).autoTable({
-        startY: lastY + 20,
-        head: [['Date', 'Type', 'Amount', 'Status', 'Notes']],
-        body: tableData,
-        theme: 'grid'
-    });
-    
-    doc.save(`report_${user.uid}_${new Date().toISOString().split('T')[0]}.pdf`);
+        const transactionBody = transactions.map(tx => [
+            tx.createdAt?.toDate().toLocaleString() || 'N/A',
+            tx.type ? tx.type.replace(/_/g, ' ') : 'N/A',
+            `₹${tx.amount.toFixed(2)}`,
+            tx.status || 'N/A',
+            tx.notes || tx.relatedId || 'N/A',
+        ]);
+        
+        (doc as any).autoTable({
+            startY: lastY + 20,
+            head: [['Date', 'Type', 'Amount', 'Status', 'Notes']],
+            body: transactionBody,
+            theme: 'grid'
+        });
+        
+        doc.save(`report_${user.uid}_${new Date().toISOString().split('T')[0]}.pdf`);
+    } catch(e) {
+        console.error("Error generating PDF:", e);
+        throw new Error("Failed to generate PDF report.");
+    }
 }

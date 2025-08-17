@@ -11,7 +11,7 @@ import {
   signInWithPopup,
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase/config';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, getDoc } from 'firebase/firestore';
 import { SplashScreen } from '@/components/ui/splash-screen';
 import type { AppUser } from '@/lib/firebase/users';
 import { googleAuthProvider } from '@/lib/firebase/config';
@@ -70,55 +70,64 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   useEffect(() => {
     let unsubscribeFirestore: (() => void) | null = null;
-    setLoading(true);
-
-    const unsubscribeAuth = onAuthStateChanged(auth, (authUser) => {
+  
+    const unsubscribeAuth = onAuthStateChanged(auth, async (authUser) => {
       setUser(authUser);
-
-      if (unsubscribeFirestore) {
-        unsubscribeFirestore();
-        unsubscribeFirestore = null;
-      }
-      
+  
+      // If signed out, clean up and stop loading
       if (!authUser) {
+        if (unsubscribeFirestore) {
+          unsubscribeFirestore();
+          unsubscribeFirestore = null;
+        }
         setAppUser(null);
         setLoading(false);
         return;
       }
-
-      const userDocRef = doc(db, 'users', authUser.uid);
-      
-      unsubscribeFirestore = onSnapshot(
-        userDocRef,
-        (snapshot) => {
-          if (snapshot.exists()) {
-            const userData = snapshot.data() as AppUser;
-            setAppUser({ ...userData, uid: authUser.uid, isKycVerified: userData.kycStatus === 'Verified' });
-          } else {
-             // This case handles new users where the doc might not exist yet.
-             // We don't set appUser to null, we just wait. The loading state remains true.
-             // The cloud function `onUserCreate` will create the document, and this listener will pick it up.
+  
+      // If user is authenticated, set up the Firestore listener for their app data.
+      try {
+        const userRef = doc(db, 'users', authUser.uid);
+        
+        // This is the single, authoritative listener for the user's document.
+        unsubscribeFirestore = onSnapshot(
+          userRef,
+          (snapshot) => {
+            if (snapshot.exists()) {
+              const data = snapshot.data() as AppUser;
+              setAppUser({ ...data, uid: authUser.uid, isKycVerified: data.kycStatus === 'Verified' });
+            } else {
+              // This can happen briefly for new users.
+              // We don't set appUser to null, we just wait for the doc to be created by the cloud function.
+              // The loading state remains true until the document is created and this listener fires again.
+            }
+            // We only stop loading if the appUser document exists.
+            if (snapshot.exists()) {
+                setLoading(false);
+            }
+          },
+          (error) => {
+            console.error('Firestore onSnapshot error:', error);
+            setAppUser(null);
+            setLoading(false); // Stop loading even on error to prevent infinite loop.
           }
-           // Only set loading to false if we have the appUser document.
-          if (appUser || snapshot.exists()) {
-             setLoading(false);
-          }
-        },
-        (error) => {
-          console.error("Firestore onSnapshot error:", error);
-          setAppUser(null);
-          setLoading(false);
-        }
-      );
+        );
+      } catch (e) {
+        console.error('Error setting up user listener:', e);
+        setAppUser(null);
+        setLoading(false);
+      }
     });
-
+  
+    // Cleanup function for the useEffect hook
     return () => {
       unsubscribeAuth();
       if (unsubscribeFirestore) {
         unsubscribeFirestore();
       }
     };
-  }, [appUser]); // Add appUser as a dependency to re-evaluate loading state
+  }, []); // The empty dependency array ensures this effect runs only once on mount.
+  
 
   const signUp = async (
     email: string,
@@ -131,6 +140,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const functions = getFunctions();
     const onUserCreate = httpsCallable(functions, 'onUserCreate');
     
+    // Call the Cloud Function to create the Firestore document and handle referrals securely.
     await onUserCreate({ name, phone, referralCode });
     
     return userCredential;
@@ -146,11 +156,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const functions = getFunctions();
     const onUserCreate = httpsCallable(functions, 'onUserCreate');
-    await onUserCreate({ 
-        name: user.displayName, 
-        phone: user.phoneNumber || '', 
-        referralCode 
-    });
+    // Check if user doc exists before calling create function to avoid overwriting existing users
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    if (!userDoc.exists()) {
+      await onUserCreate({ 
+          name: user.displayName, 
+          phone: user.phoneNumber || '', 
+          referralCode 
+      });
+    }
     
     return result;
   };
