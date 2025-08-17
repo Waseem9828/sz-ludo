@@ -4,6 +4,7 @@
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
+import { Progress } from '@/components/ui/progress';
 
 const Dice = ({ rotation, position, size = 60, src }: { rotation: number[], position: { top: string, left: string }, size?: number, src: string }) => (
     <motion.div
@@ -97,10 +98,23 @@ const TypewriterText = ({ text, delay = 0 }: { text: string; delay?: number }) =
 
 export const SplashScreen = () => {
     const [isReady, setIsReady] = useState(false);
+    const [progress, setProgress] = useState(0);
 
     useEffect(() => {
-        // This ensures the component is mounted on the client before starting the animation
         setIsReady(true);
+        const timer = setInterval(() => {
+          setProgress(oldProgress => {
+            if (oldProgress >= 95) {
+              clearInterval(timer);
+              return 95;
+            }
+            return Math.min(oldProgress + Math.random() * 15, 95);
+          });
+        }, 300);
+    
+        return () => {
+          clearInterval(timer);
+        };
     }, []);
 
     const dicePositions = [
@@ -162,9 +176,13 @@ export const SplashScreen = () => {
                              <TypewriterText text="Luck Meets Skill" delay={0.3} />
                         </div>
                         
-                        <p className="mt-12 text-sm font-medium text-white/70 animate-glowPulse">
-                            Loading...
-                        </p>
+                        <div className="mt-12 w-48 text-center">
+                            <Progress value={progress} className="h-2 bg-white/20 [&>div]:bg-white" />
+                            <p className="mt-2 text-sm font-medium text-white/70 animate-glowPulse">
+                                Loading... {Math.round(progress)}%
+                            </p>
+                        </div>
+
                     </motion.div>
                 </motion.div>
             )}

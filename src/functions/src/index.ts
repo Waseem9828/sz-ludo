@@ -27,7 +27,7 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
     if (userDoc.exists) {
         functions.logger.log(`User document for UID: ${uid} already exists. Skipping creation.`);
         // Return a non-error response indicating the user already exists.
-        return { success: false, message: "User already exists." };
+        return { success: true, message: "User already exists." };
     }
 
     const newAppUser: any = {
