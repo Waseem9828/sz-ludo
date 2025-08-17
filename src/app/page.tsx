@@ -10,27 +10,25 @@ import { SplashScreen } from '@/components/ui/splash-screen';
 import { getSettings, AppSettings } from '@/lib/firebase/settings';
 import GameListing from '@/components/game-listing';
 import { FestiveDialog, FestiveBackground } from '@/components/ui/festive-dialog';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 import AnimatedBanner from '@/components/animated-banner';
 
 function Home() {
-  const { user, appUser, loading } = useAuth();
+  const { user, appUser, loading: authLoading } = useAuth();
   const router = useRouter();
+  
   const [settings, setSettings] = useState<AppSettings | null>(null);
+  const [settingsLoading, setSettingsLoading] = useState(true);
+
   const [showFestiveDialog, setShowFestiveDialog] = useState(false);
   const [showFestiveBackground, setShowFestiveBackground] = useState(false);
 
   useEffect(() => {
-    // This effect handles redirection if the user is not logged in.
-    // It will only run once the initial loading is complete.
-    if (!loading && !user) {
+    if (!authLoading && !user) {
       router.replace('/login');
     }
-  }, [user, loading, router]);
+  }, [user, authLoading, router]);
   
   useEffect(() => {
-    // This effect fetches app settings once the user is confirmed to be logged in.
     if (user && appUser) {
         getSettings().then(appSettings => {
             setSettings(appSettings);
@@ -41,14 +39,20 @@ function Home() {
                 const lastShown = localStorage.getItem(lastShownKey);
                 const now = new Date().getTime();
                 
+                // Show every 24 hours
                 if (!lastShown || (now - Number(lastShown) > 24 * 60 * 60 * 1000)) {
                     setShowFestiveDialog(true);
                     localStorage.setItem(lastShownKey, now.toString());
                 }
             }
+        }).finally(() => {
+            setSettingsLoading(false);
         });
+    } else if (!authLoading && !user) {
+        // If user is not logged in, no need to load settings
+        setSettingsLoading(false);
     }
-  }, [user, appUser]);
+  }, [user, appUser, authLoading]);
   
   const handleDialogClose = (isOpen: boolean) => {
     setShowFestiveDialog(isOpen);
@@ -57,8 +61,8 @@ function Home() {
     }
   }
 
-  // Show splash screen while loading auth state OR if the user is not logged in yet (to prevent flicker before redirect).
-  if (loading || !user || !appUser) {
+  // Show splash screen while auth or settings are loading, or if the user is not logged in yet.
+  if (authLoading || settingsLoading || !user || !appUser) {
     return <SplashScreen />;
   }
   
@@ -90,7 +94,7 @@ function Home() {
                   description="Complete KYC to unlock all features."
                 />
               )}
-              {settings && <GameListing cards={settings.homePageCards} />}
+              {settings && <GameListing cards={settings.homePageCards || []} />}
             </main>
           </div>
       </div>

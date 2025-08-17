@@ -35,24 +35,24 @@ export interface FestiveGreeting {
 }
 
 export interface AppSettings {
-  upiIds?: UpiId[];
-  appSettings?: {
+  upiIds: UpiId[];
+  appSettings: {
     adminCommission: number;
   };
-  promotionBannerText?: string;
-  termsContent?: string;
-  privacyContent?: string;
-  refundContent?: string;
-  gstContent?: string;
-  homePageCards?: HomePageCard[];
-  referralSettings?: ReferralSettings;
-  festiveGreeting?: FestiveGreeting;
+  promotionBannerText: string;
+  termsContent: string;
+  privacyContent: string;
+  refundContent: string;
+  gstContent: string;
+  homePageCards: HomePageCard[];
+  referralSettings: ReferralSettings;
+  festiveGreeting: FestiveGreeting;
 }
 
 const SETTINGS_DOC_ID = 'appConfig';
 
 /**
- * Fetches the application settings from Firestore.
+ * Fetches the application settings from Firestore, providing default values for missing fields.
  * @returns {Promise<AppSettings>} A promise that resolves to the app settings object.
  */
 export async function getSettings(): Promise<AppSettings> {
@@ -60,17 +60,27 @@ export async function getSettings(): Promise<AppSettings> {
     const docRef = doc(db, 'settings', SETTINGS_DOC_ID);
     const docSnap = await getDoc(docRef);
 
-    if (docSnap.exists()) {
-      return docSnap.data() as AppSettings;
-    } else {
-      console.warn('Settings document does not exist. Returning default empty object.');
-      return {};
-    }
+    const data = docSnap.exists() ? docSnap.data() : {};
+
+    // Return data with defaults for any missing properties to prevent runtime errors
+    return {
+      upiIds: data.upiIds || [],
+      appSettings: data.appSettings || { adminCommission: 5 },
+      promotionBannerText: data.promotionBannerText || '',
+      termsContent: data.termsContent || '',
+      privacyContent: data.privacyContent || '',
+      refundContent: data.refundContent || '',
+      gstContent: data.gstContent || '',
+      homePageCards: data.homePageCards || [],
+      referralSettings: data.referralSettings || { imageUrl: '', shareText: '', howItWorksText: '' },
+      festiveGreeting: data.festiveGreeting || { enabled: false, type: 'None', message: '' },
+    };
   } catch (error) {
     console.error("Error fetching settings: ", error);
     throw new Error("Could not fetch application settings.");
   }
 }
+
 
 /**
  * Updates the application settings in Firestore.
