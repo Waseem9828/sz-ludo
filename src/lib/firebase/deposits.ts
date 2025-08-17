@@ -41,8 +41,14 @@ export const createDepositRequest = async (data: {
     const filePath = `deposits/${data.userId}/${Date.now()}_${data.screenshotFile.name}`;
     const screenshotRef = ref(storage, filePath);
     
+    // Add client-side validation and metadata for robustness
+    if (data.screenshotFile.size > 10 * 1024 * 1024) { // 10 MB limit
+        throw new Error("Screenshot is too large. Please upload an image under 10 MB.");
+    }
+    const metadata = { contentType: data.screenshotFile.type || 'image/jpeg' };
+
     // This step must complete successfully before proceeding.
-    const uploadResult = await uploadBytes(screenshotRef, data.screenshotFile);
+    const uploadResult = await uploadBytes(screenshotRef, data.screenshotFile, metadata);
     const screenshotUrl = await getDownloadURL(uploadResult.ref);
 
     // 2. Now that the upload is successful and we have the URL, create the document.
@@ -88,4 +94,3 @@ export const listenForDepositRequests = (
 
     return unsubscribe;
 };
-

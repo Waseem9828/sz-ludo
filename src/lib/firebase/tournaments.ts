@@ -20,7 +20,8 @@ import {
     writeBatch,
     getDocs
 } from 'firebase/firestore';
-import { db } from './config';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from './config';
 import type { AppUser } from './users';
 import { createTransaction } from './transactions';
 import { updateUserWallet, getUser } from './users';
@@ -57,6 +58,19 @@ export interface Tournament {
 }
 
 const TOURNAMENTS_COLLECTION = 'tournaments';
+
+// Helper to upload tournament image
+export const uploadTournamentImage = async (file: File): Promise<string> => {
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        throw new Error("Image is too large. Please upload an image under 10 MB.");
+    }
+    const metadata = { contentType: file.type || 'image/jpeg' };
+    const filePath = `tournaments/${Date.now()}_${file.name}`;
+    const storageRef = ref(storage, filePath);
+    await uploadBytes(storageRef, file, metadata);
+    return await getDownloadURL(storageRef);
+};
+
 
 // Admin: Create a new tournament
 export const createTournament = async (data: Omit<Tournament, 'id' | 'players' | 'status' | 'createdAt' | 'prizePool' | 'leaderboard' | 'startTime' | 'endTime'> & { startTime: Date, endTime: Date }) => {

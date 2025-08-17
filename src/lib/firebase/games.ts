@@ -225,8 +225,13 @@ export const submitPlayerResult = async (gameId: string, userId: string, result:
 
         // Upload screenshot if player won
         if (result === 'WON' && screenshotFile) {
+            if (screenshotFile.size > 10 * 1024 * 1024) { // 10MB limit
+                throw new Error("Screenshot is too large. Please upload an image under 10 MB.");
+            }
+            const metadata = { contentType: screenshotFile.type || 'image/jpeg' };
+
             const screenshotRef = ref(storage, `screenshots/${gameId}/${Date.now()}_${userId}`);
-            const uploadResult = await uploadBytes(screenshotRef, screenshotFile);
+            const uploadResult = await uploadBytes(screenshotRef, screenshotFile, metadata);
             updateData.screenshotUrl = await getDownloadURL(uploadResult.ref);
         }
         

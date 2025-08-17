@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -92,12 +93,12 @@ const BannerManager = ({ title, bannerUrls, onUpdate, singleImage = false, folde
             </div>
             {(!singleImage || bannerUrls.length === 0) && (
                  <div className="flex gap-2">
-                    <Label htmlFor={`banner-upload-${title.replace(/\s+/g, '-')}`} className="flex-grow">
+                    <Label htmlFor={`banner-upload-${folder}-${title.replace(/\s+/g, '-')}`} className="flex-grow">
                         <div className="flex items-center justify-center w-full px-4 py-2 border-2 border-dashed rounded-md cursor-pointer hover:bg-muted">
                             {isUploading ? <Loader className="animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                             <span>Upload</span>
                         </div>
-                        <Input id={`banner-upload-${title.replace(/\s+/g, '-')}`} type="file" accept="image/*" className="sr-only" onChange={handleImageUpload} disabled={isUploading} />
+                        <Input id={`banner-upload-${folder}-${title.replace(/\s+/g, '-')}`} type="file" accept="image/*" className="sr-only" onChange={handleImageUpload} disabled={isUploading} />
                     </Label>
                     <Dialog>
                         <DialogTrigger asChild>

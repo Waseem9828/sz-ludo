@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -12,14 +13,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { createTournament } from '@/lib/firebase/tournaments';
+import { createTournament, uploadTournamentImage } from '@/lib/firebase/tournaments';
 import { Calendar as CalendarIcon, ChevronLeft, Loader, PlusCircle, Trash2, Upload } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
-import { uploadBannerImage, deleteBannerImage } from '@/lib/firebase/settings';
+import { deleteBannerImage } from '@/lib/firebase/settings';
 import Image from 'next/image';
 
 const prizeDistributionSchema = z.object({
@@ -55,7 +56,7 @@ const BannerManager = ({ title, bannerUrl, onUpdate, singleImage = true }: { tit
 
         setIsUploading(true);
         try {
-            const newUrl = await uploadBannerImage(file, 'tournaments');
+            const newUrl = await uploadTournamentImage(file);
             onUpdate(newUrl);
             toast({ title: 'Success', description: 'Image uploaded!' });
         } catch (error: any) {
