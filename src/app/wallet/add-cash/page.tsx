@@ -115,7 +115,7 @@ function AddCashPageComponent() {
     }
   }, [amount]);
   
-  if (loading) {
+  if (loading || !user) {
     return <SplashScreen />;
   }
 
@@ -124,6 +124,9 @@ function AddCashPageComponent() {
     setActiveUpi(null);
     setScreenshot(null);
     setUtr('');
+    if(fileInputRef.current) {
+        fileInputRef.current.value = '';
+    }
   }
   
   const renderContent = () => {
@@ -146,6 +149,7 @@ function AddCashPageComponent() {
                         </div>
                         <div className="text-sm text-muted-foreground">
                             <p>To: {activeUpi?.name}</p>
+                            <p>UPI ID: {activeUpi?.id}</p>
                         </div>
                         <a href={upiLink}>
                         <Button className="w-full font-bold text-lg py-6 md:hidden">Pay with UPI</Button>
