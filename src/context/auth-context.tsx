@@ -19,7 +19,9 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 
 const defaultAvatar = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi_h6LUuqTTKYsn5TfUZwkI6Aib6Y0tOzQzcoZKstURqxyl-PJXW1DKTkF2cPPNNUbP3iuDNsOBVOYx7p-ZwrodI5w9fyqEwoabj8rU0mLzSbT5GCFUKpfCc4s_LrtHcWFDvvRstCghAfQi5Zfv2fipdZG8h4dU4vGt-eFRn-gS3QTg6_JJKhv0Yysr_ZY/s1600/82126.png";
 
-// This is the client-side fallback, designed to be robust.
+
+// This helper function creates the user document on the client-side.
+// It's a fallback for the cloud function or for cases where the doc is missing.
 const createFirestoreUserDocument = async (user: User, additionalData: Partial<AppUser> = {}) => {
   const userRef = doc(db, 'users', user.uid);
   const { displayName, email, photoURL } = user;
@@ -29,7 +31,7 @@ const createFirestoreUserDocument = async (user: User, additionalData: Partial<A
     email: email || "",
     displayName: displayName || "New User",
     photoURL: photoURL || defaultAvatar,
-    phone: additionalData.phone || "", // Ensure phone is not undefined
+    phone: additionalData.phone || "",
     wallet: { balance: 10, winnings: 0 },
     kycStatus: 'Pending',
     status: 'active',
@@ -41,9 +43,9 @@ const createFirestoreUserDocument = async (user: User, additionalData: Partial<A
     createdAt: serverTimestamp(),
   };
 
-  if ((email?.toLowerCase() === 'admin@example.com' || email?.toLowerCase() === 'super@admin.com')) {
-    (newAppUser as any).role = 'superadmin';
-    (newAppUser as any).lifetimeStats.totalRevenue = 0;
+  if ((email?.toLowerCase() === "admin@example.com" || email?.toLowerCase() === "super@admin.com")) {
+      (newAppUser as any).role = 'superadmin';
+      (newAppUser as any).lifetimeStats.totalRevenue = 0;
   }
   
   await setDoc(userRef, newAppUser);
@@ -61,37 +63,23 @@ const createFirestoreUserDocument = async (user: User, additionalData: Partial<A
 };
 
 
-const ensureUserDocument = async (u: User, additionalData: Partial<AppUser> = {}) => {
-  console.log("Ensuring user doc for", u.uid);
-  const userRef = doc(db, 'users', u.uid);
-  let snap = await getDoc(userRef);
-  if (snap.exists()) {
-    return;
+// This function robustly ensures a user document exists.
+// It first checks for the doc, and if it's missing, creates it.
+const ensureUserDocument = async (user: User, additionalData: Partial<AppUser> = {}) => {
+  if (!user) return;
+  const userRef = doc(db, 'users', user.uid);
+  
+  const docSnap = await getDoc(userRef);
+  if (docSnap.exists()) {
+    return; // Document already exists, no action needed.
   }
 
-  // Callable is primary method
+  console.log("User doc not found, creating it now on the client-side as a fallback.");
   try {
-    const functions = getFunctions();
-    const onUserCreate = httpsCallable(functions, 'onUserCreate');
-    await onUserCreate({ 
-        name: u.displayName || additionalData.displayName || "New User", 
-        phone: u.phoneNumber || additionalData.phone || "", 
-        referralCode: null 
-    });
-    // Wait a bit for the function to create the doc
-    await new Promise(r => setTimeout(r, 1500)); 
-    snap = await getDoc(userRef);
-    if (snap.exists()) return;
-  } catch (e) {
-    console.warn('onUserCreate callable failed, proceeding to client-side fallback:', e);
-  }
-
-  // Fallback if callable fails or doesn't create the doc in time
-  try {
-    await createFirestoreUserDocument(u, additionalData);
-    console.log("Fallback: user doc created successfully on client.");
-  } catch (createError) {
-    console.error("CRITICAL: Fallback user document creation failed:", createError);
+    await createFirestoreUserDocument(user, additionalData);
+    console.log("Client-side fallback: user document created successfully.");
+  } catch (error) {
+    console.error("CRITICAL: Client-side fallback user document creation failed:", error);
   }
 };
 
@@ -149,9 +137,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     let unsubscribeFirestore: (() => void) | null = null;
     let safetyTimer: NodeJS.Timeout | null = null;
-
+    
     const unsubscribeAuth = onAuthStateChanged(auth, (authUser) => {
-      // Clean up previous listeners
       if (unsubscribeFirestore) unsubscribeFirestore();
       if (safetyTimer) clearTimeout(safetyTimer);
       
@@ -159,35 +146,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
       if (authUser) {
         setLoading(true);
+
+        // This timer is a safety net. If Firestore hangs for any reason,
+        // it will force the loading to stop after 8 seconds to prevent an infinite splash screen.
         safetyTimer = setTimeout(() => {
-            console.warn("Safety timer fired! Forcing loading state to false.");
+            console.warn("Safety timer fired! This indicates a potential issue with Firestore connection or document creation. Forcing loading to false.");
             setLoading(false);
         }, 8000);
+        
+        // This is the critical part: ensure the user document exists before subscribing.
+        ensureUserDocument(authUser, { phone: authUser.phoneNumber || '' }).then(() => {
+            const userRef = doc(db, 'users', authUser.uid);
+            unsubscribeFirestore = onSnapshot(
+              userRef,
+              (snapshot) => {
+                if (safetyTimer) clearTimeout(safetyTimer);
+                if (snapshot.exists()) {
+                  const data = snapshot.data() as AppUser;
+                  setAppUser({ ...data, uid: authUser.uid, isKycVerified: data.kycStatus === 'Verified' });
+                } else {
+                  // This case should be rare now, but as a safeguard, we treat it as logged out.
+                  setAppUser(null);
+                }
+                setLoading(false);
+              },
+              (error) => {
+                if (safetyTimer) clearTimeout(safetyTimer);
+                console.error('Firestore onSnapshot error:', error);
+                setAppUser(null);
+                setLoading(false);
+              }
+            );
+        });
 
-        const userRef = doc(db, 'users', authUser.uid);
-        
-        ensureUserDocument(authUser, { phone: authUser.phoneNumber || '' });
-        
-        unsubscribeFirestore = onSnapshot(
-          userRef,
-          (snapshot) => {
-            if (snapshot.exists()) {
-              if (safetyTimer) clearTimeout(safetyTimer);
-              const data = snapshot.data() as AppUser;
-              setAppUser({ ...data, uid: authUser.uid, isKycVerified: data.kycStatus === 'Verified' });
-              console.log("User snapshot received, setting loading to false.");
-              setLoading(false);
-            } else {
-              console.log("User doc not found, waiting for ensureUserDocument to create it.");
-            }
-          },
-          (error) => {
-            if (safetyTimer) clearTimeout(safetyTimer);
-            console.error('Firestore onSnapshot error:', error);
-            setAppUser(null);
-            setLoading(false);
-          }
-        );
       } else {
         setAppUser(null);
         setLoading(false);
@@ -217,8 +208,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const newUser = userCredential.user;
     await updateProfile(newUser, { displayName: name });
     
-    // Let onAuthStateChanged handle the doc creation via ensureUserDocument
-    // to keep logic centralized.
+    // Call the cloud function as the primary method.
+    // The onAuthStateChanged listener will handle the fallback if needed.
+    try {
+        const functions = getFunctions();
+        const onUserCreate = httpsCallable(functions, 'onUserCreate');
+        await onUserCreate({ name, phone, referralCode });
+    } catch (e) {
+        console.warn('onUserCreate callable failed, onAuthStateChanged will handle doc creation.', e);
+    }
     
     return userCredential;
   };
@@ -242,6 +240,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     logout,
   };
 
+  // Render SplashScreen while loading is true, regardless of user state.
+  // This prevents UI flicker and ensures all data is ready before showing the app.
   if (loading) {
     return <SplashScreen />;
   }
