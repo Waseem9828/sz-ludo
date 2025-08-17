@@ -53,16 +53,21 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
 
     // Handle referral logic
     if (referralCode && typeof referralCode === 'string' && referralCode.startsWith('SZLUDO')) {
-        const referrerId = referralCode.replace('SZLUDO', '');
-        if (referrerId && referrerId !== uid) {
-            const referrerRef = db.doc(`users/${referrerId}`);
-            // We check if referrer exists before updating.
-            const referrerDoc = await referrerRef.get();
-            if(referrerDoc.exists) {
-                newAppUser.referralStats.referredBy = referrerId;
-                batch.update(referrerRef, { 'referralStats.referredCount': admin.firestore.FieldValue.increment(1) });
-            } else {
-                 functions.logger.warn(`Referrer with code ${referralCode} not found.`);
+        const referrerCode = referralCode.replace('SZLUDO', '');
+        // A simple query to find a user whose UID starts with the referrerCode.
+        // This is not foolproof if multiple UIDs start with the same prefix, but it's a common pattern.
+        if (referrerCode) {
+            const usersRef = db.collection('users');
+            // Query for UIDs that start with the referrerCode
+            const querySnapshot = await usersRef.where(admin.firestore.FieldPath.documentId(), '>=', referrerCode).where(admin.firestore.FieldPath.documentId(), '<', referrerCode + '\uf8ff').limit(1).get();
+
+            if (!querySnapshot.empty) {
+                const referrerDoc = querySnapshot.docs[0];
+                if (referrerDoc.id !== uid) { // Can't refer yourself
+                    newAppUser.referralStats.referredBy = referrerDoc.id;
+                    // Securely update the referrer's count on the server
+                    batch.update(referrerDoc.ref, { 'referralStats.referredCount': admin.firestore.FieldValue.increment(1) });
+                }
             }
         }
     }

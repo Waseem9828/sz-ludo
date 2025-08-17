@@ -24,7 +24,7 @@ const createFirestoreUserDocument = async (user: User, additionalData: Partial<A
     const userRef = doc(db, 'users', user.uid);
     const { displayName, email, photoURL } = user;
 
-    const newAppUser: Omit<AppUser, 'createdAt' | 'isKycVerified'> & { createdAt: any } = {
+    const newAppUser: Omit<AppUser, 'createdAt'> & { createdAt: any } = {
         uid: user.uid,
         email: email || "",
         displayName: additionalData.displayName || displayName || "New User",
@@ -32,11 +32,13 @@ const createFirestoreUserDocument = async (user: User, additionalData: Partial<A
         phone: additionalData.phone || "",
         wallet: { balance: 10, winnings: 0 },
         kycStatus: 'Pending',
+        isKycVerified: false,
         status: 'active',
         gameStats: { played: 0, won: 0, lost: 0 },
         lifetimeStats: { totalDeposits: 0, totalWithdrawals: 0, totalWinnings: 0 },
         referralStats: { referredCount: 0, totalEarnings: 0 },
         ...(additionalData.role && {role: additionalData.role}),
+        createdAt: serverTimestamp(),
     };
     
     if (email && (email.toLowerCase() === "admin@example.com" || email.toLowerCase() === "super@admin.com")) {
@@ -165,7 +167,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     let unsubscribeFirestore: (() => void) | null = null;
     let safetyTimer: NodeJS.Timeout | null = null;
   
-    const unsubscribeAuth = onAuthStateChanged(auth, (authUser) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (authUser) => {
       if (unsubscribeFirestore) {
         unsubscribeFirestore();
         unsubscribeFirestore = null;
@@ -177,45 +179,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(authUser);
   
       if (authUser) {
-        console.log('Auth - user signed in:', authUser.uid);
         setLoading(true);
         
         // Safety net to prevent infinite loading screen
         safetyTimer = setTimeout(() => {
             console.warn('Safety timer fired (8s)! Forcing loading state to false.');
-            setLoading(false);
+            if (loading) { // Check if still loading before forcing
+               setLoading(false);
+            }
         }, 8000);
+        
+        // Try to ensure the document exists before setting up the listener.
+        await ensureUserDocument(authUser, { displayName: authUser.displayName, phone: authUser.phoneNumber || '' });
   
         const userRef = doc(db, 'users', authUser.uid);
-        
-        // This is the main listener for user profile data.
         unsubscribeFirestore = onSnapshot(userRef, (snapshot) => {
+          if (safetyTimer) clearTimeout(safetyTimer);
           if (snapshot.exists()) {
-            console.log('User snapshot received. Doc exists.');
             const data = snapshot.data() as AppUser;
             setAppUser({ ...data, uid: authUser.uid, isKycVerified: data.kycStatus === 'Verified' });
-            setLoading(false); // SUCCESS: Both auth user and app user are loaded.
-            if(safetyTimer) clearTimeout(safetyTimer);
           } else {
-            // Document doesn't exist yet, try to create it.
-            // This happens for brand new sign-ups.
-            console.log('User doc not found, attempting to ensure it exists.');
-            ensureUserDocument(authUser, { displayName: authUser.displayName, phone: authUser.phoneNumber || '' })
-              .catch(err => {
-                  console.error("CRITICAL: Error ensuring user document exists:", err);
-                  // Even if it fails, we must stop loading to prevent infinite spinner.
-                  setLoading(false); 
-                  if(safetyTimer) clearTimeout(safetyTimer);
-              });
+             // This case should be rare now because of ensureUserDocument,
+             // but as a safeguard, we set appUser to null.
+            setAppUser(null);
           }
+          setLoading(false); // SUCCESS: Both auth user and app user are loaded/handled.
         }, (error) => {
           console.error('onSnapshot error (userRef):', error);
-          setLoading(false);
           if(safetyTimer) clearTimeout(safetyTimer);
+          setAppUser(null);
+          setLoading(false);
         });
   
       } else {
-        console.log('Auth - no user (signed out)');
         setAppUser(null);
         setLoading(false);
       }
@@ -244,8 +240,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const newUser = userCredential.user;
     await updateProfile(newUser, { displayName: name });
     
-    // The ensureUserDocument logic in onAuthStateChanged will handle doc creation.
-    // We can still call the function here for faster creation on sign-up.
+    // The ensureUserDocument logic in onAuthStateChanged will handle doc creation,
+    // but calling here can speed it up on initial sign-up.
     await ensureUserDocument(newUser, { displayName: name, phone, referralCode });
     
     return userCredential;
