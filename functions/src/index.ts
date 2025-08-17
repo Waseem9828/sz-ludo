@@ -54,23 +54,28 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
     // Handle referral logic
     if (referralCode && typeof referralCode === 'string' && referralCode.startsWith('SZLUDO')) {
         const referrerCode = referralCode.replace('SZLUDO', '');
+        // A simple query to find a user whose UID starts with the referrerCode.
+        // This is not foolproof if multiple UIDs start with the same prefix, but it's a common pattern.
         if (referrerCode) {
-            // Find user by matching the start of their UID
             const usersRef = db.collection('users');
-            const querySnapshot = await usersRef.where('uid', '>=', referrerCode).where('uid', '<', referrerCode + '\uf8ff').limit(1).get();
+            // Query for UIDs that start with the referrerCode
+            const querySnapshot = await usersRef.where(admin.firestore.FieldPath.documentId(), '>=', referrerCode).where(admin.firestore.FieldPath.documentId(), '<', referrerCode + '\uf8ff').limit(1).get();
 
             if (!querySnapshot.empty) {
                 const referrerDoc = querySnapshot.docs[0];
-                if (referrerDoc.id !== uid) {
+                if (referrerDoc.id !== uid) { // Can't refer yourself
                     newAppUser.referralStats.referredBy = referrerDoc.id;
+                    // Securely update the referrer's count on the server
                     batch.update(referrerDoc.ref, { 'referralStats.referredCount': admin.firestore.FieldValue.increment(1) });
                 }
             }
         }
     }
 
+    // Set the user document in the batch
     batch.set(userRef, newAppUser);
     
+    // Create the signup bonus transaction in the same batch
     const transLogRef = db.collection("transactions").doc();
     batch.set(transLogRef, {
         userId: uid,
@@ -82,6 +87,7 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
+    // Commit all batched writes at once
     await batch.commit();
 
     functions.logger.log(`Successfully created user document and bonus transaction for UID: ${uid}`);
