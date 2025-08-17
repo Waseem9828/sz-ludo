@@ -8,7 +8,6 @@ import {
   signOut,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  signInWithPopup,
   updateProfile,
   fetchSignInMethodsForEmail,
 } from 'firebase/auth';
@@ -16,7 +15,6 @@ import { auth, db } from '@/lib/firebase/config';
 import { doc, onSnapshot, getDoc, setDoc, serverTimestamp, runTransaction } from 'firebase/firestore';
 import { SplashScreen } from '@/components/ui/splash-screen';
 import type { AppUser } from '@/lib/firebase/users';
-import { googleAuthProvider } from '@/lib/firebase/config';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 const defaultAvatar = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi_h6LUuqTTKYsn5TfUZwkI6Aib6Y0tOzQzcoZKstURqxyl-PJXW1DKTkF2cPPNNUbP3iuDNsOBVOYx7p-ZwrodI5w9fyqEwoabj8rU0mLzSbT5GCFUKpfCc4s_LrtHcWFDvvRstCghAfQi5Zfv2fipdZG8h4dU4vGt-eFRn-gS3QTg6_JJKhv0Yysr_ZY/s1600/82126.png";
@@ -110,7 +108,6 @@ interface AuthContextType {
     referralCode?: string
   ) => Promise<any>;
   signIn: (email: string, password:string) => Promise<any>;
-  signInWithGoogle: (referralCode?: string) => Promise<any>;
   logout: () => Promise<void>;
 }
 
@@ -221,12 +218,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return signInWithEmailAndPassword(auth, email, password);
   };
 
-  const signInWithGoogle = async (referralCode?: string) => {
-    const result = await signInWithPopup(auth, googleAuthProvider);
-    await ensureUserDocument(result.user, referralCode);
-    return result;
-  };
-
   const logout = async () => {
     await signOut(auth);
   };
@@ -239,7 +230,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     installPwa,
     signUp,
     signIn,
-    signInWithGoogle,
     logout,
   };
 
