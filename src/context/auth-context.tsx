@@ -14,6 +14,7 @@ import { auth, db } from '@/lib/firebase/config';
 import { doc, onSnapshot, getDoc } from 'firebase/firestore';
 import type { AppUser } from '@/lib/firebase/users';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { SplashScreen } from '@/components/ui/splash-screen';
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: Array<string>;
