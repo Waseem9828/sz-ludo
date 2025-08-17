@@ -12,7 +12,6 @@ import {
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase/config';
 import { doc, onSnapshot, getDoc } from 'firebase/firestore';
-import { SplashScreen } from '@/components/ui/splash-screen';
 import type { AppUser } from '@/lib/firebase/users';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
@@ -68,53 +67,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   useEffect(() => {
     let unsubscribeFirestore: (() => void) | null = null;
-    let safetyTimer: NodeJS.Timeout | null = null;
 
-    const unsubscribeAuth = onAuthStateChanged(auth, async (authUser) => {
+    const minSplashTimePromise = new Promise(resolve => setTimeout(resolve, 5000));
+
+    const unsubscribeAuth = onAuthStateChanged(auth, (authUser) => {
       if (unsubscribeFirestore) {
         unsubscribeFirestore();
       }
       
-      setUser(authUser);
-      
       if (authUser) {
-        setLoading(true); // Always set loading to true when auth state changes to logged in
+        // User is logged in, start fetching their profile
         const userRef = doc(db, 'users', authUser.uid);
-
-        // Try to get the user document once. If it exists, we are good.
-        try {
-            const userDoc = await getDoc(userRef);
-            if (userDoc.exists()) {
-                const data = userDoc.data() as AppUser;
-                setAppUser({ ...data, uid: authUser.uid, isKycVerified: data.kycStatus === 'Verified' });
-                setLoading(false);
-            } else {
-                 // The document might not exist yet for a new user. 
-                 // Set up a listener to wait for it.
-                 console.log("User document not found for " + authUser.uid + ", setting up listener.");
-                 unsubscribeFirestore = onSnapshot(userRef, (snapshot) => {
-                    if (snapshot.exists()) {
-                        console.log("User document created for " + authUser.uid + ", updating app state.");
-                        if(unsubscribeFirestore) unsubscribeFirestore(); // Stop listening once we have it
-                        
-                        const data = snapshot.data() as AppUser;
-                        setAppUser({ ...data, uid: authUser.uid, isKycVerified: data.kycStatus === 'Verified' });
-                        setLoading(false);
-                    }
-                });
-            }
-        } catch (error) {
-             console.error("Error fetching user document: ", error);
-             setAppUser(null);
-             setLoading(false);
-        }
-
+        unsubscribeFirestore = onSnapshot(userRef, (snapshot) => {
+          if (snapshot.exists()) {
+            const data = snapshot.data() as AppUser;
+            setAppUser({ ...data, uid: authUser.uid, isKycVerified: data.kycStatus === 'Verified' });
+          } else {
+            // This can happen briefly for new users while the cloud function runs
+            setAppUser(null);
+          }
+          setUser(authUser); // Update user state along with appUser
+        }, (error) => {
+          console.error("Error listening to user document:", error);
+          setUser(authUser); // Still set auth user
+          setAppUser(null);
+        });
       } else {
         // User is logged out
+        setUser(null);
         setAppUser(null);
-        setLoading(false);
-        if (unsubscribeFirestore) unsubscribeFirestore();
       }
+    });
+
+    // Wait for both minimum splash time and auth state to resolve
+    Promise.all([minSplashTimePromise, new Promise(resolve => onAuthStateChanged(auth, resolve))]).finally(() => {
+        setLoading(false);
     });
 
     return () => {
@@ -138,15 +125,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
         const functions = getFunctions();
         const onUserCreate = httpsCallable(functions, 'onUserCreate');
-        // We don't await this call, because the onSnapshot listener will handle the result.
-        // This is a "fire and forget" call to the backend.
-        onUserCreate({ 
+        // We can await this, but the listener will also pick it up.
+        // It's good to await to ensure the function is called before proceeding.
+        await onUserCreate({ 
             name: name,
             phone: phone,
             referralCode: referralCode || null 
         });
     } catch (e) {
         console.error('CRITICAL: onUserCreate callable failed. This might lead to an inconsistent state.', e);
+        // We should probably sign the user out here to avoid inconsistent state
+        await signOut(auth);
+        throw e; // re-throw the error to be caught by the UI
     }
     
     return userCredential;
@@ -157,7 +147,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
+    setLoading(true); // Show splash screen on logout
     await signOut(auth);
+    // The onAuthStateChanged listener will handle setting user/appUser to null
+    // and loading will be set to false after the min splash time.
   };
   
   const value = {

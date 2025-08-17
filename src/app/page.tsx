@@ -22,30 +22,33 @@ function Home() {
   const [showFestiveBackground, setShowFestiveBackground] = useState(false);
 
   useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        router.replace('/login');
-        return;
-      }
-      
-      // Fetch settings only if user is logged in and loading is complete
-      getSettings().then(appSettings => {
-        setSettings(appSettings);
-
-        if (appSettings.festiveGreeting?.enabled && appSettings.festiveGreeting.type !== 'None') {
-          setShowFestiveBackground(true);
-          const lastShownKey = `festiveGreetingLastShown_${appSettings.festiveGreeting.type}`;
-          const lastShown = localStorage.getItem(lastShownKey);
-          const now = new Date().getTime();
-          
-          if (!lastShown || (now - Number(lastShown) > 24 * 60 * 60 * 1000)) {
-            setShowFestiveDialog(true);
-            localStorage.setItem(lastShownKey, now.toString());
-          }
-        }
-      });
+    // This effect handles redirection if the user is not logged in.
+    // It will only run once the initial loading is complete.
+    if (!loading && !user) {
+      router.replace('/login');
     }
   }, [user, loading, router]);
+  
+  useEffect(() => {
+    // This effect fetches app settings once the user is confirmed to be logged in.
+    if (user && appUser) {
+        getSettings().then(appSettings => {
+            setSettings(appSettings);
+
+            if (appSettings.festiveGreeting?.enabled && appSettings.festiveGreeting.type !== 'None') {
+                setShowFestiveBackground(true);
+                const lastShownKey = `festiveGreetingLastShown_${appSettings.festiveGreeting.type}`;
+                const lastShown = localStorage.getItem(lastShownKey);
+                const now = new Date().getTime();
+                
+                if (!lastShown || (now - Number(lastShown) > 24 * 60 * 60 * 1000)) {
+                    setShowFestiveDialog(true);
+                    localStorage.setItem(lastShownKey, now.toString());
+                }
+            }
+        });
+    }
+  }, [user, appUser]);
   
   const handleDialogClose = (isOpen: boolean) => {
     setShowFestiveDialog(isOpen);
@@ -54,7 +57,7 @@ function Home() {
     }
   }
 
-  // Show splash screen while loading auth state OR if auth is resolved but appUser is not yet available
+  // Show splash screen while loading auth state OR if the user is not logged in yet (to prevent flicker before redirect).
   if (loading || !user || !appUser) {
     return <SplashScreen />;
   }

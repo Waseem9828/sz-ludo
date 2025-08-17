@@ -87,7 +87,7 @@ const TypewriterText = ({ text, delay = 0 }: { text: string; delay?: number }) =
         >
             {letters.map((letter, index) => (
                 <motion.span key={index} variants={child}>
-                    {letter === ' ' ? ' ' : letter}
+                    {letter === ' ' ? ' ' : letter}
                 </motion.span>
             ))}
         </motion.h2>
@@ -176,7 +176,7 @@ export const SplashScreen = () => {
                                 />
                             </div>
                             <p className="text-sm font-medium text-white/70 animate-glowPulse">
-                                Loading...
+                                Connecting...
                             </p>
                         </div>
 
