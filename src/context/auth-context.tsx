@@ -71,48 +71,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     setLoading(true);
     const unsubscribeAuth = onAuthStateChanged(auth, (authUser) => {
-        if (authUser) {
-            setUser(authUser);
-            // User is logged in, now listen for the appUser document.
-            // Loading remains true until the appUser document is fetched.
-            const userDocRef = doc(db, 'users', authUser.uid);
-            const unsubscribeFirestore = onSnapshot(userDocRef, (snapshot) => {
-                if (snapshot.exists()) {
-                    const userData = snapshot.data() as AppUser;
-                    setAppUser({ ...userData, uid: authUser.uid, isKycVerified: userData.kycStatus === 'Verified' });
-                }
-                // setLoading(false) will be called in the next useEffect when appUser is set.
-            }, (error) => {
-                console.error("Firestore onSnapshot error:", error);
-                // If there's an error fetching the user doc, stop loading to avoid getting stuck.
-                setAppUser(null);
-                setLoading(false);
-            });
-            return () => unsubscribeFirestore();
-        } else {
-            // No user is logged in.
+      if (authUser) {
+        setUser(authUser);
+        const userDocRef = doc(db, 'users', authUser.uid);
+        const unsubscribeFirestore = onSnapshot(
+          userDocRef,
+          (snapshot) => {
+            if (snapshot.exists()) {
+              const userData = snapshot.data() as AppUser;
+              setAppUser({ ...userData, uid: authUser.uid, isKycVerified: userData.kycStatus === 'Verified' });
+              setLoading(false); // Stop loading ONLY when appUser is confirmed
+            } else {
+              // This might happen for a brief moment for new users.
+              // We keep loading until the user document is created by the cloud function.
+              setAppUser(null);
+              setLoading(true);
+            }
+          },
+          (error) => {
+            console.error("Firestore onSnapshot error:", error);
             setUser(null);
             setAppUser(null);
-            setLoading(false);
-        }
+            setLoading(false); // Stop loading on error to prevent infinite loop
+          }
+        );
+        return () => unsubscribeFirestore();
+      } else {
+        setUser(null);
+        setAppUser(null);
+        setLoading(false); // No user, stop loading
+      }
     });
 
     return () => unsubscribeAuth();
-}, []);
-
-// This separate useEffect handles the final loading state change.
-// It will only trigger when `user` or `appUser` state changes.
-useEffect(() => {
-    // If we have a user but are still waiting for appUser, keep loading.
-    if (user && !appUser) {
-        setLoading(true);
-    } 
-    // If we have both, or if there's no user at all, we can stop loading.
-    else if ((user && appUser) || !user) {
-        setLoading(false);
-    }
-}, [user, appUser]);
-
+  }, []);
 
   const signUp = async (
     email: string,
@@ -161,11 +153,7 @@ useEffect(() => {
     setAppUser(null);
     setUser(null);
   };
-
-  if (loading) {
-    return <SplashScreen />;
-  }
-
+  
   const value = {
     user,
     appUser,
@@ -178,7 +166,11 @@ useEffect(() => {
     logout,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {loading ? <SplashScreen /> : children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = (): AuthContextType => {
