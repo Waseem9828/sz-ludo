@@ -19,12 +19,12 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 
 const defaultAvatar = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi_h6LUuqTTKYsn5TfUZwkI6Aib6Y0tOzQzcoZKstURqxyl-PJXW1DKTkF2cPPNNUbP3iuDNsOBVOYx7p-ZwrodI5w9fyqEwoabj8rU0mLzSbT5GCFUKpfCc4s_LrtHcWFDvvRstCghAfQi5Zfv2fipdZG8h4dU4vGt-eFRn-gS3QTg6_JJKhv0Yysr_ZY/s1600/82126.png";
 
-// This helper function creates the user document on the client-side.
+// This helper function creates the user document on the client-side as a fallback.
 const createFirestoreUserDocument = async (user: User, additionalData: Partial<AppUser> = {}) => {
     const userRef = doc(db, 'users', user.uid);
     const { displayName, email, photoURL } = user;
 
-    const newAppUser: Omit<AppUser, 'createdAt'> = {
+    const newAppUser: Omit<AppUser, 'createdAt'> & { createdAt: any } = {
         uid: user.uid,
         email: email || "",
         displayName: displayName || "New User",
@@ -37,6 +37,7 @@ const createFirestoreUserDocument = async (user: User, additionalData: Partial<A
         lifetimeStats: { totalDeposits: 0, totalWithdrawals: 0, totalWinnings: 0 },
         referralStats: { referredCount: 0, totalEarnings: 0 },
         isKycVerified: false,
+        createdAt: serverTimestamp(),
         ...(additionalData.role && {role: additionalData.role}),
     };
     
@@ -48,13 +49,10 @@ const createFirestoreUserDocument = async (user: User, additionalData: Partial<A
     const batch = writeBatch(db);
     
     // Set the new user document
-    batch.set(userRef, {
-        ...newAppUser,
-        createdAt: serverTimestamp(),
-    });
+    batch.set(userRef, newAppUser);
     
     // Log the sign-up bonus transaction
-    const transLogRef = doc(db, 'transactions', `signup_${user.uid}`);
+    const transLogRef = doc(collection(db, 'transactions'));
     batch.set(transLogRef, {
         userId: user.uid,
         userName: newAppUser.displayName,
@@ -66,6 +64,44 @@ const createFirestoreUserDocument = async (user: User, additionalData: Partial<A
     });
     
     await batch.commit();
+};
+
+// helper: tries callable then falls back to client-side create
+const ensureUserDocument = async (u: User, additionalData: Partial<AppUser> = {}) => {
+  const userRef = doc(db, 'users', u.uid);
+  try {
+    const snap = await getDoc(userRef);
+    if (snap.exists()) {
+        console.log('User doc already exists for:', u.uid);
+        return;
+    }
+  } catch (err) {
+    console.warn('Error checking user doc (getDoc):', err);
+  }
+
+  // Try callable first (fastest when functions deployed)
+  try {
+    const functions = getFunctions();
+    const onUserCreate = httpsCallable(functions, 'onUserCreate');
+    await onUserCreate({ name: u.displayName || null, phone: additionalData.phone || null, referralCode: null });
+    // small wait for function to commit
+    await new Promise(r => setTimeout(r, 800));
+  } catch (e) {
+    console.warn('onUserCreate callable failed or not deployed; will fallback to client create:', e);
+  }
+
+  // Final fallback: create user doc on client (allowed by your rules)
+  try {
+    const snap2 = await getDoc(userRef);
+    if (!snap2.exists()) {
+      console.log('Fallback: creating user doc client-side for', u.uid);
+      await createFirestoreUserDocument(u, additionalData);
+      // Wait briefly for onSnapshot to pick it up
+      await new Promise(r => setTimeout(r, 600));
+    }
+  } catch (e) {
+    console.error('Fallback createFirestoreUserDocument failed:', e);
+  }
 };
 
 
@@ -119,55 +155,67 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setInstallable(false);
   };
   
-  useEffect(() => {
-    let unsubscribeFirestore: (() => void) | null = null;
+useEffect(() => {
+  let unsubscribeFirestore: (() => void) | null = null;
+  let safetyTimer: NodeJS.Timeout | null = null;
 
-    const unsubscribeAuth = onAuthStateChanged(auth, async (authUser) => {
-      if (unsubscribeFirestore) {
-        unsubscribeFirestore();
-        unsubscribeFirestore = null;
-      }
+  const unsubscribeAuth = onAuthStateChanged(auth, async (authUser) => {
+    if (unsubscribeFirestore) {
+      unsubscribeFirestore();
+      unsubscribeFirestore = null;
+    }
+    if (safetyTimer) {
+        clearTimeout(safetyTimer);
+    }
+
+    setUser(authUser);
+
+    if (authUser) {
+      console.log('Auth - user signed in:', authUser.uid);
+      setLoading(true);
+
+      safetyTimer = setTimeout(() => {
+          console.warn('Safety timeout fired (8s)! Forcing loading state to false.');
+          setLoading(false);
+      }, 8000);
       
-      setUser(authUser);
+      const userRef = doc(db, 'users', authUser.uid);
 
-      if (authUser) {
-        setLoading(true);
-        const userRef = doc(db, 'users', authUser.uid);
-        
-        // This is the listener that will keep appUser in sync
-        unsubscribeFirestore = onSnapshot(userRef, (snapshot) => {
-          if (snapshot.exists()) {
-            const data = snapshot.data() as AppUser;
-            setAppUser({ ...data, uid: authUser.uid, isKycVerified: data.kycStatus === 'Verified' });
-          }
-          // The loading state is managed below, not here, to prevent race conditions.
-        });
-
-        // This block ensures the document exists and handles the initial loading state.
-        try {
-            const docSnap = await getDoc(userRef);
-            if (!docSnap.exists()) {
-                console.log("User doc not found, attempting to create it now (client-side fallback).");
-                await createFirestoreUserDocument(authUser);
-            }
-        } catch (error) {
-            console.error("CRITICAL: Error ensuring user document exists:", error);
-        } finally {
-            // No matter what, stop loading. If doc doesn't exist, onSnapshot will eventually pick it up.
-            setLoading(false);
+      unsubscribeFirestore = onSnapshot(userRef, (snapshot) => {
+        if (snapshot.exists()) {
+          console.log('User snapshot received. Doc exists.');
+          const data = snapshot.data() as AppUser;
+          setAppUser({ ...data, uid: authUser.uid, isKycVerified: data.kycStatus === 'Verified' });
+          setLoading(false); // Stop loading once we have the appUser data.
+          if(safetyTimer) clearTimeout(safetyTimer);
+        } else {
+            // Document doesn't exist yet, ensureUserDocument will handle it.
+            // Do not stop loading here, wait for creation.
+            console.log('User snapshot received. Doc does NOT exist. Waiting for creation.');
         }
-      } else {
-        // User is signed out
-        setAppUser(null);
+      }, (error) => {
+        console.error('onSnapshot error (userRef):', error);
         setLoading(false);
-      }
-    });
+        if(safetyTimer) clearTimeout(safetyTimer);
+      });
 
-    return () => {
-      unsubscribeAuth();
-      if (unsubscribeFirestore) unsubscribeFirestore();
-    };
-  }, []);
+      // Ensure doc exists (callable -> fallback). This prevents infinite waiting.
+      await ensureUserDocument(authUser, { phone: authUser.phoneNumber || "" });
+
+    } else {
+      console.log('Auth - no user (signed out)');
+      setAppUser(null);
+      setLoading(false);
+    }
+  });
+
+  return () => {
+    unsubscribeAuth();
+    if (unsubscribeFirestore) unsubscribeFirestore();
+    if(safetyTimer) clearTimeout(safetyTimer);
+  };
+}, []);
+
   
   const signUp = async (
     email: string,
@@ -185,14 +233,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const newUser = userCredential.user;
     await updateProfile(newUser, { displayName: name });
     
-    try {
-        const functions = getFunctions();
-        const onUserCreate = httpsCallable(functions, 'onUserCreate');
-        await onUserCreate({ name, phone, referralCode });
-    } catch (e) {
-        console.warn('onUserCreate callable failed, client-side creation will handle it.', e);
-        // The onAuthStateChanged listener will now reliably create the document.
-    }
+    // The ensureUserDocument logic in onAuthStateChanged will handle doc creation.
+    // We can still call the function here for faster creation on sign-up.
+    await ensureUserDocument(newUser, { phone, referralCode: referralCode || undefined });
     
     return userCredential;
   };

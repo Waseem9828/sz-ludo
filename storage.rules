@@ -1,54 +1,54 @@
+
 rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
 
-    // Allow users to upload their own deposit screenshots
-    // Path: deposits/{userId}/{fileName}
+    // Helper function to check if a user is the owner of the resource
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // Deposits: Only the user can upload to their own deposit folder.
     match /deposits/{userId}/{fileName} {
-      allow read: if request.auth != null && request.auth.uid == userId;
-      allow write: if request.auth != null 
-                   && request.auth.uid == userId
-                   && request.resource.size < 10 * 1024 * 1024
-                   && request.resource.contentType.matches('image/.*');
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId)
+                    && request.resource.size < 10 * 1024 * 1024 // 10 MB limit
+                    && request.resource.contentType.matches('image/.*');
+      allow delete: if isOwner(userId);
     }
-
-    // Allow authenticated users to upload game screenshots
-    // Path: screenshots/{gameId}/{fileName}
+    
+    // Game Screenshots: Any authenticated user can upload, as both players might need to.
+    // The path is secured by a random gameId.
     match /screenshots/{gameId}/{fileName} {
-      allow read, write: if request.auth != null
-                   && request.resource.size < 10 * 1024 * 1024
-                   && request.resource.contentType.matches('image/.*');
+       allow create: if request.auth != null
+                    && request.resource.size < 10 * 1024 * 1024 // 10 MB limit
+                    && request.resource.contentType.matches('image/.*');
     }
-    
-    // Allow authenticated users (admins) to upload banners
-    // Path: banners/{folder}/{fileName}
+
+    // Banners (for Admin): Any authenticated user can upload to the banners folder.
+    // This assumes an admin role check is handled in the app/security rules for who can access the upload UI.
     match /banners/{folder}/{fileName} {
-        allow read: if true; // Public read for banners
-        allow write: if request.auth != null; // Only authenticated users can upload
-    }
-
-    // Allow authenticated users to upload tournament images
-    match /tournaments/{fileName} {
-        allow read: if true;
+        allow read; // Allow public read for banners
         allow write: if request.auth != null;
     }
     
-    // Allow authenticated users to upload home card images
+     // Home Cards (for Admin):
     match /homecards/{fileName} {
-        allow read: if true;
+        allow read;
         allow write: if request.auth != null;
     }
     
-     // Allow authenticated users to upload referral images
-    match /referral/{fileName} {
-        allow read: if true;
+    // Tournaments (for Admin):
+    match /tournaments/{fileName} {
+        allow read;
         allow write: if request.auth != null;
     }
-
-    // Fallback: Deny all other routes
-    match /{allPaths=**} {
-      allow read, write: if false;
+    
+    // Referral Image (for Admin):
+     match /referral/{fileName} {
+        allow read;
+        allow write: if request.auth != null;
     }
   }
 }
