@@ -43,18 +43,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import {
-  useUserNotifications,
-  markNotificationAsRead,
-  markAllNotificationsAsRead,
-} from '@/lib/firebase/notifications';
 import { Badge } from "./ui/badge";
 
 const defaultAvatar = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi_h6LUuqTTKYsn5TfUZwkI6Aib6Y0tOzQzcoZKstURqxyl-PJXW1DKTkF2cPPNNUbP3iuDNsOBVOYx7p-ZwrodI5w9fyqEwoabj8rU0mLzSbT5GCFUKpfCc4s_LrtHcWFDvvRstCghAfQi5Zfv2fipdZG8h4dU4vGt-eFRn-gS3QTg6_JJKhv0Yysr_ZY/s1600/82126.png";
 
 export default function Header() {
   const { user, appUser, logout, installable, installPwa } = useAuth();
-  const { notifications, unreadCount } = useUserNotifications(user?.uid);
   const { toast } = useToast();
   const router = useRouter();
 
@@ -75,18 +69,6 @@ export default function Header() {
         });
     }
   };
-
-  const handleNotificationClick = (notificationId: string) => {
-    if (user?.uid) {
-      markNotificationAsRead(user.uid, notificationId);
-    }
-  }
-
-  const handleMarkAllRead = () => {
-    if (user?.uid) {
-      markAllNotificationsAsRead(user.uid);
-    }
-  }
 
   const getInitials = (name: string) => {
     if (!name) return 'U';
@@ -216,38 +198,16 @@ export default function Header() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full relative">
                   <Bell className="h-5 w-5" />
-                  {unreadCount > 0 && (
-                    <span className="absolute top-1 right-1 flex h-3 w-3">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                    </span>
-                  )}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-80">
                 <DropdownMenuLabel className="flex justify-between items-center">
                   <span>Notifications</span>
-                  {unreadCount > 0 && <Badge variant="destructive">{unreadCount} New</Badge>}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <div className="max-h-80 overflow-y-auto">
-                    {notifications.length === 0 ? (
-                        <DropdownMenuItem disabled>No notifications yet.</DropdownMenuItem>
-                    ) : (
-                        notifications.map(notif => (
-                            <DropdownMenuItem key={notif.id} onSelect={() => handleNotificationClick(notif.id)} className={`flex flex-col items-start gap-1 whitespace-normal ${!notif.isRead ? 'font-bold' : ''}`}>
-                                <p className="w-full">{notif.title}</p>
-                                <p className={`w-full text-xs ${!notif.isRead ? 'text-foreground' : 'text-muted-foreground'}`}>{notif.message}</p>
-                                <p className="w-full text-xs text-muted-foreground/80 mt-1">{new Date(notif.createdAt.toDate()).toLocaleString()}</p>
-                            </DropdownMenuItem>
-                        ))
-                    )}
+                  <DropdownMenuItem disabled>No new notifications.</DropdownMenuItem>
                 </div>
-                 <DropdownMenuSeparator />
-                 <DropdownMenuItem onSelect={handleMarkAllRead} disabled={unreadCount === 0}>
-                    <CheckCheck className="mr-2 h-4 w-4" />
-                    <span>Mark all as read</span>
-                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
