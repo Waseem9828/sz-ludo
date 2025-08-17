@@ -1,4 +1,5 @@
 
+
 import {
     collection,
     addDoc,
@@ -269,12 +270,14 @@ export const distributeTournamentPrizes = async (tournamentId: string) => {
         if (!tSnap.exists()) throw new Error("Tournament not found.");
         
         const tournament = tSnap.data() as Tournament;
+        if (tournament.status === 'completed') {
+            throw new Error("Prizes have already been distributed for this tournament.");
+        }
+
         if (tournament.status !== 'live' && new Date() < tournament.endTime.toDate()) {
             throw new Error("Tournament has not ended yet.");
         }
-         if (tournament.status === 'completed') {
-            throw new Error("Prizes have already been distributed for this tournament.");
-        }
+
 
         const leaderboard = tournament.leaderboard.sort((a, b) => b.points - a.points);
         const prizePoolAfterCommission = tournament.prizePool * (1 - (tournament.adminCommission / 100));

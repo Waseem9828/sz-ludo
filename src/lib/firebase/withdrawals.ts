@@ -1,4 +1,5 @@
 
+
 import { 
     collection, 
     addDoc, 
@@ -44,36 +45,38 @@ export const createWithdrawalRequest = async (data: {
     upiId: string;
     status: 'pending'
 }) => {
-     const batch = writeBatch(db);
-     const userRef = doc(db, 'users', data.userId);
-     const withdrawalRef = doc(collection(db, WITHDRAWALS_COLLECTION));
+     
+     return runTransaction(db, async (transaction) => {
+        const userRef = doc(db, 'users', data.userId);
+        const withdrawalRef = doc(collection(db, WITHDRAWALS_COLLECTION));
 
-     const userSnap = await getDoc(userRef);
-     if (!userSnap.exists() || (userSnap.data().wallet?.winnings || 0) < data.amount) {
-         throw new Error("Insufficient winning balance.");
-     }
+        const userSnap = await transaction.get(userRef);
+        if (!userSnap.exists() || (userSnap.data().wallet?.winnings || 0) < data.amount) {
+            throw new Error("Insufficient winning balance.");
+        }
 
-     // 1. Decrement user's winnings
-     batch.update(userRef, { 'wallet.winnings': increment(-data.amount) });
+        // 1. Decrement user's winnings
+        transaction.update(userRef, { 'wallet.winnings': increment(-data.amount) });
 
-     // 2. Create withdrawal request
-     batch.set(withdrawalRef, {
-        ...data,
-        createdAt: serverTimestamp()
+        // 2. Create withdrawal request
+        transaction.set(withdrawalRef, {
+            ...data,
+            createdAt: serverTimestamp()
+        });
+
+        // 3. Create a pending transaction log
+        const transLogRef = doc(collection(db, 'transactions'));
+        transaction.set(transLogRef, {
+             userId: data.userId,
+            userName: data.userName,
+            amount: data.amount,
+            type: 'withdrawal',
+            status: 'pending',
+            relatedId: withdrawalRef.id,
+        });
+
+        return withdrawalRef;
      });
-
-     // 3. Create a pending transaction log
-     await createTransaction({
-        userId: data.userId,
-        userName: data.userName,
-        amount: data.amount,
-        type: 'withdrawal',
-        status: 'pending',
-        relatedId: withdrawalRef.id,
-     });
-
-     await batch.commit();
-     return withdrawalRef;
 };
 
 // Agent assigns a withdrawal to themselves

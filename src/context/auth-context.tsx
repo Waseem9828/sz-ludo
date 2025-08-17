@@ -11,7 +11,7 @@ import {
   signInWithPopup,
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase/config';
-import { doc, onSnapshot, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { SplashScreen } from '@/components/ui/splash-screen';
 import type { AppUser } from '@/lib/firebase/users';
 import { googleAuthProvider } from '@/lib/firebase/config';
@@ -95,14 +95,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             const userData = snapshot.data() as AppUser;
             setAppUser({ ...userData, uid: authUser.uid, isKycVerified: userData.kycStatus === 'Verified' });
           } else {
-            // Document might be in the process of being created by the Cloud Function.
-            // Do not set loading to false here, wait for creation.
-            // If it's permanently missing, the app will show loading, which is correct
-            // as it cannot function without an appUser document.
+             // This case handles new users where the doc might not exist yet.
+             // We don't set appUser to null, we just wait. The loading state remains true.
+             // The cloud function `onUserCreate` will create the document, and this listener will pick it up.
           }
-          // Only set loading to false if we have the appUser document.
-          if (snapshot.exists()) {
-              setLoading(false);
+           // Only set loading to false if we have the appUser document.
+          if (appUser || snapshot.exists()) {
+             setLoading(false);
           }
         },
         (error) => {
@@ -119,7 +118,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         unsubscribeFirestore();
       }
     };
-  }, []);
+  }, [appUser]); // Add appUser as a dependency to re-evaluate loading state
 
   const signUp = async (
     email: string,
@@ -132,8 +131,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const functions = getFunctions();
     const onUserCreate = httpsCallable(functions, 'onUserCreate');
     
-    // This function will now reliably create the user document in Firestore.
-    // The onSnapshot listener in useEffect will pick it up, setting appUser and turning off loading.
     await onUserCreate({ name, phone, referralCode });
     
     return userCredential;
@@ -147,18 +144,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const result = await signInWithPopup(auth, googleAuthProvider);
     const user = result.user;
 
-    const userDocRef = doc(db, 'users', user.uid);
-    const userDoc = await getDoc(userDocRef);
-
-    if (!userDoc.exists()) {
-        const functions = getFunctions();
-        const onUserCreate = httpsCallable(functions, 'onUserCreate');
-        await onUserCreate({ 
-            name: user.displayName, 
-            phone: user.phoneNumber || '', 
-            referralCode 
-        });
-    }
+    const functions = getFunctions();
+    const onUserCreate = httpsCallable(functions, 'onUserCreate');
+    await onUserCreate({ 
+        name: user.displayName, 
+        phone: user.phoneNumber || '', 
+        referralCode 
+    });
     
     return result;
   };

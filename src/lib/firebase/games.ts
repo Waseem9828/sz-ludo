@@ -138,7 +138,7 @@ export const deleteChallenge = async (gameId: string) => {
 export const acceptChallenge = async (gameId: string, player2: PlayerInfo): Promise<string> => {
     const gameRef = doc(db, GAMES_COLLECTION, gameId);
     
-    await runTransaction(db, async (transaction) => {
+    return await runTransaction(db, async (transaction) => {
         const gameSnap = await transaction.get(gameRef);
         if (!gameSnap.exists()) {
             throw new Error("Game not found");
@@ -148,9 +148,9 @@ export const acceptChallenge = async (gameId: string, player2: PlayerInfo): Prom
         if (gameData.status !== 'challenge') {
             throw new Error("This challenge is no longer available.");
         }
-
-        // Deduct fee from accepting player's wallet
-        await updateUserWallet(player2.uid, -gameData.amount, 'balance', 'Challenge Accepted', `Accepted battle vs ${gameData.createdBy.displayName}`);
+        
+        // Deduct fee from accepting player's wallet within the same transaction
+        await updateUserWallet(player2.uid, -gameData.amount, 'balance', 'game_fee', `Accepted battle vs ${gameData.createdBy.displayName}`);
 
         // Update the game document
         transaction.update(gameRef, {
