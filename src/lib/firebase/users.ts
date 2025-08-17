@@ -1,5 +1,6 @@
 
-import { Timestamp } from "firebase/firestore";
+import { doc, updateDoc, Timestamp } from 'firebase/firestore';
+import { db } from './config';
 
 export interface AppUser {
   uid: string;
@@ -54,3 +55,18 @@ export interface AppUser {
   createdAt: Timestamp;
   lastLogin?: Timestamp;
 }
+
+// Function to update user's KYC details
+export const updateUserKycDetails = async (uid: string, kycData: Partial<AppUser>) => {
+  const userRef = doc(db, 'users', uid);
+  await updateDoc(userRef, {
+    ...kycData,
+    kycStatus: 'Pending'
+  });
+};
+
+// Function to update user's status by an admin
+export const updateUserStatus = async (uid: string, status: 'active' | 'suspended') => {
+  const userRef = doc(db, 'users', uid);
+  await updateDoc(userRef, { status });
+};

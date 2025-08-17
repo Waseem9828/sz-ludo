@@ -76,7 +76,7 @@ export async function getSettings(): Promise<AppSettings> {
  * Updates the application settings in Firestore.
  * @param {AppSettings} newSettings - The new settings object to save.
  */
-export async function updateSettings(newSettings: AppSettings): Promise<void> {
+export async function updateSettings(newSettings: Partial<AppSettings>): Promise<void> {
     const docRef = doc(db, 'settings', SETTINGS_DOC_ID);
     await updateDoc(docRef, newSettings, { merge: true });
 }
