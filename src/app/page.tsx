@@ -39,7 +39,6 @@ function Home() {
                 const lastShown = localStorage.getItem(lastShownKey);
                 const now = new Date().getTime();
                 
-                // Show every 24 hours
                 if (!lastShown || (now - Number(lastShown) > 24 * 60 * 60 * 1000)) {
                     setShowFestiveDialog(true);
                     localStorage.setItem(lastShownKey, now.toString());
@@ -48,8 +47,7 @@ function Home() {
         }).finally(() => {
             setSettingsLoading(false);
         });
-    } else if (!authLoading && !user) {
-        // If user is not logged in, no need to load settings
+    } else if (!authLoading) {
         setSettingsLoading(false);
     }
   }, [user, appUser, authLoading]);
@@ -61,8 +59,12 @@ function Home() {
     }
   }
 
-  // Show splash screen while auth or settings are loading, or if the user is not logged in yet.
-  if (authLoading || settingsLoading || !user || !appUser) {
+  if (authLoading || settingsLoading) {
+    return <SplashScreen />;
+  }
+  
+  if (!user || !appUser) {
+    router.replace('/login');
     return <SplashScreen />;
   }
   
@@ -94,7 +96,7 @@ function Home() {
                   description="Complete KYC to unlock all features."
                 />
               )}
-              {settings && <GameListing cards={settings.homePageCards || []} />}
+              {settings && settings.homePageCards && <GameListing cards={settings.homePageCards} />}
             </main>
           </div>
       </div>

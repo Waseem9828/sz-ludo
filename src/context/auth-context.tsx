@@ -69,7 +69,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (authUser) => {
       setUser(authUser);
-      setLoading(false);
+      if (!authUser) {
+        setAppUser(null);
+        setLoading(false);
+      }
     });
     return () => unsubscribeAuth();
   }, []);
@@ -84,10 +87,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             } else {
                 setAppUser(null);
             }
+            setLoading(false); // Stop loading once we have a definitive answer about appUser
         });
         return () => unsubscribeFirestore();
-    } else {
-        setAppUser(null);
     }
   }, [user]);
 

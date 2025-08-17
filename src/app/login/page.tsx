@@ -39,7 +39,6 @@ function LoginPageContent() {
   }, [searchParams]);
 
   useEffect(() => {
-    // Redirect only when auth is resolved and we have a user
     if (!loading && user) {
       router.replace('/');
     }
@@ -59,11 +58,11 @@ function LoginPageContent() {
     setLoadingAction('signup');
     try {
       await signUp(email, password, name, phone, referralCode || undefined);
-      // Let the useEffect handle the redirect
       toast({
         title: 'Success',
         description: 'Account created successfully! Welcome!',
       });
+      // The useEffect will handle the redirect
     } catch (error: any) {
       toast({
         title: 'Error Signing Up',
@@ -80,11 +79,11 @@ function LoginPageContent() {
     setLoadingAction('login');
     try {
       await signIn(email, password);
-       // Let the useEffect handle the redirect
        toast({
         title: 'Success',
         description: 'Signed in successfully!',
       });
+       // The useEffect will handle the redirect
     } catch (error: any) {
       toast({
         title: 'Error Signing In',
@@ -96,8 +95,6 @@ function LoginPageContent() {
     }
   };
 
-  // While loading, or if the user is already logged in, show nothing or a splash screen
-  // The redirect logic in useEffect will handle moving away from this page.
   if (loading || user) {
     return <SplashScreen />;
   }
