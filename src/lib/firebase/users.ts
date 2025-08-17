@@ -252,7 +252,7 @@ export const generateUserReport = async (user: AppUser, transactions: Transactio
         theme: 'striped',
     });
 
-    const lastY = (doc as any).lastAutoTable.finalY || 60;
+    const lastY = (doc as any).lastAutoTable?.finalY ?? 100;
     
     doc.setFontSize(16);
     doc.text("Transaction History", 14, lastY + 15);

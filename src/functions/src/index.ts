@@ -9,7 +9,7 @@ const defaultAvatar = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvX
 
 /**
  * A Callable Cloud Function triggered from the client after a user is created in Firebase Auth.
- * This function securely creates the corresponding user document in Firestore.
+ * This function securely creates the corresponding user document in Firestore and handles referral logic.
  */
 export const onUserCreate = functions.https.onCall(async (data, context) => {
     if (!context.auth) {
@@ -22,6 +22,13 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
 
     const userRef = db.doc(`users/${uid}`);
     
+    // Check if the user document already exists to prevent overwriting
+    const userDoc = await userRef.get();
+    if (userDoc.exists) {
+        functions.logger.log(`User document for UID: ${uid} already exists. Skipping creation.`);
+        return { success: false, message: "User already exists." };
+    }
+
     const newAppUser = {
         uid: uid,
         email: email || "",
@@ -45,19 +52,21 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
     
     const batch = db.batch();
 
+    // Handle referral logic securely on the server side
     if (referralCode && typeof referralCode === 'string' && referralCode.startsWith('SZLUDO')) {
         const referrerId = referralCode.replace('SZLUDO', '');
         if (referrerId && referrerId !== uid) {
             const referrerRef = db.doc(`users/${referrerId}`);
             (newAppUser.referralStats as any).referredBy = referrerId;
-            // Note: Updating another user's doc from here is better done via a separate secure function
-            // to avoid client-side permission issues. For now, we only note who referred them.
-            // A separate backend process could handle the increment.
+            // Securely increment the referrer's count
+            batch.update(referrerRef, { 'referralStats.referredCount': admin.firestore.FieldValue.increment(1) });
         }
     }
 
+    // Create the new user's document
     batch.set(userRef, newAppUser);
     
+    // Create the sign-up bonus transaction log
     const transLogRef = db.collection("transactions").doc();
     batch.set(transLogRef, {
         userId: uid,
