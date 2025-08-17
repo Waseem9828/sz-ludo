@@ -15,6 +15,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { SplashScreen } from '@/components/ui/splash-screen';
 
 function LoginPageContent() {
   const [name, setName] = useState('');
