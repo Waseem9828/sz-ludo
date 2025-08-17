@@ -31,6 +31,22 @@ export const metadata: Metadata = {
     shortcut: '/favicon-16x16.png',
     apple: '/apple-touch-icon.png',
   },
+  // Open Graph meta tags for social sharing
+  openGraph: {
+    title: 'SZ Ludo',
+    description: 'The ultimate Ludo gaming experience. Play and win real cash!',
+    url: 'https://sz-ludo-app.web.app', // Replace with your actual app URL
+    siteName: 'SZ Ludo',
+    images: [
+      {
+        url: 'https://sz-ludo-app.web.app/og-image.png', // Replace with a link to your preview image
+        width: 1200,
+        height: 630,
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
 };
 
 const WhatsAppIcon = () => (
