@@ -12,15 +12,14 @@ import {
   fetchSignInMethodsForEmail,
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase/config';
-import { doc, onSnapshot, getDoc, setDoc, serverTimestamp, collection, runTransaction } from 'firebase/firestore';
+import { doc, onSnapshot, getDoc, setDoc, serverTimestamp, collection, runTransaction, writeBatch, Timestamp } from 'firebase/firestore';
 import { SplashScreen } from '@/components/ui/splash-screen';
 import type { AppUser } from '@/lib/firebase/users';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 const defaultAvatar = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi_h6LUuqTTKYsn5TfUZwkI6Aib6Y0tOzQzcoZKstURqxyl-PJXW1DKTkF2cPPNNUbP3iuDNsOBVOYx7p-ZwrodI5w9fyqEwoabj8rU0mLzSbT5GCFUKpfCc4s_LrtHcWFDvvRstCghAfQi5Zfv2fipdZG8h4dU4vGt-eFRn-gS3QTg6_JJKhv0Yysr_ZY/s1600/82126.png";
 
-// This helper function creates the user document on the client-side.
-// It's a fallback for the cloud function or for cases where the doc is missing.
+// This helper function creates the user document on the client-side as a fallback.
 const createFirestoreUserDocument = async (user: User, additionalData: Partial<AppUser> = {}) => {
   const userRef = doc(db, 'users', user.uid);
   const { displayName, email, photoURL } = user;
@@ -39,51 +38,62 @@ const createFirestoreUserDocument = async (user: User, additionalData: Partial<A
     referralStats: { referredCount: 0, totalEarnings: 0 },
     isKycVerified: false,
     ...additionalData,
-    createdAt: serverTimestamp(),
+    createdAt: serverTimestamp() as Timestamp,
   };
-
-  if ((email?.toLowerCase() === "admin@example.com" || email?.toLowerCase() === "super@admin.com")) {
+  
+  if (email && (email.toLowerCase() === "admin@example.com" || email.toLowerCase() === "super@admin.com")) {
       (newAppUser as any).role = 'superadmin';
       (newAppUser as any).lifetimeStats.totalRevenue = 0;
   }
   
-  await runTransaction(db, async (transaction) => {
-    transaction.set(userRef, newAppUser);
-    
-    const transLogRef = doc(collection(db, 'transactions'));
-    transaction.set(transLogRef, {
-        userId: user.uid,
-        userName: newAppUser.displayName || 'N/A',
-        amount: 10,
-        type: 'Sign Up',
-        status: 'completed',
-        notes: 'Welcome bonus',
-        createdAt: serverTimestamp(),
-    });
+  if (additionalData.referralStats?.referredBy) {
+      newAppUser.referralStats = {
+          ...newAppUser.referralStats,
+          referredBy: additionalData.referralStats.referredBy
+      }
+  }
+
+  // Using a write batch for atomicity
+  const batch = writeBatch(db);
+  
+  // Set the new user document
+  batch.set(userRef, newAppUser);
+  
+  // Log the sign-up bonus transaction
+  const transLogRef = doc(collection(db, 'transactions'));
+  batch.set(transLogRef, {
+      userId: user.uid,
+      userName: newAppUser.displayName,
+      amount: 10,
+      type: "Sign Up",
+      status: "completed",
+      notes: "Welcome bonus",
+      createdAt: serverTimestamp(),
   });
+  
+  // Commit the batch
+  await batch.commit();
 };
 
 
 // This function robustly ensures a user document exists.
-// It first checks for the doc, and if it's missing, creates it.
 const ensureUserDocument = async (user: User, additionalData: Partial<AppUser> = {}) => {
   if (!user) return;
+  console.log("Ensuring user doc for", user.uid);
   const userRef = doc(db, 'users', user.uid);
   
   const docSnap = await getDoc(userRef);
   if (docSnap.exists()) {
+    console.log("User doc already exists.");
     return; // Document already exists, no action needed.
   }
 
   console.log("User doc not found, attempting to create it now (client-side fallback).");
   try {
-    // We add the phone number to the additionalData here if it's available
-    const finalData = { ...additionalData, phone: additionalData.phone || user.phoneNumber || '' };
-    await createFirestoreUserDocument(user, finalData);
+    await createFirestoreUserDocument(user, additionalData);
     console.log("Client-side fallback: user document created successfully.");
   } catch (error) {
-    console.error("CRITICAL: Client-side fallback user document creation failed:", error);
-    // Even if this fails, the app should proceed to avoid an infinite loop.
+    console.error("CRITICAL: Fallback user document creation failed:", error);
   }
 };
 
@@ -141,7 +151,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     let unsubscribeFirestore: (() => void) | null = null;
     let safetyTimer: NodeJS.Timeout | null = null;
-    
+
     const unsubscribeAuth = onAuthStateChanged(auth, async (authUser) => {
         
       if (unsubscribeFirestore) {
@@ -156,13 +166,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(authUser);
   
       if (authUser) {
+        // Start loading and set a safety timer to prevent infinite loops
         setLoading(true);
-        
         safetyTimer = setTimeout(() => {
             console.warn("Safety timer fired! Forcing loading state to false.");
             setLoading(false);
         }, 8000);
         
+        // This will create the user doc if it's missing.
         await ensureUserDocument(authUser);
         
         const userRef = doc(db, 'users', authUser.uid);
@@ -174,6 +185,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               const data = snapshot.data() as AppUser;
               setAppUser({ ...data, uid: authUser.uid, isKycVerified: data.kycStatus === 'Verified' });
             } else {
+              // This case is less likely now, but as a safeguard:
               setAppUser(null);
             }
             setLoading(false);
@@ -215,16 +227,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const newUser = userCredential.user;
     await updateProfile(newUser, { displayName: name });
     
+    // The onAuthStateChanged listener will handle document creation via ensureUserDocument.
+    // However, we can call the Cloud Function for referral logic.
     try {
         const functions = getFunctions();
         const onUserCreate = httpsCallable(functions, 'onUserCreate');
+        // We pass all data needed by the cloud function
         await onUserCreate({ name, phone, referralCode });
     } catch (e) {
-        console.warn('onUserCreate callable failed, onAuthStateChanged will handle doc creation.', e);
+        console.warn('onUserCreate callable failed, client-side fallback will handle doc creation.', e);
+        // If the callable fails, ensureUserDocument in onAuthStateChanged will create the doc.
     }
-    
-    // Ensure the document exists as a fallback.
-    await ensureUserDocument(newUser, { phone });
     
     return userCredential;
   };

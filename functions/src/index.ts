@@ -51,12 +51,21 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
     
     const batch = db.batch();
 
+    // Handle referral logic
     if (referralCode && typeof referralCode === 'string' && referralCode.startsWith('SZLUDO')) {
-        const referrerId = referralCode.replace('SZLUDO', '');
-        if (referrerId && referrerId !== uid) {
-            const referrerRef = db.doc(`users/${referrerId}`);
-            newAppUser.referralStats.referredBy = referrerId;
-            batch.update(referrerRef, { 'referralStats.referredCount': admin.firestore.FieldValue.increment(1) });
+        const referrerCode = referralCode.replace('SZLUDO', '');
+        if (referrerCode) {
+            // Find user by matching the start of their UID
+            const usersRef = db.collection('users');
+            const querySnapshot = await usersRef.where('uid', '>=', referrerCode).where('uid', '<', referrerCode + '\uf8ff').limit(1).get();
+
+            if (!querySnapshot.empty) {
+                const referrerDoc = querySnapshot.docs[0];
+                if (referrerDoc.id !== uid) {
+                    newAppUser.referralStats.referredBy = referrerDoc.id;
+                    batch.update(referrerDoc.ref, { 'referralStats.referredCount': admin.firestore.FieldValue.increment(1) });
+                }
+            }
         }
     }
 
