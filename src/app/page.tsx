@@ -64,7 +64,7 @@ function Home() {
   }
   
   if (!user || !appUser) {
-    router.replace('/login');
+    // This case should be handled by the redirect effect, but as a fallback:
     return <SplashScreen />;
   }
   

@@ -67,31 +67,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
   
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (authUser) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (authUser) => {
       setUser(authUser);
+
       if (!authUser) {
         setAppUser(null);
         setLoading(false);
+        return;
       }
+
+      // If we have a user, set up the Firestore listener.
+      const userDocRef = doc(db, 'users', authUser.uid);
+      const unsubscribeFirestore = onSnapshot(userDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data() as AppUser;
+          setAppUser({ ...data, uid: authUser.uid, isKycVerified: data.kycStatus === 'Verified' });
+        } else {
+          // This case might happen briefly after signup before the cloud function runs.
+          // We keep listening. If it persists, it's an issue.
+          setAppUser(null);
+        }
+        setLoading(false); // Only set loading to false after we get a Firestore result
+      });
+
+      return () => unsubscribeFirestore();
     });
+
     return () => unsubscribeAuth();
   }, []);
-  
-  useEffect(() => {
-    if (user) {
-        const userRef = doc(db, 'users', user.uid);
-        const unsubscribeFirestore = onSnapshot(userRef, (snapshot) => {
-            if (snapshot.exists()) {
-                const data = snapshot.data() as AppUser;
-                setAppUser({ ...data, uid: user.uid, isKycVerified: data.kycStatus === 'Verified' });
-            } else {
-                setAppUser(null);
-            }
-            setLoading(false); // Stop loading once we have a definitive answer about appUser
-        });
-        return () => unsubscribeFirestore();
-    }
-  }, [user]);
 
   const signUp = async (
     email: string,

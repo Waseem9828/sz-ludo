@@ -95,7 +95,7 @@ function LoginPageContent() {
     }
   };
 
-  if (loading || user) {
+  if (loading) {
     return <SplashScreen />;
   }
 
