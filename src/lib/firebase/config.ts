@@ -1,9 +1,11 @@
 
-// This file has been cleared as part of the backend removal.
-// Please provide your new Firebase config details to re-initialize the app.
 import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
+import { getAuth, Auth } from "firebase/auth";
+import { getFirestore, Firestore } from "firebase/firestore";
+import { getStorage, FirebaseStorage } from "firebase/storage";
 
 // Your web app's Firebase configuration will be placed here.
+// NOTE: Replace these with your actual Firebase project configuration.
 const firebaseConfig = {
   apiKey: "REPLACE_WITH_YOUR_API_KEY",
   authDomain: "REPLACE_WITH_YOUR_AUTH_DOMAIN",
@@ -13,15 +15,16 @@ const firebaseConfig = {
   appId: "REPLACE_WITH_YOUR_APP_ID"
 };
 
-let app: FirebaseApp | undefined;
-try {
-  app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-} catch (e) {
-  console.error("Firebase initialization error", e);
+// Initialize Firebase
+let app: FirebaseApp;
+if (getApps().length === 0) {
+  app = initializeApp(firebaseConfig);
+} else {
+  app = getApp();
 }
 
-const db = undefined;
-const auth = undefined;
-const storage = undefined;
+const auth: Auth = getAuth(app);
+const db: Firestore = getFirestore(app);
+const storage: FirebaseStorage = getStorage(app);
 
 export { app, auth, db, storage };
