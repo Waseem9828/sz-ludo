@@ -25,7 +25,7 @@ function LoginPageContent() {
   const [referralCode, setReferralCode] = useState('');
   const [loadingAction, setLoadingAction] = useState<null | 'login' | 'signup'>(null);
   
-  const { signUp, signIn, user } = useAuth();
+  const { signUp, signIn, user, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -39,10 +39,11 @@ function LoginPageContent() {
 
 
   useEffect(() => {
-    if (user) {
+    // Only redirect if auth state is resolved and user is logged in
+    if (!loading && user) {
       router.replace('/');
     }
-  }, [user, router]);
+  }, [user, loading, router]);
 
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -58,7 +59,7 @@ function LoginPageContent() {
     setLoadingAction('signup');
     try {
       await signUp(email, password, name, phone, referralCode || undefined);
-      router.replace('/');
+      // Let the useEffect handle the redirect
       toast({
         title: 'Success',
         description: 'Account created successfully!',
@@ -79,7 +80,7 @@ function LoginPageContent() {
     setLoadingAction('login');
     try {
       await signIn(email, password);
-      router.replace('/');
+       // Let the useEffect handle the redirect
        toast({
         title: 'Success',
         description: 'Signed in successfully!',
@@ -95,8 +96,9 @@ function LoginPageContent() {
     }
   };
 
-  if (user) {
-    return null; // or a loading spinner, to prevent rendering the login form while redirecting
+  // While loading, don't render the form to avoid flashes of content
+  if (loading || user) {
+    return null;
   }
 
   return (
@@ -187,3 +189,5 @@ export default function LoginPage() {
     </Suspense>
   )
 }
+
+    

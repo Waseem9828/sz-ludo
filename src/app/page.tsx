@@ -22,28 +22,33 @@ function Home() {
   const [showFestiveBackground, setShowFestiveBackground] = useState(false);
 
   useEffect(() => {
+    // Only redirect when auth state is resolved and there's no user
     if (!loading && !user) {
       router.replace('/login');
+      return; // Stop further execution in this effect
     }
     
-    getSettings().then(appSettings => {
-      setSettings(appSettings);
+    // Only fetch settings if the user is logged in
+    if (user) {
+      getSettings().then(appSettings => {
+        setSettings(appSettings);
 
-      // Show background if any festive greeting is enabled
-      if (appSettings.festiveGreeting?.enabled && appSettings.festiveGreeting.type !== 'None') {
-        setShowFestiveBackground(true);
+        // Show background if any festive greeting is enabled
+        if (appSettings.festiveGreeting?.enabled && appSettings.festiveGreeting.type !== 'None') {
+          setShowFestiveBackground(true);
 
-        // Logic to show the popup dialog only once per 24 hours
-        const lastShownKey = `festiveGreetingLastShown_${appSettings.festiveGreeting.type}`;
-        const lastShown = localStorage.getItem(lastShownKey);
-        const now = new Date().getTime();
-        
-        if (!lastShown || (now - Number(lastShown) > 24 * 60 * 60 * 1000)) {
-          setShowFestiveDialog(true);
-          localStorage.setItem(lastShownKey, now.toString());
+          // Logic to show the popup dialog only once per 24 hours
+          const lastShownKey = `festiveGreetingLastShown_${appSettings.festiveGreeting.type}`;
+          const lastShown = localStorage.getItem(lastShownKey);
+          const now = new Date().getTime();
+          
+          if (!lastShown || (now - Number(lastShown) > 24 * 60 * 60 * 1000)) {
+            setShowFestiveDialog(true);
+            localStorage.setItem(lastShownKey, now.toString());
+          }
         }
-      }
-    });
+      });
+    }
 
   }, [user, loading, router]);
   
@@ -55,6 +60,8 @@ function Home() {
     }
   }
 
+  // The splash screen will be shown by the AuthProvider, 
+  // but we can keep it here as a fallback while waiting for the redirect.
   if (loading || !user || !appUser) {
     return <SplashScreen />;
   }
@@ -96,3 +103,5 @@ function Home() {
 }
 
 export default Home;
+
+    
