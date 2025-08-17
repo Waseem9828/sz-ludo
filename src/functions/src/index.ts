@@ -44,6 +44,7 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
     };
     
+    // Assign admin role if email matches
     if (email && (email.toLowerCase() === "admin@example.com" || email.toLowerCase() === "super@admin.com")) {
         newAppUser.role = "superadmin";
         newAppUser.lifetimeStats.totalRevenue = 0;
@@ -56,7 +57,6 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
         const referrerCode = referralCode.replace('SZLUDO', '');
         if (referrerCode) {
             const usersRef = db.collection('users');
-            // Query for UIDs that start with the referrerCode
             const querySnapshot = await usersRef.where(admin.firestore.FieldPath.documentId(), '>=', referrerCode).where(admin.firestore.FieldPath.documentId(), '<', referrerCode + '\uf8ff').limit(1).get();
 
             if (!querySnapshot.empty) {

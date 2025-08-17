@@ -22,22 +22,19 @@ function Home() {
   const [showFestiveBackground, setShowFestiveBackground] = useState(false);
 
   useEffect(() => {
-    // Only redirect when auth state is fully resolved (loading is false)
-    if (!loading && !user) {
-      router.replace('/login');
-      return; // Stop further execution in this effect
-    }
-    
-    // Only fetch settings if the user is logged in
-    if (user) {
+    // Only perform actions when the loading state is fully resolved.
+    if (!loading) {
+      if (!user) {
+        router.replace('/login');
+        return;
+      }
+      
+      // If user is logged in, fetch settings.
       getSettings().then(appSettings => {
         setSettings(appSettings);
 
-        // Show background if any festive greeting is enabled
         if (appSettings.festiveGreeting?.enabled && appSettings.festiveGreeting.type !== 'None') {
           setShowFestiveBackground(true);
-
-          // Logic to show the popup dialog only once per 24 hours
           const lastShownKey = `festiveGreetingLastShown_${appSettings.festiveGreeting.type}`;
           const lastShown = localStorage.getItem(lastShownKey);
           const now = new Date().getTime();
@@ -49,19 +46,15 @@ function Home() {
         }
       });
     }
-
   }, [user, loading, router]);
   
   const handleDialogClose = (isOpen: boolean) => {
     setShowFestiveDialog(isOpen);
-    // if the background should disappear when the dialog is manually closed
     if (!isOpen) {
         setShowFestiveBackground(false); 
     }
   }
 
-  // The splash screen will be shown by the AuthProvider, 
-  // but we can keep it here as a fallback while waiting for the redirect or appUser.
   if (loading || !user || !appUser) {
     return <SplashScreen />;
   }
