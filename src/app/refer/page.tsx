@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Header from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,8 +10,8 @@ import Image from "next/image";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/context/auth-context';
 import { SplashScreen } from '@/components/ui/splash-screen';
-import { getSettings, AppSettings } from '@/lib/firebase/settings';
-import { Share2, Swords, Wallet, Landmark } from 'lucide-react';
+import { getSettings, ReferralSettings } from '@/lib/firebase/settings';
+import { Share2 } from 'lucide-react';
 import { Remarkable } from 'remarkable';
 
 const WhatsAppIcon = () => (
@@ -28,7 +28,7 @@ const TelegramIcon = () => (
     </svg>
 )
 
-const defaultSettings = {
+const defaultSettings: ReferralSettings = {
     imageUrl: 'https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEigtvhhJRucPCHR_BWwPVLk335J3yeFT8CTExF13JYJbogG0IOrplIRwu2FzgAca1G8ssvc83saCCnC7NdVFP15FnIOppoCDc0pa31pziFzf6hGq8qCo7yZa2K9_92MtBQet6Ii0wgVFYMEyfUn8R3s6vOgo2aavCvuzdNcsYX0YizIEy9xzVB_mBt5o_4/s320/77621.png',
     shareText: "Hey! I'm playing on SZ LUDO and earning real cash. You should join too! Use my code {{referralCode}} to sign up and get a bonus. Let's play! Link: {{referralLink}}",
     howItWorksText: `
@@ -51,7 +51,7 @@ const defaultSettings = {
 export default function ReferPage() {
     const { toast } = useToast();
     const { user, appUser, loading: authLoading } = useAuth();
-    const [settings, setSettings] = useState<AppSettings['referralSettings']>(undefined);
+    const [settings, setSettings] = useState<ReferralSettings | undefined>(undefined);
     const [settingsLoading, setSettingsLoading] = useState(true);
     
     useEffect(() => {
@@ -61,18 +61,31 @@ export default function ReferPage() {
         });
     }, []);
     
-    const referralSettings = settings || defaultSettings;
-    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-    const referralCode = user ? `SZLUDO${user.uid.substring(0, 8).toUpperCase()}` : '';
-    const referralLink = `${baseUrl}/login?ref=${referralCode}`;
-    const shareText = (referralSettings.shareText || defaultSettings.shareText)
-        .replace('{{referralCode}}', referralCode)
-        .replace('{{referralLink}}', referralLink);
+    const referralData = useMemo(() => {
+        if (!user) return null;
 
-    const howItWorksHtml = new Remarkable().render(referralSettings.howItWorksText || defaultSettings.howItWorksText);
+        const referralSettings = settings || defaultSettings;
+        const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+        const referralCode = `SZLUDO${user.uid.substring(0, 8).toUpperCase()}`;
+        const referralLink = `${baseUrl}/login?ref=${referralCode}`;
+        const shareText = (referralSettings.shareText || defaultSettings.shareText)
+            .replace('{{referralCode}}', referralCode)
+            .replace('{{referralLink}}', referralLink);
+
+        const howItWorksHtml = new Remarkable().render(referralSettings.howItWorksText || defaultSettings.howItWorksText);
+
+        return {
+            referralCode,
+            referralLink,
+            shareText,
+            howItWorksHtml,
+            imageUrl: referralSettings.imageUrl || defaultSettings.imageUrl,
+        };
+    }, [user, settings]);
 
     const handleCopyToClipboard = () => {
-        navigator.clipboard.writeText(referralLink);
+        if (!referralData) return;
+        navigator.clipboard.writeText(referralData.referralLink);
         toast({
             title: "Copied to clipboard!",
             description: "Your referral link has been copied.",
@@ -80,16 +93,17 @@ export default function ReferPage() {
     };
 
     const handleShare = (platform: 'whatsapp' | 'telegram') => {
+        if (!referralData) return;
         let url = '';
         if (platform === 'whatsapp') {
-            url = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+            url = `https://wa.me/?text=${encodeURIComponent(referralData.shareText)}`;
         } else if (platform === 'telegram') {
-            url = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent(shareText)}`;
+            url = `https://t.me/share/url?url=${encodeURIComponent(referralData.referralLink)}&text=${encodeURIComponent(referralData.shareText)}`;
         }
         window.open(url, '_blank');
     };
 
-    if (authLoading || settingsLoading || !user || !appUser) {
+    if (authLoading || settingsLoading || !user || !appUser || !referralData) {
         return <SplashScreen />;
     }
 
@@ -122,10 +136,10 @@ export default function ReferPage() {
                     </CardHeader>
                     <CardContent className="text-center">
                         <div className="flex justify-center my-4">
-                            <Image src={referralSettings.imageUrl || defaultSettings.imageUrl} alt="Refer a friend" width={200} height={150} data-ai-hint="referral illustration" className="rounded-lg"/>
+                            <Image src={referralData.imageUrl} alt="Refer a friend" width={200} height={150} data-ai-hint="referral illustration" className="rounded-lg"/>
                         </div>
                         <div className="flex">
-                            <Input type="text" value={referralCode} readOnly className="text-center bg-muted border-r-0 rounded-r-none" />
+                            <Input type="text" value={referralData.referralCode} readOnly className="text-center bg-muted border-r-0 rounded-r-none" />
                             <Button className="rounded-l-none" onClick={handleCopyToClipboard}>COPY</Button>
                         </div>
                         <div className="flex items-center my-4">
@@ -142,8 +156,9 @@ export default function ReferPage() {
                                 <TelegramIcon />
                                 Share To Telegram
                             </Button>
-                            <Button variant="secondary" className="w-full" onClick={handleCopyToClipboard}>
-                                Copy To Clipboard
+                             <Button variant="secondary" className="w-full" onClick={() => handleShare('whatsapp')}>
+                                <Share2 className="mr-2"/>
+                                More Share Options
                             </Button>
                         </div>
                     </CardContent>
@@ -153,7 +168,7 @@ export default function ReferPage() {
                     <CardContent className="p-6">
                         <div
                            className="prose dark:prose-invert max-w-none [&_h3]:text-center [&_h3]:text-red-600"
-                           dangerouslySetInnerHTML={{ __html: howItWorksHtml }}
+                           dangerouslySetInnerHTML={{ __html: referralData.howItWorksHtml }}
                         />
                     </CardContent>
                 </Card>
