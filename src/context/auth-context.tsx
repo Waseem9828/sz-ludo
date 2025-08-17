@@ -12,13 +12,12 @@ import {
   fetchSignInMethodsForEmail,
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase/config';
-import { doc, onSnapshot, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, onSnapshot, getDoc, setDoc, serverTimestamp, collection } from 'firebase/firestore';
 import { SplashScreen } from '@/components/ui/splash-screen';
 import type { AppUser } from '@/lib/firebase/users';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 const defaultAvatar = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi_h6LUuqTTKYsn5TfUZwkI6Aib6Y0tOzQzcoZKstURqxyl-PJXW1DKTkF2cPPNNUbP3iuDNsOBVOYx7p-ZwrodI5w9fyqEwoabj8rU0mLzSbT5GCFUKpfCc4s_LrtHcWFDvvRstCghAfQi5Zfv2fipdZG8h4dU4vGt-eFRn-gS3QTg6_JJKhv0Yysr_ZY/s1600/82126.png";
-
 
 // This is the client-side fallback, designed to be robust.
 const createFirestoreUserDocument = async (user: User, additionalData: Partial<AppUser> = {}) => {
@@ -27,9 +26,10 @@ const createFirestoreUserDocument = async (user: User, additionalData: Partial<A
 
   const newAppUser: AppUser = {
     uid: user.uid,
-    email,
-    displayName,
+    email: email || "",
+    displayName: displayName || "New User",
     photoURL: photoURL || defaultAvatar,
+    phone: additionalData.phone || "", // Ensure phone is not undefined
     wallet: { balance: 10, winnings: 0 },
     kycStatus: 'Pending',
     status: 'active',
@@ -46,10 +46,8 @@ const createFirestoreUserDocument = async (user: User, additionalData: Partial<A
     (newAppUser as any).lifetimeStats.totalRevenue = 0;
   }
   
-  // Directly set the document, rules allow this for the authenticated user.
   await setDoc(userRef, newAppUser);
   
-  // Create the transaction log for the signup bonus.
   const transLogRef = doc(collection(db, 'transactions'));
   await setDoc(transLogRef, {
       userId: user.uid,
@@ -63,29 +61,37 @@ const createFirestoreUserDocument = async (user: User, additionalData: Partial<A
 };
 
 
-const ensureUserDocument = async (u: User, referralCode?: string, additionalData: Partial<AppUser> = {}) => {
+const ensureUserDocument = async (u: User, additionalData: Partial<AppUser> = {}) => {
+  console.log("Ensuring user doc for", u.uid);
   const userRef = doc(db, 'users', u.uid);
   let snap = await getDoc(userRef);
   if (snap.exists()) {
-    console.log("User doc already exists for:", u.uid);
     return;
   }
 
-  console.log("Ensuring user doc for", u.uid);
+  // Callable is primary method
   try {
     const functions = getFunctions();
     const onUserCreate = httpsCallable(functions, 'onUserCreate');
-    await onUserCreate({ name: u.displayName, phone: additionalData.phone, referralCode });
-    console.log("Callable onUserCreate succeeded.");
+    await onUserCreate({ 
+        name: u.displayName || additionalData.displayName || "New User", 
+        phone: u.phoneNumber || additionalData.phone || "", 
+        referralCode: null 
+    });
+    // Wait a bit for the function to create the doc
+    await new Promise(r => setTimeout(r, 1500)); 
+    snap = await getDoc(userRef);
+    if (snap.exists()) return;
   } catch (e) {
     console.warn('onUserCreate callable failed, proceeding to client-side fallback:', e);
-    // If callable fails, immediately try client-side creation.
-    try {
-        await createFirestoreUserDocument(u, additionalData);
-        console.log("Fallback: user doc created successfully on client.");
-    } catch (createError) {
-        console.error("CRITICAL: Fallback user document creation failed:", createError);
-    }
+  }
+
+  // Fallback if callable fails or doesn't create the doc in time
+  try {
+    await createFirestoreUserDocument(u, additionalData);
+    console.log("Fallback: user doc created successfully on client.");
+  } catch (createError) {
+    console.error("CRITICAL: Fallback user document creation failed:", createError);
   }
 };
 
@@ -152,7 +158,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(authUser);
   
       if (authUser) {
-        // Start loading and set a safety timer to prevent infinite loading
         setLoading(true);
         safetyTimer = setTimeout(() => {
             console.warn("Safety timer fired! Forcing loading state to false.");
@@ -160,6 +165,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }, 8000);
 
         const userRef = doc(db, 'users', authUser.uid);
+        
+        ensureUserDocument(authUser, { phone: authUser.phoneNumber || '' });
         
         unsubscribeFirestore = onSnapshot(
           userRef,
@@ -171,10 +178,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               console.log("User snapshot received, setting loading to false.");
               setLoading(false);
             } else {
-              // Document doesn't exist, try to create it.
-              // The snapshot listener will pick up the new doc once created.
-              console.log("User doc not found, attempting to ensure it exists.");
-              ensureUserDocument(authUser, undefined, { phone: authUser.phoneNumber || undefined });
+              console.log("User doc not found, waiting for ensureUserDocument to create it.");
             }
           },
           (error) => {
@@ -185,7 +189,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
         );
       } else {
-        // User is signed out
         setAppUser(null);
         setLoading(false);
       }
@@ -211,10 +214,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    await updateProfile(userCredential.user, { displayName: name });
+    const newUser = userCredential.user;
+    await updateProfile(newUser, { displayName: name });
     
     // Let onAuthStateChanged handle the doc creation via ensureUserDocument
-    // This simplifies the logic and avoids race conditions.
+    // to keep logic centralized.
     
     return userCredential;
   };

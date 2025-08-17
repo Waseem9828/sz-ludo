@@ -9,7 +9,7 @@ const defaultAvatar = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvX
 
 /**
  * A Callable Cloud Function triggered from the client after a user is created in Firebase Auth.
- * This function securely creates the corresponding user document in Firestore.
+ * This function securely creates the corresponding user document in Firestore and handles referral logic.
  */
 export const onUserCreate = functions.https.onCall(async (data, context) => {
     if (!context.auth) {
@@ -17,23 +17,26 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
     }
 
     const { uid } = context.auth;
-    const { name, phone, referralCode } = data;
+    const { name, phone, referralCode } = data || {};
     const { email, photoURL } = context.auth.token;
 
     const userRef = db.doc(`users/${uid}`);
     
-    // The callable function is expected to be called only for new users,
-    // so we don't need to check if the document exists. We just create it.
-    
-    const newAppUser = {
+    const userDoc = await userRef.get();
+    if (userDoc.exists) {
+        functions.logger.log(`User document for UID: ${uid} already exists. Skipping creation.`);
+        return { success: true, message: "User already exists." };
+    }
+
+    const newAppUser: any = {
         uid: uid,
         email: email || "",
-        displayName: name || "New User",
+        displayName: name || context.auth.token.name || "New User",
         photoURL: photoURL || defaultAvatar,
         phone: phone || "",
         wallet: { balance: 10, winnings: 0 },
-        kycStatus: "Pending" as const,
-        status: "active" as const,
+        kycStatus: "Pending",
+        status: "active",
         gameStats: { played: 0, won: 0, lost: 0 },
         lifetimeStats: { totalDeposits: 0, totalWithdrawals: 0, totalWinnings: 0 },
         referralStats: { referredCount: 0, totalEarnings: 0 },
@@ -42,8 +45,8 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
     };
     
     if (email && (email.toLowerCase() === "admin@example.com" || email.toLowerCase() === "super@admin.com")) {
-        (newAppUser as any).role = "superadmin";
-        (newAppUser as any).lifetimeStats.totalRevenue = 0;
+        newAppUser.role = "superadmin";
+        newAppUser.lifetimeStats.totalRevenue = 0;
     }
     
     const batch = db.batch();
@@ -52,7 +55,7 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
         const referrerId = referralCode.replace('SZLUDO', '');
         if (referrerId && referrerId !== uid) {
             const referrerRef = db.doc(`users/${referrerId}`);
-            (newAppUser.referralStats as any).referredBy = referrerId;
+            newAppUser.referralStats.referredBy = referrerId;
             batch.update(referrerRef, { 'referralStats.referredCount': admin.firestore.FieldValue.increment(1) });
         }
     }
@@ -71,6 +74,7 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
     });
 
     await batch.commit();
+
     functions.logger.log(`Successfully created user document and bonus transaction for UID: ${uid}`);
     return { success: true, message: "User created successfully." };
 });
