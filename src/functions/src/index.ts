@@ -22,22 +22,21 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
 
     const userRef = db.doc(`users/${uid}`);
     
-    // Check if the user document already exists to prevent overwriting
     const userDoc = await userRef.get();
     if (userDoc.exists) {
         functions.logger.log(`User document for UID: ${uid} already exists. Skipping creation.`);
         return { success: false, message: "User already exists." };
     }
 
-    const newAppUser = {
+    const newAppUser: any = {
         uid: uid,
         email: email || "",
         displayName: name || "New User",
         photoURL: photoURL || defaultAvatar,
         phone: phone || "",
         wallet: { balance: 10, winnings: 0 },
-        kycStatus: "Pending" as const,
-        status: "active" as const,
+        kycStatus: "Pending",
+        status: "active",
         gameStats: { played: 0, won: 0, lost: 0 },
         lifetimeStats: { totalDeposits: 0, totalWithdrawals: 0, totalWinnings: 0 },
         referralStats: { referredCount: 0, totalEarnings: 0 },
@@ -46,27 +45,23 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
     };
     
     if (email && (email.toLowerCase() === "admin@example.com" || email.toLowerCase() === "super@admin.com")) {
-        (newAppUser as any).role = "superadmin";
-        (newAppUser as any).lifetimeStats.totalRevenue = 0;
+        newAppUser.role = "superadmin";
+        newAppUser.lifetimeStats.totalRevenue = 0;
     }
     
     const batch = db.batch();
 
-    // Handle referral logic securely on the server side
     if (referralCode && typeof referralCode === 'string' && referralCode.startsWith('SZLUDO')) {
         const referrerId = referralCode.replace('SZLUDO', '');
         if (referrerId && referrerId !== uid) {
             const referrerRef = db.doc(`users/${referrerId}`);
-            (newAppUser.referralStats as any).referredBy = referrerId;
-            // Securely increment the referrer's count
+            newAppUser.referralStats.referredBy = referrerId;
             batch.update(referrerRef, { 'referralStats.referredCount': admin.firestore.FieldValue.increment(1) });
         }
     }
 
-    // Create the new user's document
     batch.set(userRef, newAppUser);
     
-    // Create the sign-up bonus transaction log
     const transLogRef = db.collection("transactions").doc();
     batch.set(transLogRef, {
         userId: uid,
