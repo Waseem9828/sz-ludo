@@ -189,7 +189,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
         }, 8000);
         
-        // Try to ensure the document exists before setting up the listener.
         await ensureUserDocument(authUser, { displayName: authUser.displayName, phone: authUser.phoneNumber || '' });
   
         const userRef = doc(db, 'users', authUser.uid);
@@ -199,8 +198,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             const data = snapshot.data() as AppUser;
             setAppUser({ ...data, uid: authUser.uid, isKycVerified: data.kycStatus === 'Verified' });
           } else {
-             // This case should be rare now because of ensureUserDocument,
-             // but as a safeguard, we set appUser to null.
             setAppUser(null);
           }
           setLoading(false); // SUCCESS: Both auth user and app user are loaded/handled.
