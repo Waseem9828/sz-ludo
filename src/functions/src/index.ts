@@ -54,8 +54,6 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
     // Handle referral logic
     if (referralCode && typeof referralCode === 'string' && referralCode.startsWith('SZLUDO')) {
         const referrerCode = referralCode.replace('SZLUDO', '');
-        // A simple query to find a user whose UID starts with the referrerCode.
-        // This is not foolproof if multiple UIDs start with the same prefix, but it's a common pattern.
         if (referrerCode) {
             const usersRef = db.collection('users');
             // Query for UIDs that start with the referrerCode
@@ -65,7 +63,6 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
                 const referrerDoc = querySnapshot.docs[0];
                 if (referrerDoc.id !== uid) { // Can't refer yourself
                     newAppUser.referralStats.referredBy = referrerDoc.id;
-                    // Securely update the referrer's count on the server
                     batch.update(referrerDoc.ref, { 'referralStats.referredCount': admin.firestore.FieldValue.increment(1) });
                 }
             }
