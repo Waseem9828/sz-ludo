@@ -22,7 +22,7 @@ function Home() {
   const [showFestiveBackground, setShowFestiveBackground] = useState(false);
 
   useEffect(() => {
-    // Only redirect when auth state is resolved and there's no user
+    // Only redirect when auth state is fully resolved (loading is false)
     if (!loading && !user) {
       router.replace('/login');
       return; // Stop further execution in this effect
@@ -61,7 +61,7 @@ function Home() {
   }
 
   // The splash screen will be shown by the AuthProvider, 
-  // but we can keep it here as a fallback while waiting for the redirect.
+  // but we can keep it here as a fallback while waiting for the redirect or appUser.
   if (loading || !user || !appUser) {
     return <SplashScreen />;
   }

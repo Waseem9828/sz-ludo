@@ -36,11 +36,11 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
         phone: phone || "",
         wallet: { balance: 10, winnings: 0 },
         kycStatus: "Pending",
+        isKycVerified: false,
         status: "active",
         gameStats: { played: 0, won: 0, lost: 0 },
         lifetimeStats: { totalDeposits: 0, totalWithdrawals: 0, totalWinnings: 0 },
         referralStats: { referredCount: 0, totalEarnings: 0 },
-        isKycVerified: false,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
     };
     

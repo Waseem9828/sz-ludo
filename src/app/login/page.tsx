@@ -40,7 +40,7 @@ function LoginPageContent() {
 
 
   useEffect(() => {
-    // Only redirect if auth state is resolved and user is logged in
+    // Only redirect when auth state is fully resolved (loading is false) and user is logged in
     if (!loading && user) {
       router.replace('/');
     }
@@ -97,9 +97,9 @@ function LoginPageContent() {
     }
   };
 
-  // While loading, don't render the form to avoid flashes of content
+  // While auth state is loading, or if user is already present, don't render form to avoid flashes of content
   if (loading || user) {
-    return null;
+    return <SplashScreen />;
   }
 
   return (
