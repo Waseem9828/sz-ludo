@@ -22,9 +22,11 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
 
     const userRef = db.doc(`users/${uid}`);
     
+    // Check if the user document already exists to prevent overwriting or duplicate operations.
     const userDoc = await userRef.get();
     if (userDoc.exists) {
         functions.logger.log(`User document for UID: ${uid} already exists. Skipping creation.`);
+        // Return a non-error response indicating the user already exists.
         return { success: false, message: "User already exists." };
     }
 
@@ -51,17 +53,21 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
     
     const batch = db.batch();
 
+    // Securely handle referral logic on the server-side
     if (referralCode && typeof referralCode === 'string' && referralCode.startsWith('SZLUDO')) {
         const referrerId = referralCode.replace('SZLUDO', '');
         if (referrerId && referrerId !== uid) {
             const referrerRef = db.doc(`users/${referrerId}`);
             newAppUser.referralStats.referredBy = referrerId;
+            // Securely update the referrer's count.
             batch.update(referrerRef, { 'referralStats.referredCount': admin.firestore.FieldValue.increment(1) });
         }
     }
 
+    // Set the new user document in the batch
     batch.set(userRef, newAppUser);
     
+    // Set the sign-up bonus transaction log in the batch
     const transLogRef = db.collection("transactions").doc();
     batch.set(transLogRef, {
         userId: uid,
@@ -73,7 +79,9 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
+    // Commit all batched writes atomically
     await batch.commit();
+
     functions.logger.log(`Successfully created user document and bonus transaction for UID: ${uid}`);
     return { success: true, message: "User created successfully." };
 });

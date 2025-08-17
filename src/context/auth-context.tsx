@@ -82,7 +82,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(authUser);
   
       if (authUser) {
-        setLoading(true); // Start loading for app user data
+        setLoading(true); // Always set loading to true when authUser is found
         const userRef = doc(db, 'users', authUser.uid);
         
         unsubscribeFirestore = onSnapshot(
@@ -92,31 +92,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               const data = snapshot.data() as AppUser;
               setAppUser({ ...data, uid: authUser.uid, isKycVerified: data.kycStatus === 'Verified' });
               setLoading(false); // Stop loading ONLY when appUser is confirmed
+            } else {
+              // This handles new sign-ups. The document doesn't exist yet.
+              // We keep loading=true and wait for the Cloud Function to create the doc.
+              // onSnapshot will fire again once the doc is created.
             }
-            // If doc doesn't exist (e.g., new user), we just wait.
-            // The Cloud Function will create it, and this listener will fire again.
-            // Loading remains true until the doc is available.
           },
           (error) => {
             console.error('Firestore onSnapshot error:', error);
             setAppUser(null);
-            setLoading(false);
+            setLoading(false); // Stop loading on error
           }
         );
       } else {
-        // User is signed out
+        // User is signed out, no need to check Firestore.
         setAppUser(null);
-        setLoading(false);
+        setLoading(false); // Stop loading
       }
     });
   
+    // Cleanup function for the main useEffect
     return () => {
       unsubscribeAuth();
       if (unsubscribeFirestore) {
         unsubscribeFirestore();
       }
     };
-  }, []);
+  }, []); // Empty dependency array ensures this runs only ONCE
   
 
   const signUp = async (
@@ -181,9 +183,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     logout,
   };
 
+  // Render SplashScreen while loading is true, regardless of user state
+  if (loading) {
+    return (
+      <AuthContext.Provider value={value}>
+        <SplashScreen />
+      </AuthContext.Provider>
+    );
+  }
+
   return (
     <AuthContext.Provider value={value}>
-      {loading ? <SplashScreen /> : children}
+      {children}
     </AuthContext.Provider>
   );
 };
