@@ -10,7 +10,6 @@ export async function deleteAccount() {
   const uid = currentUser.uid;
 
   // 1. Delete user's Firestore documents
-  // Note: This is a best-effort cleanup. For production, a Cloud Function is more reliable.
   const collectionsToDeleteFrom = ["deposits", "games", "transactions"];
   const batch = writeBatch(db);
 
@@ -48,7 +47,10 @@ export async function deleteAccount() {
         await Promise.all(deletePromises);
         console.log(`Storage files deleted from '${path}'`);
     } catch (error) {
-        console.error(`Error deleting files from storage path '${path}':`, error);
+        // It's okay if a folder doesn't exist, so we can ignore 'object-not-found' errors on listAll.
+        if ((error as any).code !== 'storage/object-not-found') {
+          console.error(`Error deleting files from storage path '${path}':`, error);
+        }
     }
   }
 

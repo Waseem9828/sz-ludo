@@ -97,7 +97,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setLoading(false);
         });
 
-        // Safety timer to prevent infinite loading state if Firestore is slow or fails
         safetyTimer = setTimeout(() => {
           if (loading) {
             console.warn('Auth context safety timer expired. Forcing loading state to false.');
@@ -106,7 +105,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }, 8000);
 
       } else {
-        // No user, not loading.
         setAppUser(null);
         setLoading(false);
       }
@@ -117,7 +115,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (unsubscribeFirestore) unsubscribeFirestore();
       if(safetyTimer) clearTimeout(safetyTimer);
     };
-  }, []); // Empty dependency array ensures this runs only once
+  }, []);
   
   const signUp = async (
     email: string,
@@ -131,8 +129,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     await updateProfile(newUser, { displayName: name });
 
-    // Call the Cloud Function to create the Firestore document.
-    // This is more reliable and handles referral logic securely.
     try {
         const functions = getFunctions();
         const onUserCreate = httpsCallable(functions, 'onUserCreate');
@@ -143,9 +139,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         });
     } catch (e) {
         console.error('CRITICAL: onUserCreate callable failed. This might lead to an inconsistent state.', e);
-        // We no longer call the client-side fallback here to avoid race conditions.
-        // The onSnapshot listener in the main useEffect will handle UI updates.
-        // The cloud function MUST be deployed and working.
+        // The onSnapshot listener will eventually pick up the user, but we rely on the function for robust creation.
     }
     
     return userCredential;
