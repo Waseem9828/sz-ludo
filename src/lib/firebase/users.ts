@@ -1,5 +1,5 @@
 
-import { doc, getDoc, updateDoc, increment, collection, onSnapshot, writeBatch, serverTimestamp, runTransaction, query, where, getDocs, DocumentReference, Transaction as FirestoreTransaction, setDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, increment, collection, onSnapshot, writeBatch, serverTimestamp, runTransaction, query, where, getDocs, DocumentReference, Transaction as FirestoreTransaction, setDoc, orderBy, limit } from 'firebase/firestore';
 import { db } from './config';
 import { Transaction, TransactionType } from './transactions';
 import jsPDF from 'jspdf';
@@ -202,8 +202,7 @@ export const listenForAllUsers = (
     role?: UserRole
 ) => {
     const usersCollection = collection(db, 'users');
-    const constraints = role ? [where('role', '==', role)] : [];
-    const q = query(usersCollection, ...constraints);
+    const q = role ? query(usersCollection, where('role', '==', role), orderBy('createdAt', 'desc')) : query(usersCollection, orderBy('createdAt', 'desc'));
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const users: AppUser[] = [];

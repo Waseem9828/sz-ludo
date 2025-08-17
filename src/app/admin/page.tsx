@@ -9,7 +9,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from 'rec
 import { DollarSign, Users, Wallet, TrendingUp, Loader } from 'lucide-react';
 import ChallengeList from '@/components/play/challenge-list';
 import BattleList from '@/components/play/battle-list';
-import { listenForAllTransactions, Transaction, TransactionStatus, TransactionType } from '@/lib/firebase/transactions';
+import { getAllTransactions, Transaction, TransactionStatus, TransactionType } from '@/lib/firebase/transactions';
 import { useToast } from '@/hooks/use-toast';
 import { AppUser, listenForAllUsers } from '@/lib/firebase/users';
 import Link from 'next/link';
@@ -64,7 +64,6 @@ export default function AdminDashboardPage() {
   const { toast } = useToast();
 
    useEffect(() => {
-        // Update revenue KPI from appUser state
         if (appUser?.lifetimeStats?.totalRevenue) {
             setKpiData(prev => [
                 { ...prev[0], value: `₹${appUser.lifetimeStats.totalRevenue.toFixed(2)}`},
@@ -76,7 +75,6 @@ export default function AdminDashboardPage() {
             const monthlyData: { [key: string]: { month: string, deposits: number, withdrawals: number } } = {};
             const sixMonthsAgo = subMonths(new Date(), 6);
 
-            // Initialize last 6 months
             for (let i = 5; i >= 0; i--) {
                 const d = subMonths(new Date(), i);
                 const monthKey = format(d, 'yyyy-MM');
@@ -87,7 +85,6 @@ export default function AdminDashboardPage() {
             transactions.forEach(tx => {
                 if (tx.createdAt) {
                     const date = tx.createdAt.toDate();
-                    // Client-side filtering for date
                     if (isAfter(date, sixMonthsAgo)) {
                          const monthKey = format(date, 'yyyy-MM');
                         
@@ -105,22 +102,24 @@ export default function AdminDashboardPage() {
             setChartData(Object.values(monthlyData) as any);
         };
         
+        async function fetchData() {
+            try {
+                const [allTransactions, chartTransactions] = await Promise.all([
+                    getAllTransactions({ limitCount: 10 }),
+                    getAllTransactions({ statuses: ['completed', 'approved'] })
+                ]);
+                
+                setRecentTransactions(allTransactions);
+                processTransactionDataForChart(chartTransactions);
 
-        const unsubscribeTransactions = listenForAllTransactions(
-            (transactions) => {
-                setRecentTransactions(transactions)
-                setLoading(false); // Transactions are a good indicator for loading state
-            },
-            (error) => toast({ title: "Error", description: `Could not fetch recent transactions: ${error.message}`, variant: "destructive" }),
-            { limitCount: 10 }
-        );
+            } catch (error: any) {
+                toast({ title: "Error", description: `Could not fetch transactions: ${error.message}`, variant: "destructive" });
+            } finally {
+                setLoading(false);
+            }
+        }
         
-        // Fetch only completed/approved transactions for chart to reduce load
-        const unsubscribeChartTransactions = listenForAllTransactions(
-            processTransactionDataForChart,
-            (error) => toast({ title: "Error", description: `Could not fetch chart data: ${error.message}`, variant: "destructive" }),
-            { statuses: ['completed', 'approved'] }
-        );
+        fetchData();
 
         const unsubscribeUsers = listenForAllUsers(
             (users) => {
@@ -129,7 +128,7 @@ export default function AdminDashboardPage() {
                 const totalWithdrawals = users.reduce((sum, user) => sum + (user.lifetimeStats?.totalWithdrawals || 0), 0);
                 
                 setKpiData(prev => [
-                    prev[0], // Revenue is handled separately
+                    prev[0], 
                     { ...prev[1], value: `₹${totalWithdrawals.toLocaleString()}`},
                     { ...prev[2], value: activeUsers.toLocaleString()},
                     { ...prev[3], value: totalSignups.toLocaleString()},
@@ -139,8 +138,6 @@ export default function AdminDashboardPage() {
         );
 
       return () => {
-          unsubscribeTransactions();
-          unsubscribeChartTransactions();
           unsubscribeUsers();
       };
   }, [toast, appUser]);

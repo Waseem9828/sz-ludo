@@ -30,7 +30,7 @@ export const createTransaction = async (data: Omit<Transaction, 'id'>) => {
 export const listenForUserTransactions = (
     userId: string,
     callback: (transactions: Transaction[]) => void,
-    limitCount: number = 20, // Default limit to 20
+    limitCount: number = 50, // Default limit
     onError?: (error: Error) => void
 ) => {
     const q = query(
@@ -56,41 +56,30 @@ export const listenForUserTransactions = (
     return unsubscribe;
 };
 
-// Listen for all transactions for admin dashboard
-export const listenForAllTransactions = (
-    callback: (transactions: Transaction[]) => void,
-    onError?: (error: Error) => void,
-    options?: {
-        limitCount?: number;
-        statuses?: TransactionStatus[];
-    }
-) => {
-     const constraints: QueryConstraint[] = [];
+// Get all transactions for admin dashboard (one-time fetch for speed)
+export const getAllTransactions = async (options?: {
+    limitCount?: number;
+    statuses?: TransactionStatus[];
+}): Promise<Transaction[]> => {
+    const constraints: QueryConstraint[] = [];
 
-     if (options?.statuses && options.statuses.length > 0) {
+    if (options?.statuses && options.statuses.length > 0) {
         constraints.push(where("status", "in", options.statuses));
-     }
+    }
 
-     constraints.push(orderBy("createdAt", "desc"));
+    constraints.push(orderBy("createdAt", "desc"));
 
-     if (options?.limitCount) {
+    if (options?.limitCount) {
         constraints.push(limit(options.limitCount));
-     }
-     
-     const q = query(collection(db, TRANSACTIONS_COLLECTION), ...constraints);
-
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const transactions: Transaction[] = [];
-        querySnapshot.forEach((doc) => {
-            transactions.push({ id: doc.id, ...doc.data() } as Transaction);
-        });
-        callback(transactions);
-    }, (error) => {
-        console.error("Error listening for all transactions: ", error);
-        if (onError) {
-            onError(error);
-        }
+    }
+    
+    const q = query(collection(db, TRANSACTIONS_COLLECTION), ...constraints);
+    const querySnapshot = await getDocs(q);
+    
+    const transactions: Transaction[] = [];
+    querySnapshot.forEach((doc) => {
+        transactions.push({ id: doc.id, ...doc.data() } as Transaction);
     });
 
-    return unsubscribe;
+    return transactions;
 }
