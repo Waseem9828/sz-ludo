@@ -62,7 +62,7 @@ function LoginPageContent() {
       // Let the useEffect handle the redirect
       toast({
         title: 'Success',
-        description: 'Account created successfully!',
+        description: 'Account created successfully! Welcome!',
       });
     } catch (error: any) {
       toast({
@@ -134,7 +134,7 @@ function LoginPageContent() {
                             <Input id="login-password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={loadingAction !== null}/>
                         </div>
                         <Button type="submit" className="w-full font-bold py-3 text-lg" disabled={loadingAction !== null}>
-                            {loadingAction === 'login' ? <Loader className="animate-spin"/> : 'Login'}
+                            {loadingAction === 'login' ? <><Loader className="animate-spin mr-2"/> Logging in...</> : 'Login'}
                         </Button>
                         </form>
                     </div>
@@ -168,7 +168,7 @@ function LoginPageContent() {
                                     <Input id="referral-code" type="text" placeholder="Enter referral code" value={referralCode} onChange={(e) => setReferralCode(e.target.value)} disabled={loadingAction !== null}/>
                                 </div>
                                 <Button type="submit" className="w-full font-bold py-3 text-lg" disabled={loadingAction !== null}>
-                                     {loadingAction === 'signup' ? <Loader className="animate-spin"/> : 'Create Account'}
+                                     {loadingAction === 'signup' ? <><Loader className="animate-spin mr-2"/> Signing up...</> : 'Create Account'}
                                 </Button>
                             </form>
                         </div>
@@ -184,7 +184,7 @@ function LoginPageContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+    <Suspense fallback={<SplashScreen />}>
       <LoginPageContent />
     </Suspense>
   )

@@ -88,4 +88,3 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
     functions.logger.log(`Successfully created user document and bonus transaction for UID: ${uid}`);
     return { success: true, message: "User created successfully." };
 });
-
