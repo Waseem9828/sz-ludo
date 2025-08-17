@@ -157,7 +157,7 @@ export const updateUserWallet = async (uid: string, amount: number, walletType: 
         // Update lifetime stats for specific transaction types
         if (transactionType === 'deposit') {
             updates['lifetimeStats.totalDeposits'] = increment(amount);
-        } else if (transactionType === 'withdrawal' && notes === 'Withdrawal Approved') {
+        } else if (transactionType === 'withdrawal' && (notes === 'Withdrawal Approved' || notes?.startsWith('Withdrawal Processed'))) {
              updates['lifetimeStats.totalWithdrawals'] = increment(Math.abs(amount));
         } else if (transactionType === 'winnings') {
             updates['lifetimeStats.totalWinnings'] = increment(amount);
@@ -238,21 +238,21 @@ export const generateUserReport = async (user: AppUser, transactions: Transactio
     
     doc.setFontSize(16);
     doc.text("Account Summary", 14, 50);
+    const tableBody = [
+        ['Total Balance', `₹${totalBalance.toFixed(2)}`],
+        ['Deposit Balance', `₹${(user.wallet?.balance || 0).toFixed(2)}`],
+        ['Winnings Balance', `₹${(user.wallet?.winnings || 0).toFixed(2)}`],
+        ['KYC Status', user.kycStatus || 'N/A'],
+        ['Account Status', user.status || 'active'],
+    ];
     (doc as any).autoTable({
         startY: 55,
         head: [['Metric', 'Value']],
-        body: [
-            ['Total Balance', `₹${totalBalance.toFixed(2)}`],
-            ['Deposit Balance', `₹${(user.wallet?.balance || 0).toFixed(2)}`],
-            ['Winnings Balance', `₹${(user.wallet?.winnings || 0).toFixed(2)}`],
-            ['KYC Status', user.kycStatus || 'N/A'],
-            ['Account Status', user.status || 'active'],
-        ],
+        body: tableBody,
         theme: 'striped',
     });
 
-    // @ts-ignore
-    const lastY = doc.lastAutoTable.finalY || 60;
+    const lastY = (doc as any).lastAutoTable.finalY || 60;
     
     doc.setFontSize(16);
     doc.text("Transaction History", 14, lastY + 15);

@@ -69,41 +69,57 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
   
   useEffect(() => {
+    let unsubscribeFirestore: (() => void) | null = null;
     setLoading(true);
+
     const unsubscribeAuth = onAuthStateChanged(auth, (authUser) => {
-      if (authUser) {
-        setUser(authUser);
-        const userDocRef = doc(db, 'users', authUser.uid);
-        const unsubscribeFirestore = onSnapshot(
-          userDocRef,
-          (snapshot) => {
-            if (snapshot.exists()) {
-              const userData = snapshot.data() as AppUser;
-              setAppUser({ ...userData, uid: authUser.uid, isKycVerified: userData.kycStatus === 'Verified' });
-              setLoading(false); // Stop loading ONLY when appUser is confirmed
-            } else {
-              // This might happen for a brief moment for new users.
-              // We keep loading until the user document is created by the cloud function.
-              setAppUser(null);
-              setLoading(true);
-            }
-          },
-          (error) => {
-            console.error("Firestore onSnapshot error:", error);
-            setUser(null);
-            setAppUser(null);
-            setLoading(false); // Stop loading on error to prevent infinite loop
-          }
-        );
-        return () => unsubscribeFirestore();
-      } else {
-        setUser(null);
+      setUser(authUser);
+
+      // If signed out, clean up and stop loading
+      if (!authUser) {
+        if (unsubscribeFirestore) {
+          unsubscribeFirestore();
+          unsubscribeFirestore = null;
+        }
         setAppUser(null);
-        setLoading(false); // No user, stop loading
+        setLoading(false);
+        return;
       }
+
+      // If there's a user, set up the Firestore listener for their profile
+      const userDocRef = doc(db, 'users', authUser.uid);
+      
+      // Detach any existing listener before attaching a new one
+      if (unsubscribeFirestore) {
+          unsubscribeFirestore();
+      }
+
+      unsubscribeFirestore = onSnapshot(
+        userDocRef,
+        (snapshot) => {
+          if (snapshot.exists()) {
+            const userData = snapshot.data() as AppUser;
+            setAppUser({ ...userData, uid: authUser.uid, isKycVerified: userData.kycStatus === 'Verified' });
+          } else {
+             // This can happen briefly for new users. The onUserCreate function will trigger this listener again.
+             // We don't set appUser to null here, just wait for the document to be created.
+          }
+          setLoading(false); // Stop loading ONLY when we have a definitive state (doc exists or doesn't)
+        },
+        (error) => {
+          console.error("Firestore onSnapshot error:", error);
+          setAppUser(null);
+          setLoading(false); // Stop loading on error
+        }
+      );
     });
 
-    return () => unsubscribeAuth();
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeFirestore) {
+        unsubscribeFirestore();
+      }
+    };
   }, []);
 
   const signUp = async (
@@ -117,8 +133,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const functions = getFunctions();
     const onUserCreate = httpsCallable(functions, 'onUserCreate');
     
-    // We explicitly call the function to create the user document in Firestore.
-    // The onSnapshot listener in the useEffect hook will then pick up the new document.
     await onUserCreate({ name, phone, referralCode });
     
     return userCredential;
@@ -150,8 +164,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     await signOut(auth);
-    setAppUser(null);
-    setUser(null);
   };
   
   const value = {
@@ -166,9 +178,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     logout,
   };
 
+  // Render SplashScreen while loading is true, this prevents rendering children with incomplete data
+  if (loading) {
+    return <SplashScreen />;
+  }
+
   return (
     <AuthContext.Provider value={value}>
-      {loading ? <SplashScreen /> : children}
+      {children}
     </AuthContext.Provider>
   );
 };

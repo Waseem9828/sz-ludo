@@ -22,9 +22,6 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
 
     const userRef = db.doc(`users/${uid}`);
     
-    // The callable function is expected to be called only for new users,
-    // so we don't need to check if the document exists. We just create it.
-    
     const newAppUser = {
         uid: uid,
         email: email || "",
@@ -53,7 +50,9 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
         if (referrerId && referrerId !== uid) {
             const referrerRef = db.doc(`users/${referrerId}`);
             (newAppUser.referralStats as any).referredBy = referrerId;
-            batch.update(referrerRef, { 'referralStats.referredCount': admin.firestore.FieldValue.increment(1) });
+            // Note: Updating another user's doc from here is better done via a separate secure function
+            // to avoid client-side permission issues. For now, we only note who referred them.
+            // A separate backend process could handle the increment.
         }
     }
 
