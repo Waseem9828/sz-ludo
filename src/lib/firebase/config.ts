@@ -4,16 +4,16 @@ import { getAuth, Auth } from "firebase/auth";
 import { getFirestore, Firestore } from "firebase/firestore";
 import { getStorage, FirebaseStorage } from "firebase/storage";
 
-// Your web app's Firebase configuration will be placed here.
-// IMPORTANT: Please replace these placeholder values with your actual Firebase project configuration.
+// Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "REPLACE_WITH_YOUR_API_KEY",
-  authDomain: "REPLACE_WITH_YOUR_AUTH_DOMAIN",
-  projectId: "REPLACE_WITH_YOUR_PROJECT_ID",
-  storageBucket: "REPLACE_WITH_YOUR_STORAGE_BUCKET",
-  messagingSenderId: "REPLACE_WITH_YOUR_MESSAGING_SENDER_ID",
-  appId: "REPLACE_WITH_YOUR_APP_ID"
+  apiKey: "AIzaSyCASdJ84EqDjwCTquRLwdy-0qNJmS9F95g",
+  authDomain: "ludo-legacy-61efi.firebaseapp.com",
+  projectId: "ludo-legacy-61efi",
+  storageBucket: "ludo-legacy-61efi.appspot.com",
+  messagingSenderId: "374019795554",
+  appId: "1:374019795554:web:ee0c47693a42d20410bf3b"
 };
+
 
 // Initialize Firebase
 let app: FirebaseApp;
