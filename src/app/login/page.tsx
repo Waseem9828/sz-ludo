@@ -40,7 +40,7 @@ function LoginPageContent() {
 
   useEffect(() => {
     if (user) {
-      router.push('/');
+      router.replace('/');
     }
   }, [user, router]);
 
@@ -58,7 +58,7 @@ function LoginPageContent() {
     setLoadingAction('signup');
     try {
       await signUp(email, password, name, phone, referralCode || undefined);
-      router.push('/');
+      router.replace('/');
       toast({
         title: 'Success',
         description: 'Account created successfully!',
@@ -79,7 +79,7 @@ function LoginPageContent() {
     setLoadingAction('login');
     try {
       await signIn(email, password);
-      router.push('/');
+      router.replace('/');
        toast({
         title: 'Success',
         description: 'Signed in successfully!',
@@ -99,7 +99,7 @@ function LoginPageContent() {
     setLoadingAction('google');
     try {
       await signInWithGoogle(referralCode || undefined);
-      router.push('/');
+      router.replace('/');
       toast({
         title: 'Success',
         description: 'Signed in with Google successfully!',
@@ -218,5 +218,3 @@ export default function LoginPage() {
     </Suspense>
   )
 }
-
-    

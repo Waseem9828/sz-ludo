@@ -13,11 +13,82 @@ import {
   fetchSignInMethodsForEmail,
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase/config';
-import { doc, onSnapshot, getDoc, collection, setDoc, serverTimestamp, runTransaction, query, where, getDocs, limit, increment } from 'firebase/firestore';
+import { doc, onSnapshot, getDoc, setDoc, serverTimestamp, runTransaction } from 'firebase/firestore';
 import { SplashScreen } from '@/components/ui/splash-screen';
 import type { AppUser } from '@/lib/firebase/users';
 import { googleAuthProvider } from '@/lib/firebase/config';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+
+const defaultAvatar = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi_h6LUuqTTKYsn5TfUZwkI6Aib6Y0tOzQzcoZKstURqxyl-PJXW1DKTkF2cPPNNUbP3iuDNsOBVOYx7p-ZwrodI5w9fyqEwoabj8rU0mLzSbT5GCFUKpfCc4s_LrtHcWFDvvRstCghAfQi5Zfv2fipdZG8h4dU4vGt-eFRn-gS3QTg6_JJKhv0Yysr_ZY/s1600/82126.png";
+
+
+// This is a client-side fallback, NOT the primary method.
+const createFirestoreUserDocument = async (user: User, additionalData: Partial<AppUser> = {}) => {
+  const userRef = doc(db, 'users', user.uid);
+  const { displayName, email, photoURL } = user;
+
+  const newAppUser: AppUser = {
+    uid: user.uid,
+    email,
+    displayName,
+    photoURL: photoURL || defaultAvatar,
+    wallet: { balance: 10, winnings: 0 },
+    kycStatus: 'Pending',
+    status: 'active',
+    gameStats: { played: 0, won: 0, lost: 0 },
+    lifetimeStats: { totalDeposits: 0, totalWithdrawals: 0, totalWinnings: 0 },
+    referralStats: { referredCount: 0, totalEarnings: 0 },
+    isKycVerified: false,
+    ...additionalData,
+    createdAt: serverTimestamp(),
+  };
+
+  if ((email?.toLowerCase() === 'admin@example.com' || email?.toLowerCase() === 'super@admin.com')) {
+    (newAppUser as any).role = 'superadmin';
+    (newAppUser as any).lifetimeStats.totalRevenue = 0;
+  }
+
+  await runTransaction(db, async (transaction) => {
+    transaction.set(userRef, newAppUser);
+    const transLogRef = doc(db, 'transactions', user.uid + '_signup');
+    transaction.set(transLogRef, {
+      userId: user.uid,
+      userName: newAppUser.displayName || 'N/A',
+      amount: 10,
+      type: 'Sign Up',
+      status: 'completed',
+      notes: 'Welcome bonus',
+      createdAt: serverTimestamp(),
+    });
+  });
+};
+
+
+const ensureUserDocument = async (u: User, referralCode?: string, additionalData: Partial<AppUser> = {}) => {
+  const userRef = doc(db, 'users', u.uid);
+  let snap = await getDoc(userRef);
+  if (snap.exists()) return;
+
+  try {
+    const functions = getFunctions();
+    const onUserCreate = httpsCallable(functions, 'onUserCreate');
+    await onUserCreate({ name: u.displayName, phone: additionalData.phone, referralCode });
+  } catch (e) {
+    console.warn('onUserCreate callable failed (will fallback):', e);
+  }
+
+  await new Promise(r => setTimeout(r, 1500));
+  snap = await getDoc(userRef);
+  if (snap.exists()) return;
+
+  try {
+    await createFirestoreUserDocument(u, additionalData);
+    console.log("Client-side fallback document created.");
+  } catch (e) {
+    console.error('Fallback client-side user doc create failed:', e);
+  }
+};
+
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: Array<string>;
@@ -72,7 +143,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   useEffect(() => {
     let unsubscribeFirestore: (() => void) | null = null;
-  
+    
     const unsubscribeAuth = onAuthStateChanged(auth, (authUser) => {
       if (unsubscribeFirestore) {
         unsubscribeFirestore();
@@ -82,45 +153,50 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(authUser);
   
       if (authUser) {
-        setLoading(true); // Always set loading to true when authUser is found
+        setLoading(true);
         const userRef = doc(db, 'users', authUser.uid);
         
+        let safetyTimer = setTimeout(() => {
+            console.warn("Auth context timed out. Stopping loader.");
+            setLoading(false);
+        }, 8000);
+
         unsubscribeFirestore = onSnapshot(
           userRef,
           (snapshot) => {
+            clearTimeout(safetyTimer);
             if (snapshot.exists()) {
               const data = snapshot.data() as AppUser;
               setAppUser({ ...data, uid: authUser.uid, isKycVerified: data.kycStatus === 'Verified' });
-              setLoading(false); // Stop loading ONLY when appUser is confirmed
+              setLoading(false);
             } else {
-              // This handles new sign-ups. The document doesn't exist yet.
-              // We keep loading=true and wait for the Cloud Function to create the doc.
-              // onSnapshot will fire again once the doc is created.
+              // Document doesn't exist. It might be a new user.
+              // ensureUserDocument will be called from signUp/signInWithGoogle.
+              // We keep listening, but we don't want to get stuck.
+              // A new snapshot will arrive once the doc is created.
             }
           },
           (error) => {
+            clearTimeout(safetyTimer);
             console.error('Firestore onSnapshot error:', error);
             setAppUser(null);
-            setLoading(false); // Stop loading on error
+            setLoading(false);
           }
         );
       } else {
-        // User is signed out, no need to check Firestore.
         setAppUser(null);
-        setLoading(false); // Stop loading
+        setLoading(false);
       }
     });
   
-    // Cleanup function for the main useEffect
     return () => {
       unsubscribeAuth();
       if (unsubscribeFirestore) {
         unsubscribeFirestore();
       }
     };
-  }, []); // Empty dependency array ensures this runs only ONCE
+  }, []);
   
-
   const signUp = async (
     email: string,
     password: string,
@@ -128,19 +204,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     phone: string,
     referralCode?: string
   ) => {
-    // Check for email existence using Firebase Auth method, not Firestore query
     const methods = await fetchSignInMethodsForEmail(auth, email);
     if (methods.length > 0) {
       throw new Error('This email address is already in use.');
     }
     
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const functions = getFunctions();
-    const onUserCreate = httpsCallable(functions, 'onUserCreate');
+    await updateProfile(userCredential.user, { displayName: name });
     
-    // Call the Cloud Function to create the Firestore document and handle referrals securely.
-    // This is the source of truth for user document creation.
-    await onUserCreate({ name, phone, referralCode });
+    await ensureUserDocument(userCredential.user, referralCode, { phone });
     
     return userCredential;
   };
@@ -151,19 +223,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signInWithGoogle = async (referralCode?: string) => {
     const result = await signInWithPopup(auth, googleAuthProvider);
-    const user = result.user;
-
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
-    if (!userDoc.exists()) {
-      const functions = getFunctions();
-      const onUserCreate = httpsCallable(functions, 'onUserCreate');
-      await onUserCreate({ 
-          name: user.displayName, 
-          phone: user.phoneNumber || '', 
-          referralCode 
-      });
-    }
-    
+    await ensureUserDocument(result.user, referralCode);
     return result;
   };
 
@@ -183,13 +243,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     logout,
   };
 
-  // Render SplashScreen while loading is true, regardless of user state
   if (loading) {
-    return (
-      <AuthContext.Provider value={value}>
-        <SplashScreen />
-      </AuthContext.Provider>
-    );
+    return <SplashScreen />;
   }
 
   return (

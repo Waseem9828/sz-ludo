@@ -33,7 +33,7 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
     const newAppUser: any = {
         uid: uid,
         email: email || "",
-        displayName: name || "New User",
+        displayName: name || context.auth.token.name || "New User",
         photoURL: photoURL || defaultAvatar,
         phone: phone || "",
         wallet: { balance: 10, winnings: 0 },

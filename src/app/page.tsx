@@ -23,7 +23,7 @@ function Home() {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push('/login');
+      router.replace('/login');
     }
     
     getSettings().then(appSettings => {
@@ -96,4 +96,3 @@ function Home() {
 }
 
 export default Home;
-    
