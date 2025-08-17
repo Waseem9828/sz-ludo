@@ -1,7 +1,7 @@
 
 import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore, initializeFirestore, persistentLocalCache, memoryLocalCache, Firestore } from "firebase/firestore";
+import { getFirestore, Firestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 // Your web app's Firebase configuration
@@ -19,39 +19,16 @@ let app: FirebaseApp;
 let db: Firestore;
 
 // Singleton pattern to ensure Firebase is initialized only once.
-function getFirebaseApp() {
-  if (!getApps().length) {
-    app = initializeApp(firebaseConfig);
-  } else {
-    app = getApp();
-  }
-  return app;
+if (getApps().length === 0) {
+  app = initializeApp(firebaseConfig);
+} else {
+  app = getApp();
 }
 
-function getDb() {
-  if (!db) {
-     const app = getFirebaseApp();
-     // Use persistent cache for web to enable offline data access and faster loads.
-     // Memory cache is a fallback for environments where persistent cache is not supported.
-     try {
-        db = initializeFirestore(app, {
-            localCache: persistentLocalCache({}),
-        });
-     } catch (e) {
-        console.warn("Persistent cache not available, falling back to memory cache.", e);
-        db = initializeFirestore(app, {
-            localCache: memoryLocalCache({}),
-        });
-     }
-  }
-  return db;
-}
+db = getFirestore(app);
+
+const auth = getAuth(app);
+const storage = getStorage(app);
 
 
-// Initialize and export Firebase services
-const auth = getAuth(getFirebaseApp());
-const storage = getStorage(getFirebaseApp());
-const firestoreDb = getDb();
-
-
-export { app, auth, firestoreDb as db, storage };
+export { app, auth, db, storage };
