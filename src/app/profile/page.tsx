@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { AlertCircle, ArrowUp, BarChart2, Gift, Pencil, Trophy, ShieldCheck, Check } from "lucide-react";
+import { AlertCircle, ArrowUp, BarChart2, Gift, Pencil, Trophy, ShieldCheck, Check, Trash2 } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -19,6 +19,19 @@ import { SplashScreen } from '@/components/ui/splash-screen';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { deleteAccount } from '@/lib/firebase/auth';
+
 
 const MetricCard = ({ icon, label, value }: { icon?: React.ReactNode, label: string, value: string | number }) => (
     <Card className="bg-secondary/50">
@@ -58,9 +71,7 @@ export default function ProfilePage() {
         if (isEditingUsername) {
             if (user && tempUsername) {
                 try {
-                    // Update profile in Firebase Auth
                     await updateProfile(user, { displayName: tempUsername });
-                    // Update display name in Firestore
                     const userRef = doc(db, 'users', user.uid);
                     await updateDoc(userRef, { displayName: tempUsername });
                     
@@ -97,6 +108,23 @@ export default function ProfilePage() {
             });
         }
     };
+    
+    const handleDeleteAccount = async () => {
+        try {
+            await deleteAccount();
+            toast({
+                title: 'Account Deleted',
+                description: 'Your account and all associated data have been permanently deleted.',
+            });
+             router.push('/login');
+        } catch (error: any) {
+            toast({
+                title: 'Deletion Failed',
+                description: error.message,
+                variant: 'destructive',
+            });
+        }
+    }
     
     if (!user || !appUser) {
         return <SplashScreen />;
@@ -208,9 +236,34 @@ export default function ProfilePage() {
                     </CardContent>
                 </Card>
 
-                <Button onClick={handleLogout} variant="destructive" className="w-full font-bold text-lg py-6">
-                    LOG OUT
-                </Button>
+                <div className="space-y-2">
+                    <Button onClick={handleLogout} variant="secondary" className="w-full font-bold text-lg py-6">
+                        LOG OUT
+                    </Button>
+                     <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="destructive" className="w-full font-bold">
+                                <Trash2 className="mr-2 h-4 w-4" /> Delete My Account
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete your
+                                account and remove all your data from our servers.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDeleteAccount} className="bg-destructive hover:bg-destructive/90">
+                                Yes, delete my account
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </div>
+
 
                 {/* Spacer to prevent content from being hidden by the fixed bottom nav */}
                 <div className="h-20 md:hidden" />

@@ -11,8 +11,8 @@ import {
     orderBy,
     where
 } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from './config';
+import { db } from './config';
+import { uploadScreenshot } from './upload';
 
 export interface DepositRequest {
     id: string;
@@ -37,19 +37,8 @@ export const createDepositRequest = async (data: {
     utr: string;
     screenshotFile: File;
 }) => {
-    // 1. Upload screenshot to Firebase Storage. The path is critical for security rules.
-    const filePath = `deposits/${data.userId}/${Date.now()}_${data.screenshotFile.name}`;
-    const screenshotRef = ref(storage, filePath);
-    
-    // Add client-side validation and metadata for robustness
-    if (data.screenshotFile.size > 10 * 1024 * 1024) { // 10 MB limit
-        throw new Error("Screenshot is too large. Please upload an image under 10 MB.");
-    }
-    const metadata = { contentType: data.screenshotFile.type || 'image/jpeg' };
-
-    // This step must complete successfully before proceeding.
-    const uploadResult = await uploadBytes(screenshotRef, data.screenshotFile, metadata);
-    const screenshotUrl = await getDownloadURL(uploadResult.ref);
+    // 1. Upload screenshot to Firebase Storage using the robust uploader.
+    const screenshotUrl = await uploadScreenshot(data.userId, data.screenshotFile);
 
     // 2. Now that the upload is successful and we have the URL, create the document.
     const docData = {

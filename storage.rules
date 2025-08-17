@@ -1,52 +1,41 @@
 rules_version = '2';
-
 service firebase.storage {
   match /b/{bucket}/o {
 
-    // Deposits - users upload their own payment proof
+    // User deposits screenshots
     match /deposits/{userId}/{fileName} {
-      allow read: if request.auth != null &&
-                  (request.auth.uid == userId ||
-                   get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin' ||
-                   get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'finance' ||
-                   get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'support');
-                   
+      allow read: if request.auth != null && (request.auth.uid == userId || request.auth.token.role == 'superadmin' || request.auth.token.role == 'finance' || request.auth.token.role == 'support');
       allow write: if request.auth != null
                    && request.auth.uid == userId
                    && request.resource.size < 10 * 1024 * 1024
                    && request.resource.contentType.matches('image/.*');
     }
 
-    // Game screenshots - authenticated users can read/write
-    match /screenshots/{gameId}/{fileName} {
-      allow read: if request.auth != null;
+    // User game screenshots
+    match /screenshots/{userId}/{fileName} {
+      allow read: if request.auth != null && (request.auth.uid == userId || request.auth.token.role == 'superadmin' || request.auth.token.role == 'support');
       allow write: if request.auth != null
+                   && request.auth.uid == userId
                    && request.resource.size < 10 * 1024 * 1024
                    && request.resource.contentType.matches('image/.*');
     }
-
-    // Banners, home cards, etc. - only admin can write, public read
+    
+    // Banners (public read, admin write)
     match /banners/{folder}/{fileName} {
       allow read: if true;
-      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin';
+      allow write: if request.auth != null && (request.auth.token.role == 'superadmin');
     }
     
-    match /homecards/{fileName} {
-      allow read: if true;
-      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin';
-    }
-    
-    match /tournaments/{fileName} {
-       allow read: if true;
-       allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin';
-    }
-
-    // Referral images (public read)
+    // Referral images (public read, admin write)
     match /referral/{fileName} {
       allow read: if true;
-      // Allow any authenticated user to write their referral image (if this feature is added)
-      // Or restrict to admin: get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin'
-      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin';
+      allow write: if request.auth != null && (request.auth.token.role == 'superadmin');
+    }
+    
+    // Tournament images (public read, admin write)
+     match /tournaments/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null && (request.auth.token.role == 'superadmin');
     }
 
     // Default deny everything else

@@ -117,7 +117,6 @@ function GamePageComponent() {
                     toast({ title: 'Error', description: 'You are not part of this game.', variant: 'destructive' });
                     router.push('/play');
                 } else {
-                    // Check if the game status has just changed to show the dialog
                     const oldStatus = game?.status;
                     const newStatus = gameData.status;
                     

@@ -23,10 +23,10 @@ import {
     writeBatch,
     DocumentReference
 } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from './config';
+import { db } from './config';
 import { AppUser, updateUserWallet } from './users';
 import { updateTournamentPoints } from './tournaments';
+import { uploadScreenshot } from './upload';
 
 export interface PlayerInfo {
     uid: string;
@@ -126,7 +126,6 @@ export const deleteChallenge = async (gameId: string) => {
         
         const gameData = gameSnap.data() as Game;
         
-        // This transaction will create its own separate transaction log for the refund.
         await updateUserWallet(gameData.createdBy.uid, gameData.amount, 'balance', 'refund', `Challenge Deleted: ${gameId}`);
         
         transaction.delete(gameRef);
@@ -149,7 +148,6 @@ export const acceptChallenge = async (gameId: string, player2: PlayerInfo): Prom
             throw new Error("This challenge is no longer available.");
         }
         
-        // Deduct fee from accepting player's wallet within the same transaction
         await updateUserWallet(player2.uid, -gameData.amount, 'balance', 'game_fee', `Accepted battle vs ${gameData.createdBy.displayName}`);
 
         // Update the game document
@@ -162,33 +160,6 @@ export const acceptChallenge = async (gameId: string, player2: PlayerInfo): Prom
     });
 
     return gameId;
-};
-
-// Cancel an accepted challenge before room code is set
-export const cancelAcceptedChallenge = async (gameId: string, player2Id: string) => {
-    const gameRef = doc(db, GAMES_COLLECTION, gameId);
-    
-    return await runTransaction(db, async (transaction) => {
-        const gameSnap = await transaction.get(gameRef);
-        if (!gameSnap.exists()) {
-            throw new Error("Game not found.");
-        }
-        
-        const gameData = gameSnap.data() as Game;
-
-        if (gameData.status !== 'ongoing' || gameData.player2?.uid !== player2Id || gameData.roomCode) {
-            throw new Error("This game cannot be canceled by you at this stage.");
-        }
-
-        await updateUserWallet(player2Id, gameData.amount, 'balance', 'refund', `Accepted Challenge Canceled: ${gameId}`);
-        
-        transaction.update(gameRef, {
-            status: 'challenge',
-            playerUids: [gameData.player1.uid],
-            player2: deleteField(),
-            lastUpdatedAt: serverTimestamp(),
-        });
-    });
 };
 
 // Update game room code
@@ -225,26 +196,18 @@ export const submitPlayerResult = async (gameId: string, userId: string, result:
 
         // Upload screenshot if player won
         if (result === 'WON' && screenshotFile) {
-            if (screenshotFile.size > 10 * 1024 * 1024) { // 10MB limit
-                throw new Error("Screenshot is too large. Please upload an image under 10 MB.");
-            }
-            const metadata = { contentType: screenshotFile.type || 'image/jpeg' };
-
-            const screenshotRef = ref(storage, `screenshots/${gameId}/${Date.now()}_${userId}`);
-            const uploadResult = await uploadBytes(screenshotRef, screenshotFile, metadata);
-            updateData.screenshotUrl = await getDownloadURL(uploadResult.ref);
+            const uploadedUrl = await uploadScreenshot(userId, screenshotFile, gameId);
+            updateData.screenshotUrl = uploadedUrl;
         }
         
         transaction.update(gameRef, updateData);
         
         const opponentResult = gameData[opponentResultField];
         
-        // --- Process Outcome if both results are in ---
         if (opponentResult) {
             const p1Result = isPlayer1 ? result : opponentResult;
             const p2Result = isPlayer1 ? opponentResult : result;
 
-            // Case 1: Agreement (Win/Loss)
             if ((p1Result === 'WON' && p2Result === 'LOST') || (p1Result === 'LOST' && p2Result === 'WON')) {
                 const winnerId = p1Result === 'WON' ? player1Id : player2Id;
                 const loserId = p1Result === 'WON' ? player2Id : player1Id;
@@ -253,18 +216,14 @@ export const submitPlayerResult = async (gameId: string, userId: string, result:
                 transaction.update(doc(db, 'users', winnerId), { 'gameStats.played': increment(1), 'gameStats.won': increment(1) });
                 transaction.update(doc(db, 'users', loserId), { 'gameStats.played': increment(1), 'gameStats.lost': increment(1) });
                 
-                // Update tournament points for both players
                 await updateTournamentPoints(winnerId, gameData.amount);
                 await updateTournamentPoints(loserId, gameData.amount);
             }
-            // Case 2: Dispute (Both Won or Both Lost)
             else if (p1Result === p2Result) {
                 transaction.update(gameRef, { status: 'disputed' });
             }
-            // Case 3: Cancellation Agreement or one cancels/one loses
             else if (p1Result === 'CANCEL' || p2Result === 'CANCEL') {
                 transaction.update(gameRef, { status: 'cancelled' });
-                // Refunds are handled in a separate function or transaction
                 await updateUserWallet(player1Id, gameData.amount, 'balance', 'refund', `Game Cancelled: ${gameData.id}`);
                 await updateUserWallet(player2Id, gameData.amount, 'balance', 'refund', `Game Cancelled: ${gameData.id}`);
             }
@@ -432,11 +391,8 @@ export const applyPenaltyForNoUpdate = async () => {
 
         if (!player1Id || !player2Id) continue;
 
-        // Mark game as cancelled
         batch.update(doc.ref, { status: 'cancelled' });
 
-        // Apply penalty to both players
-        // These calls will create transactions internally
         await updateUserWallet(player1Id, -50, 'balance', 'penalty', `No update on battle ${game.id}`);
         await updateUserWallet(player2Id, -50, 'balance', 'penalty', `No update on battle ${game.id}`);
         
