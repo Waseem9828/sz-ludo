@@ -51,17 +51,26 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
     
     const batch = db.batch();
 
+    // Handle referral logic
     if (referralCode && typeof referralCode === 'string' && referralCode.startsWith('SZLUDO')) {
         const referrerId = referralCode.replace('SZLUDO', '');
         if (referrerId && referrerId !== uid) {
             const referrerRef = db.doc(`users/${referrerId}`);
-            newAppUser.referralStats.referredBy = referrerId;
-            batch.update(referrerRef, { 'referralStats.referredCount': admin.firestore.FieldValue.increment(1) });
+            // We check if referrer exists before updating.
+            const referrerDoc = await referrerRef.get();
+            if(referrerDoc.exists) {
+                newAppUser.referralStats.referredBy = referrerId;
+                batch.update(referrerRef, { 'referralStats.referredCount': admin.firestore.FieldValue.increment(1) });
+            } else {
+                 functions.logger.warn(`Referrer with code ${referralCode} not found.`);
+            }
         }
     }
 
+    // Set the user document in the batch
     batch.set(userRef, newAppUser);
     
+    // Create the signup bonus transaction in the same batch
     const transLogRef = db.collection("transactions").doc();
     batch.set(transLogRef, {
         userId: uid,
@@ -73,8 +82,10 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
+    // Commit all batched writes at once
     await batch.commit();
 
     functions.logger.log(`Successfully created user document and bonus transaction for UID: ${uid}`);
     return { success: true, message: "User created successfully." };
 });
+
