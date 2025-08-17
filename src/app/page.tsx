@@ -22,14 +22,13 @@ function Home() {
   const [showFestiveBackground, setShowFestiveBackground] = useState(false);
 
   useEffect(() => {
-    // Only perform actions when the loading state is fully resolved.
     if (!loading) {
       if (!user) {
         router.replace('/login');
         return;
       }
       
-      // If user is logged in, fetch settings.
+      // Fetch settings only if user is logged in and loading is complete
       getSettings().then(appSettings => {
         setSettings(appSettings);
 
@@ -55,6 +54,7 @@ function Home() {
     }
   }
 
+  // Show splash screen while loading auth state OR if auth is resolved but appUser is not yet available
   if (loading || !user || !appUser) {
     return <SplashScreen />;
   }

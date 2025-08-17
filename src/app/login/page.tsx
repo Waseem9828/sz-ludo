@@ -26,7 +26,7 @@ function LoginPageContent() {
   const [referralCode, setReferralCode] = useState('');
   const [loadingAction, setLoadingAction] = useState<null | 'login' | 'signup'>(null);
   
-  const { signUp, signIn, user, loading } = useAuth();
+  const { signUp, signIn, user, appUser, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -39,11 +39,11 @@ function LoginPageContent() {
   }, [searchParams]);
 
   useEffect(() => {
-    // Only redirect when auth state is fully resolved (loading is false) and user is logged in
-    if (!loading && user) {
+    // Redirect only when auth is resolved and we have a user with a profile doc
+    if (!loading && user && appUser) {
       router.replace('/');
     }
-  }, [user, loading, router]);
+  }, [user, appUser, loading, router]);
 
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -96,7 +96,8 @@ function LoginPageContent() {
     }
   };
 
-  if (loading || user) {
+  // If we are loading, or if the user is already logged in (and has a profile doc), show splash screen
+  if (loading || (user && appUser)) {
     return <SplashScreen />;
   }
 
