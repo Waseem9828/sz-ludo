@@ -8,52 +8,56 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { SplashScreen } from '@/components/ui/splash-screen';
 import { getSettings, AppSettings } from '@/lib/firebase/settings';
+import { AppUser, listenForUser } from '@/lib/firebase/users';
 import GameListing from '@/components/game-listing';
 import { FestiveDialog, FestiveBackground } from '@/components/ui/festive-dialog';
 import AnimatedBanner from '@/components/animated-banner';
 
 function Home() {
-  const { user, appUser, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   
+  const [appUser, setAppUser] = useState<AppUser | null>(null);
   const [settings, setSettings] = useState<AppSettings | null>(null);
+  
+  const [userLoading, setUserLoading] = useState(true);
   const [settingsLoading, setSettingsLoading] = useState(true);
 
   const [showFestiveDialog, setShowFestiveDialog] = useState(false);
   const [showFestiveBackground, setShowFestiveBackground] = useState(false);
 
   useEffect(() => {
-    // Redirect logic is now cleaner and only depends on the final loading state
-    if (!loading && !user) {
+    if (authLoading) return; // Wait for auth to resolve first
+    if (!user) {
       router.replace('/login');
+      return;
     }
-  }, [user, loading, router]);
-  
-  useEffect(() => {
-    // Fetch settings only when we have a confirmed user
-    if (user && appUser) {
-        getSettings().then(appSettings => {
-            setSettings(appSettings);
+    
+    const unsubscribeUser = listenForUser(user.uid, (data) => {
+        setAppUser(data);
+        setUserLoading(false);
+    });
 
-            if (appSettings.festiveGreeting?.enabled && appSettings.festiveGreeting.type !== 'None') {
-                setShowFestiveBackground(true);
-                const lastShownKey = `festiveGreetingLastShown_${appSettings.festiveGreeting.type}`;
-                const lastShown = localStorage.getItem(lastShownKey);
-                const now = new Date().getTime();
-                
-                if (!lastShown || (now - Number(lastShown) > 24 * 60 * 60 * 1000)) {
-                    setShowFestiveDialog(true);
-                    localStorage.setItem(lastShownKey, now.toString());
-                }
+    getSettings().then(appSettings => {
+        setSettings(appSettings);
+        if (appSettings.festiveGreeting?.enabled && appSettings.festiveGreeting.type !== 'None') {
+            setShowFestiveBackground(true);
+            const lastShownKey = `festiveGreetingLastShown_${appSettings.festiveGreeting.type}`;
+            const lastShown = localStorage.getItem(lastShownKey);
+            const now = new Date().getTime();
+            
+            if (!lastShown || (now - Number(lastShown) > 24 * 60 * 60 * 1000)) {
+                setShowFestiveDialog(true);
+                localStorage.setItem(lastShownKey, now.toString());
             }
-        }).finally(() => {
-            setSettingsLoading(false);
-        });
-    } else if (!loading && !user) {
-        // If not logged in, no need to load settings.
+        }
+    }).finally(() => {
         setSettingsLoading(false);
-    }
-  }, [user, appUser, loading]);
+    });
+
+    return () => unsubscribeUser();
+
+  }, [user, authLoading, router]);
   
   const handleDialogClose = (isOpen: boolean) => {
     setShowFestiveDialog(isOpen);
@@ -62,13 +66,13 @@ function Home() {
     }
   }
 
-  // Show splash screen if either auth or settings are loading.
-  if (loading || settingsLoading) {
+  // Show splash screen if either auth or any data is loading.
+  if (authLoading || userLoading || settingsLoading) {
     return <SplashScreen />;
   }
   
-  // If, after loading, there's still no user, the redirect effect will handle it.
-  // This prevents rendering the page for a split second before redirecting.
+  // If, after loading, there's still no user, the effect above will redirect.
+  // This state check is a fallback.
   if (!user || !appUser) {
     return <SplashScreen />;
   }

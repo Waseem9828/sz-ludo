@@ -1,5 +1,5 @@
 
-import { doc, updateDoc, Timestamp, getDoc, onSnapshot, collection, query, orderBy, limit, getDocs, writeBatch, increment, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, Timestamp, getDoc, onSnapshot, collection, query, orderBy, limit, getDocs, writeBatch, increment, serverTimestamp, where } from 'firebase/firestore';
 import { db } from './config';
 import { jsPDF } from "jspdf";
 import autoTable from 'jspdf-autotable';
@@ -58,6 +58,28 @@ export interface AppUser {
   createdAt: Timestamp;
   lastLogin?: Timestamp;
 }
+
+/**
+ * Listens for real-time updates on a single user's data.
+ * @param uid - The user's unique ID.
+ * @param callback - The function to call with the updated user data.
+ * @returns An unsubscribe function to stop listening for updates.
+ */
+export const listenForUser = (uid: string, callback: (user: AppUser | null) => void): (() => void) => {
+    const userRef = doc(db, 'users', uid);
+    const unsubscribe = onSnapshot(userRef, (docSnap) => {
+        if (docSnap.exists()) {
+            callback({ uid, ...docSnap.data() } as AppUser);
+        } else {
+            callback(null);
+        }
+    }, (error) => {
+        console.error("Error listening to user document:", error);
+        callback(null);
+    });
+    return unsubscribe;
+};
+
 
 /**
  * Listens for real-time updates on all users, with optional role filtering.
