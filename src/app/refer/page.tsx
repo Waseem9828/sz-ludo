@@ -62,11 +62,11 @@ export default function ReferPage() {
     }, []);
     
     const referralData = useMemo(() => {
-        if (!user) return null;
+        if (!user || !appUser || !appUser.referralStats) return null;
 
         const referralSettings = settings || defaultSettings;
         const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-        const referralCode = `SZLUDO${user.uid.substring(0, 8).toUpperCase()}`;
+        const referralCode = appUser.referralStats.referralCode || `SZLUDO${user.uid.substring(0, 8).toUpperCase()}`;
         const referralLink = `${baseUrl}/login?ref=${referralCode}`;
         const shareText = (referralSettings.shareText || defaultSettings.shareText)
             .replace('{{referralCode}}', referralCode)
@@ -81,19 +81,33 @@ export default function ReferPage() {
             howItWorksHtml,
             imageUrl: referralSettings.imageUrl || defaultSettings.imageUrl,
         };
-    }, [user, settings]);
+    }, [user, appUser, settings]);
 
     const handleCopyToClipboard = () => {
         if (!referralData) return;
-        navigator.clipboard.writeText(referralData.referralLink);
+        navigator.clipboard.writeText(referralData.referralCode);
         toast({
             title: "Copied to clipboard!",
-            description: "Your referral link has been copied.",
+            description: "Your referral code has been copied.",
         });
     };
 
-    const handleShare = (platform: 'whatsapp' | 'telegram') => {
+    const handleShare = (platform: 'whatsapp' | 'telegram' | 'more') => {
         if (!referralData) return;
+        
+        if (platform === 'more') {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Join me on SZ Ludo!',
+                    text: referralData.shareText,
+                    url: referralData.referralLink,
+                }).catch(console.error);
+            } else {
+                 handleCopyToClipboard(); // Fallback for browsers that don't support Web Share API
+            }
+            return;
+        }
+
         let url = '';
         if (platform === 'whatsapp') {
             url = `https://wa.me/?text=${encodeURIComponent(referralData.shareText)}`;
@@ -156,7 +170,7 @@ export default function ReferPage() {
                                 <TelegramIcon />
                                 Share To Telegram
                             </Button>
-                             <Button variant="secondary" className="w-full" onClick={() => handleShare('whatsapp')}>
+                             <Button variant="secondary" className="w-full" onClick={() => handleShare('more')}>
                                 <Share2 className="mr-2"/>
                                 More Share Options
                             </Button>
