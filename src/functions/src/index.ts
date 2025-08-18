@@ -44,7 +44,7 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
         gameStats: { played: 0, won: 0, lost: 0 },
         lifetimeStats: { totalDeposits: 0, totalWithdrawals: 0, totalWinnings: 0 },
         referralStats: { 
-            referralCode: newReferralCode, // Always assign the new referral code
+            referralCode: newReferralCode,
             referredCount: 0, 
             totalEarnings: 0 
         },
@@ -61,20 +61,18 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
 
     // Handle referral logic if a referral code was provided during signup
     if (referralCode && typeof referralCode === 'string' && referralCode.startsWith('SZLUDO')) {
-        // Query for a user whose referralCode matches the one provided
         const usersRef = db.collection('users');
         const query = usersRef.where('referralStats.referralCode', '==', referralCode).limit(1);
         const querySnapshot = await query.get();
 
         if (!querySnapshot.empty) {
             const referrerDoc = querySnapshot.docs[0];
-            if (referrerDoc.id !== uid) { // Can't refer yourself
+            if (referrerDoc.id !== uid) {
                 newAppUser.referralStats.referredBy = referrerDoc.id;
                 batch.update(referrerDoc.ref, { 'referralStats.referredCount': admin.firestore.FieldValue.increment(1) });
             }
         }
     }
-
 
     // Set the user document in the batch
     batch.set(userRef, newAppUser);
