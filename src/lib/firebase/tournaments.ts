@@ -14,10 +14,14 @@ import {
   updateDoc,
   arrayUnion,
   increment,
-  getDocs
+  getDocs,
+  addDoc,
+  serverTimestamp,
+  deleteDoc
 } from 'firebase/firestore';
-import { db } from './config';
-import { AppUser } from './users';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { db, storage } from './config';
+import { AppUser, updateUserWallet } from './users';
 
 export interface LeaderboardPlayer {
     uid: string;
@@ -60,14 +64,14 @@ export interface Tournament {
 export const listenForTournaments = (
   callback: (tournaments: Tournament[]) => void,
   onError?: (error: Error) => void,
-  statuses: Tournament['status'][] = ['upcoming', 'live']
+  statuses?: Tournament['status'][]
 ): (() => void) => {
   const tournamentsRef = collection(db, 'tournaments');
-  const q = query(
-    tournamentsRef,
-    where('status', 'in', statuses),
-    orderBy('startTime', 'asc')
-  );
+  let q = query(tournamentsRef, orderBy('startTime', 'asc'));
+
+  if (statuses && statuses.length > 0) {
+    q = query(q, where('status', 'in', statuses));
+  }
 
   const unsubscribe = onSnapshot(q, (snapshot) => {
     const tournaments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tournament));
@@ -115,7 +119,7 @@ export const joinTournament = async (tournamentId: string, userId: string): Prom
     let winningsDeducted = 0;
     let balanceDeducted = 0;
     
-    if (user.wallet.winnings >= tournament.entryFee) {
+    if ((user.wallet?.winnings || 0) >= tournament.entryFee) {
         winningsDeducted = tournament.entryFee;
     } else {
         winningsDeducted = user.wallet.winnings;
@@ -144,7 +148,7 @@ export const joinTournament = async (tournamentId: string, userId: string): Prom
         status: 'completed',
         notes: `Joined tournament: ${tournament.title}`,
         relatedId: tournamentId,
-        createdAt: Timestamp.now()
+        createdAt: serverTimestamp()
     });
     
     await batch.commit();
@@ -163,10 +167,16 @@ export const hasJoinedLiveTournament = async (userId: string): Promise<boolean> 
     return !snapshot.empty;
 }
 
-// Admin functions to be added later: createTournament, updateTournament, deleteTournament, distributeTournamentPrizes
-
-export async function createTournament(tournamentData: Omit<Tournament, 'id' | 'createdAt' | 'prizePool' | 'players' | 'leaderboard'>): Promise<void> {
-    // This is a placeholder for the full implementation
+export async function createTournament(data: Omit<Tournament, 'id' | 'createdAt' | 'prizePool' | 'players' | 'leaderboard' | 'status'>): Promise<void> {
+    const tournamentRef = collection(db, 'tournaments');
+    await addDoc(tournamentRef, {
+        ...data,
+        status: 'upcoming',
+        prizePool: 0,
+        players: [],
+        leaderboard: [],
+        createdAt: serverTimestamp(),
+    });
 }
 
 export async function getTournament(id: string): Promise<Tournament | null> {
@@ -178,24 +188,111 @@ export async function getTournament(id: string): Promise<Tournament | null> {
     return null;
 }
 
-export async function updateTournament(id: string, data: Partial<Tournament>): Promise<void> {
+export async function updateTournament(id: string, data: Partial<Omit<Tournament, 'id'>>): Promise<void> {
     const docRef = doc(db, 'tournaments', id);
     await updateDoc(docRef, data);
 }
 
-export async function deleteTournament(id: string): Promise<void> {
-    const docRef = doc(db, 'tournaments', id);
-    await updateDoc(docRef, { status: 'cancelled' });
-    // Refunding logic should be handled by a cloud function for security
+export async function deleteTournament(tournamentId: string): Promise<void> {
+    const batch = writeBatch(db);
+    const tournamentRef = doc(db, 'tournaments', tournamentId);
+    const tournamentDoc = await getDoc(tournamentRef);
+
+    if (!tournamentDoc.exists()) throw new Error("Tournament not found.");
+    const tournament = tournamentDoc.data() as Tournament;
+
+    // Refund players
+    for (const userId of tournament.players) {
+        const userRef = doc(db, 'users', userId);
+        batch.update(userRef, { 'wallet.balance': increment(tournament.entryFee) });
+
+        const transactionRef = doc(collection(db, 'transactions'));
+        batch.set(transactionRef, {
+            userId: userId,
+            userName: 'N/A', // We can fetch name, but for simplicity we skip
+            amount: tournament.entryFee,
+            type: 'refund',
+            status: 'completed',
+            notes: `Tournament cancelled: ${tournament.title}`,
+            relatedId: tournamentId,
+            createdAt: serverTimestamp()
+        });
+    }
+
+    // Delete the tournament document
+    batch.delete(tournamentRef);
+
+    await batch.commit();
 }
 
-export async function distributeTournamentPrizes(id: string): Promise<void> {
-    // This should ideally be a cloud function to prevent manipulation
+
+export async function distributeTournamentPrizes(tournamentId: string): Promise<void> {
+    const batch = writeBatch(db);
+    const tournamentRef = doc(db, 'tournaments', tournamentId);
+    const tournamentDoc = await getDoc(tournamentRef);
+
+    if (!tournamentDoc.exists()) throw new Error("Tournament not found.");
+    const tournament = tournamentDoc.data() as Tournament;
+
+    if (tournament.status === 'completed') throw new Error("Prizes have already been distributed.");
+    if (new Date() < tournament.endTime.toDate()) throw new Error("Tournament has not ended yet.");
+    
+    const prizePoolAfterCommission = tournament.prizePool * (1 - (tournament.adminCommission / 100));
+
+    const sortedLeaderboard = tournament.leaderboard.sort((a, b) => b.points - a.points);
+    
+    let distributedAmount = 0;
+
+    for (const dist of tournament.prizeDistribution) {
+        for (let rank = dist.rankStart; rank <= dist.rankEnd; rank++) {
+            const winnerIndex = rank - 1;
+            if (winnerIndex >= sortedLeaderboard.length) continue;
+
+            const winner = sortedLeaderboard[winnerIndex];
+            const totalWinnersInRange = Math.max(0, dist.rankEnd - dist.rankStart + 1);
+            
+            if (totalWinnersInRange > 0) {
+                 const prizeAmount = (prizePoolAfterCommission * (dist.percentage / 100)) / totalWinnersInRange;
+                 distributedAmount += prizeAmount;
+
+                 if (prizeAmount > 0) {
+                    const userRef = doc(db, 'users', winner.uid);
+                    batch.update(userRef, { 'wallet.winnings': increment(prizeAmount) });
+
+                    const transactionRef = doc(collection(db, 'transactions'));
+                    batch.set(transactionRef, {
+                        userId: winner.uid,
+                        userName: winner.displayName,
+                        amount: prizeAmount,
+                        type: 'winnings',
+                        status: 'completed',
+                        notes: `Tournament Prize: ${tournament.title} - Rank #${rank}`,
+                        relatedId: tournamentId,
+                        createdAt: serverTimestamp()
+                    });
+                 }
+            }
+        }
+    }
+    
+    // Give commission to admin
+    const adminId = 'PUT_YOUR_SUPERADMIN_UID_HERE'; // Replace with actual superadmin UID
+    const commissionAmount = tournament.prizePool * (tournament.adminCommission / 100);
+    if (commissionAmount > 0 && adminId !== 'PUT_YOUR_SUPERADMIN_UID_HERE') {
+        updateUserWallet(adminId, commissionAmount, 'balance', 'revenue', `Commission from ${tournament.title}`);
+    }
+
+    batch.update(tournamentRef, { status: 'completed' });
+    await batch.commit();
 }
+
 
 export async function uploadTournamentImage(file: File): Promise<string> {
-    // Placeholder for image upload logic
-    return "https://placehold.co/400x300.png";
+   if (!file) throw new Error('No file provided for upload.');
+   const storageRef = ref(storage, `tournaments/${Date.now()}_${file.name}`);
+   const snapshot = await uploadBytes(storageRef, file);
+   const downloadURL = await getDownloadURL(snapshot.ref);
+   return downloadURL;
 }
 
 export const listenForTournament = (
@@ -215,4 +312,3 @@ export const listenForTournament = (
         if (onError) onError(error);
     });
 };
-

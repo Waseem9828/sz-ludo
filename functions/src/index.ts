@@ -58,16 +58,20 @@ export const onUserCreate = functions.https.onCall(async (data, context) => {
 
     // Handle referral logic
     if (referralCode && typeof referralCode === 'string' && referralCode.startsWith('SZLUDO')) {
-        const referrerCodeUID = Buffer.from(referralCode.replace('SZLUDO', ''), 'base64').toString('utf8');
-        if (referrerCodeUID && referrerCodeUID !== uid) {
-            const referrerRef = db.doc(`users/${referrerCodeUID}`);
-            const referrerDoc = await referrerRef.get();
-            if(referrerDoc.exists) {
-                newAppUser.referralStats.referredBy = referrerRef.id;
-                batch.update(referrerRef, { 'referralStats.referredCount': admin.firestore.FieldValue.increment(1) });
+        // Query for a user whose referralCode matches
+        const usersRef = db.collection('users');
+        const query = usersRef.where('referralStats.referralCode', '==', referralCode).limit(1);
+        const querySnapshot = await query.get();
+
+        if (!querySnapshot.empty) {
+            const referrerDoc = querySnapshot.docs[0];
+            if (referrerDoc.id !== uid) { // Can't refer yourself
+                newAppUser.referralStats.referredBy = referrerDoc.id;
+                batch.update(referrerDoc.ref, { 'referralStats.referredCount': admin.firestore.FieldValue.increment(1) });
             }
         }
     }
+
 
     // Set the user document in the batch
     batch.set(userRef, newAppUser);
