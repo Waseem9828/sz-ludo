@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import {
   onAuthStateChanged,
   User,
@@ -11,7 +11,7 @@ import {
   updateProfile,
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase/config';
-import { doc, onSnapshot, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import type { AppUser } from '@/lib/firebase/users';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { SplashScreen } from '@/components/ui/splash-screen';
@@ -65,36 +65,49 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setDeferredPrompt(null);
     setInstallable(false);
   };
-  
-  useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, async (authUser) => {
-      setUser(authUser);
 
+  useEffect(() => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (authUser) => {
+      setUser(authUser);
+      // If the user logs out, we can stop loading and clear appUser
       if (!authUser) {
         setAppUser(null);
         setLoading(false);
-        return;
       }
-
-      // If we have a user, set up the Firestore listener.
-      const userDocRef = doc(db, 'users', authUser.uid);
-      const unsubscribeFirestore = onSnapshot(userDocRef, (docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data() as AppUser;
-          setAppUser({ ...data, uid: authUser.uid, isKycVerified: data.kycStatus === 'Verified' });
-        } else {
-          // This case might happen briefly after signup before the cloud function runs.
-          // We keep listening. If it persists, it's an issue.
-          setAppUser(null);
-        }
-        setLoading(false); // Only set loading to false after we get a Firestore result
-      });
-
-      return () => unsubscribeFirestore();
     });
 
     return () => unsubscribeAuth();
   }, []);
+  
+  useEffect(() => {
+    // This effect runs whenever the user object changes.
+    // It's responsible for fetching the corresponding appUser from Firestore.
+    if (user) {
+      const userDocRef = doc(db, 'users', user.uid);
+      const unsubscribeFirestore = onSnapshot(userDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data() as AppUser;
+          setAppUser({ ...data, uid: user.uid, isKycVerified: data.kycStatus === 'Verified' });
+        } else {
+          // This can happen briefly after signup, before the user document is created.
+          // We set appUser to null and let the loading state persist.
+          setAppUser(null); 
+        }
+        // Crucially, we only stop loading once we have the full appUser profile.
+        setLoading(false);
+      }, (error) => {
+        console.error("Error listening to user document:", error);
+        setAppUser(null);
+        setLoading(false); // Also stop loading on error
+      });
+
+      return () => unsubscribeFirestore();
+    } else {
+      // If there's no user, there's nothing to load from Firestore.
+      setLoading(false);
+    }
+  }, [user]);
+
 
   const signUp = async (
     email: string,
@@ -103,6 +116,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     phone: string,
     referralCode?: string
   ) => {
+    setLoading(true); // Start loading before signup
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const newUser = userCredential.user;
     
@@ -119,6 +133,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (e) {
         console.error('CRITICAL: onUserCreate callable failed. This might lead to an inconsistent state.', e);
         await signOut(auth);
+        setLoading(false); // Stop loading on failure
         throw e;
     }
     
@@ -126,11 +141,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signIn = (email: string, password: string) => {
+    setLoading(true); // Start loading before sign-in attempt
     return signInWithEmailAndPassword(auth, email, password);
   };
 
   const logout = async () => {
+    setLoading(true); // Start loading before sign out
     await signOut(auth);
+    setUser(null);
+    setAppUser(null);
+    setLoading(false); // Finish loading after sign out
   };
   
   const value = {
@@ -146,7 +166,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      {loading ? <SplashScreen /> : children}
     </AuthContext.Provider>
   );
 };

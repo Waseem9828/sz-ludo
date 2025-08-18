@@ -13,7 +13,7 @@ import { FestiveDialog, FestiveBackground } from '@/components/ui/festive-dialog
 import AnimatedBanner from '@/components/animated-banner';
 
 function Home() {
-  const { user, appUser, loading: authLoading } = useAuth();
+  const { user, appUser, loading } = useAuth();
   const router = useRouter();
   
   const [settings, setSettings] = useState<AppSettings | null>(null);
@@ -23,12 +23,14 @@ function Home() {
   const [showFestiveBackground, setShowFestiveBackground] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    // Redirect logic is now cleaner and only depends on the final loading state
+    if (!loading && !user) {
       router.replace('/login');
     }
-  }, [user, authLoading, router]);
+  }, [user, loading, router]);
   
   useEffect(() => {
+    // Fetch settings only when we have a confirmed user
     if (user && appUser) {
         getSettings().then(appSettings => {
             setSettings(appSettings);
@@ -47,10 +49,11 @@ function Home() {
         }).finally(() => {
             setSettingsLoading(false);
         });
-    } else if (!authLoading) {
+    } else if (!loading && !user) {
+        // If not logged in, no need to load settings.
         setSettingsLoading(false);
     }
-  }, [user, appUser, authLoading]);
+  }, [user, appUser, loading]);
   
   const handleDialogClose = (isOpen: boolean) => {
     setShowFestiveDialog(isOpen);
@@ -59,12 +62,14 @@ function Home() {
     }
   }
 
-  if (authLoading || settingsLoading) {
+  // Show splash screen if either auth or settings are loading.
+  if (loading || settingsLoading) {
     return <SplashScreen />;
   }
   
+  // If, after loading, there's still no user, the redirect effect will handle it.
+  // This prevents rendering the page for a split second before redirecting.
   if (!user || !appUser) {
-    // This case should be handled by the redirect effect, but as a fallback:
     return <SplashScreen />;
   }
   
